@@ -1,0 +1,2 @@
+INFO:root:Start LIMU training for 3200 epochs.
+INFO:root:Training with gpu: True.
