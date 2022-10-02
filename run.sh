@@ -42,3 +42,4 @@
 # done
 name="CE"
 python main.py -g 1 -label_type 1 -slr 0.3 -name HHAR --store "${name}_HHAR" 
+python main_transfer.py -g 1 -ft True -lr 0.0005 -name MotionSense  --pretrained "${name}_${e}_MotionSense"

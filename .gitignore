@@ -1,1 +1,3 @@
-.runs/
+/runs
+/original_dataset
+/kmeans_pytorch
