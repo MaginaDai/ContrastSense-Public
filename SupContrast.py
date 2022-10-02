@@ -11,10 +11,8 @@ import torch.nn as nn
 
 
 class SupConLoss(nn.Module):
-    def __init__(self, device, temperature=0.07, base_temperature=0.07, if_cross_entropy=False):
+    def __init__(self, device, if_cross_entropy=False):
         super(SupConLoss, self).__init__()
-        self.temperature = temperature
-        self.base_temperature = base_temperature
         self.if_cross_entropy = if_cross_entropy
         self.device = device
         self.criterion = torch.nn.CrossEntropyLoss().to(self.device)
@@ -41,7 +39,7 @@ class SupConLoss(nn.Module):
         mean_log_prob_pos = (mask * log_prob).sum(1) / mask.sum(1)
 
         # loss
-        loss = - (self.temperature / self.base_temperature) * mean_log_prob_pos
+        loss = - mean_log_prob_pos
         loss = loss.mean()
         
         if torch.isnan(loss).any():

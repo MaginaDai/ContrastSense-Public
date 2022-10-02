@@ -41,7 +41,7 @@ class MoCo_model(nn.Module):
             self.classifier = MoCo_classifier(classes=classes, dims=dims, classifier_dim=classifier_dim, final_dim=final_dim, drop=drop)
         else:
             if self.DAL:
-                self.discriminator = MoCo_discriminator(out_dim=out_dim) 
+                self.discriminator = MoCo_discriminator(out_dim=out_dim)
             self.projector = MoCo_projector(out_dim=out_dim)
         self.transfer = transfer
         
@@ -241,7 +241,6 @@ class MoCo_encoder(nn.Module):
         return h
 
 
-
 # utils
 @torch.no_grad()
 def concat_all_gather(tensor):
@@ -263,7 +262,7 @@ class MoCo_v1(nn.Module):
     https://arxiv.org/abs/1911.05722
     """
     def __init__(self, device, transfer=False, out_dim=128, K=65536, m=0.999, T=0.07, T_labels=None, classes=6, dims=32,\
-                 label_type=2, num_clusters=None, mol='MoCo', final_dim=32, momentum=0.9, drop=0.1):
+                 label_type=2, num_clusters=None, mol='MoCo', final_dim=32, momentum=0.9, drop=0.1, DAL=False):
         """
         dim: feature dimension (default: 128)
         K: queue size; number of negative keys (default: 65536)
@@ -278,17 +277,18 @@ class MoCo_v1(nn.Module):
         self.T_labels = T_labels
         self.label_type = label_type
         self.if_cross_entropy = False
+        self.DAL = DAL
 
         # create the encoders
         # num_classes is the output fc dimension
         if mol == 'MoCo':
-            self.encoder_q = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, final_dim=final_dim, momentum=momentum, drop=drop)
-            self.encoder_k = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, final_dim=final_dim, momentum=momentum, drop=drop)
+            self.encoder_q = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, final_dim=final_dim, momentum=momentum, drop=drop, DAL=self.DAL)
+            self.encoder_k = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, final_dim=final_dim, momentum=momentum, drop=drop, DAL=self.DAL)
         elif mol == 'DeepSense':
             self.encoder_q = DeepSense_encoder(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims)
             self.encoder_k = DeepSense_encoder(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims)
 
-        self.sup_loss = SupConLoss(device=device, temperature=self.T, base_temperature=self.T, if_cross_entropy=self.if_cross_entropy)
+        self.sup_loss = SupConLoss(device=device, if_cross_entropy=self.if_cross_entropy)
 
         for param_q, param_k in zip(self.encoder_q.parameters(), self.encoder_k.parameters()):
             param_k.data.copy_(param_q.data)  # initialize
@@ -296,14 +296,17 @@ class MoCo_v1(nn.Module):
 
         # create the queue
         self.register_buffer("queue", torch.randn(out_dim, K))
+        self.register_buffer("queue_dis", torch.randn(out_dim, K))
         self.register_buffer("queue_labels", torch.randint(0, 10, [K, label_type]))  # store label for SupCon
         self.register_buffer("queue_gt", torch.randint(0, 10, [K, 1])) # store label for visualization
 
         self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))
+        self.register_buffer("queue_dis_ptr", torch.zeros(1, dtype=torch.long))
         self.register_buffer("queue_labels_ptr", torch.zeros(label_type, dtype=torch.long))
         self.register_buffer("queue_gt_ptr", torch.zeros(1, dtype=torch.long))
 
         self.queue = F.normalize(self.queue, dim=0)
+        self.queue_dis = F.normalize(self.queue_dis, dim=0)
         if num_clusters is not None:
             self.cluster_centers = []
 
@@ -318,7 +321,7 @@ class MoCo_v1(nn.Module):
             param_k.data = param_k.data * self.m + param_q.data * (1. - self.m)
 
     @torch.no_grad()
-    def _dequeue_and_enqueue(self, keys, labels=None, gt=None):
+    def _dequeue_and_enqueue(self, keys, labels=None, gt=None, d=None):
         # gather keys before updating queue
         # keys = concat_all_gather(keys)
 
@@ -343,6 +346,13 @@ class MoCo_v1(nn.Module):
             self.queue_gt[ptr_gt:ptr_gt + batch_size, 0] = gt
             ptr_gt = (ptr_gt + batch_size) % self.K
             self.queue_gt_ptr[0] = ptr_gt
+        
+        if d is not None:
+            dis_ptr = int(self.queue_dis_ptr)
+            # replace the keys at ptr (dequeue and enqueue)
+            self.queue_dis[:, dis_ptr:dis_ptr + batch_size] = d.T  # modified
+            dis_ptr = (dis_ptr + batch_size) % self.K  # move pointer
+            self.queue_dis_ptr[0] = dis_ptr
             
 
     @torch.no_grad()
@@ -406,14 +416,14 @@ class MoCo_v1(nn.Module):
             if sen_q.is_cuda
             else torch.device('cpu'))
 
-        q, d = self.encoder_q(sen_q)  # queries: NxC
+        q, d_q = self.encoder_q(sen_q)  # queries: NxC
         q = F.normalize(q, dim=1)
 
         # compute key features
         with torch.no_grad():  # no gradient to keys
             self._momentum_update_key_encoder()  # update the key encoder
 
-            k, d = self.encoder_k(sen_k)  # keys: NxC
+            k, d_k = self.encoder_k(sen_k)  # keys: NxC
             k = F.normalize(k, dim=1)
 
         # compute logits
@@ -423,7 +433,7 @@ class MoCo_v1(nn.Module):
         # negative logits: NxK
         l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])
         
-        feature = torch.concat([q, self.queue.clone().detach().T], dim=0)
+        feature = torch.concat([q, self.queue.clone().detach().T], dim=0)  # the overall features rather than the dot product of features.  
 
         # logits: Nx(1+K)
         logits = torch.cat([l_pos, l_neg], dim=1)
@@ -435,9 +445,12 @@ class MoCo_v1(nn.Module):
         targets = torch.zeros(logits.shape[0], dtype=torch.long).cuda()
 
         # dequeue and enqueue
-        self._dequeue_and_enqueue(k, labels, gt)
+        self._dequeue_and_enqueue(k, labels, gt, d_k)
         
-        logits_labels = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])
+        if self.DAL: # we do / T when calculating the SupCon
+            logits_labels = torch.einsum('nc,ck->nk', [d_q, self.queue_dis.clone().detach()])
+        else:
+            logits_labels = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  
 
         if num_clusters:
             h = torch.cat((q.detach(), self.queue.clone().T.detach()), 0).to(device)
@@ -550,7 +563,10 @@ class MoCo(object):
                     ori_loss = loss.detach().clone()
                     if sup_loss is not None:
                         for i in range(len(sup_loss)):
-                            loss -= self.args.slr[i] * sup_loss[i]
+                            if self.model.DAL:  # DAL use revearse layer so we just add them up.
+                                loss += self.args.slr[i] * sup_loss[i]
+                            else:
+                                loss -= self.args.slr[i] * sup_loss[i]
 
                 self.optimizer.zero_grad()
 

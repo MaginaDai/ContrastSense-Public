@@ -82,6 +82,7 @@ parser.add_argument('-mo', default=0.9, type=float, help='the momentum for Batch
 
 parser.add_argument('-drop', default=0.1, type=float, help='the dropout portion')
 parser.add_argument('-version', default="50_200", type=str, help='control the version of the setting')
+parser.add_argument('-DAL', default=True, type=bool, help='Use Domain Adaversarial Learning or not')
 
 
 def main():
@@ -116,7 +117,7 @@ def main():
     elif args.mol == 'MoCo' or args.mol == 'DeepSense':
         model = MoCo_v1(device=args.device, out_dim=args.out_dim, K=args.moco_K, m=args.moco_m, T=args.temperature, 
                         T_labels=args.tem_labels, dims=args.d, label_type=args.label_type, 
-                        num_clusters=args.num_clusters, mol=args.mol, final_dim=args.final_dim, momentum=args.mo, drop=args.drop)
+                        num_clusters=args.num_clusters, mol=args.mol, final_dim=args.final_dim, momentum=args.mo, drop=args.drop, DAL=args.DAL)
     else:
         model = MyNet(transfer=False, out_dim=args.out_dim, if_bn=args.if_bn, if_g=args.if_g, if_lstm=args.if_lstm)
     
