@@ -74,11 +74,7 @@ def results_for_each_file(files):
     eval = np.append(eval, np.mean(eval))
     test = np.append(test, np.mean(test))
     acc = np.append(acc, np.mean(acc))
-<<<<<<< HEAD
     # print(f"{np.around(eval, decimals=2)}")
-=======
-    print(f"{np.around(eval, decimals=2)}")
->>>>>>> 8051846bdd625cbed1582e943f9c2fde283f8287
     # print("test")
     print(f"{np.around(test, decimals=2)}")
     # print(f"{np.around(acc, decimals=2)}")
