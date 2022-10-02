@@ -3,15 +3,18 @@ from cProfile import label
 from cmath import nan
 from configparser import NoOptionError
 from copy import deepcopy
+from itertools import dropwhile
 import os
 import logging
 import pdb
 from re import I
+from tkinter import Y
 from tkinter.messagebox import NO
 from unicodedata import bidirectional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.autograd import Function
 from torch.cuda.amp import GradScaler, autocast
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -29,11 +32,125 @@ from sklearn.metrics import calinski_harabasz_score, adjusted_rand_score
 from sklearn.manifold import TSNE
 
 
+class MoCo_model(nn.Module):
+    def __init__(self, transfer=False, out_dim=512, classes=6, dims=32, classifier_dim=None, final_dim=8, momentum=0.9, drop=0.1, DAL=False):
+        super(MoCo_model, self).__init__()
+        self.DAL = DAL
+        self.encoder = MoCo_encoder(dims=dims, momentum=momentum, drop=drop)
+        if transfer:
+            self.classifier = MoCo_classifier(classes=classes, dims=dims, classifier_dim=classifier_dim, final_dim=final_dim, drop=drop)
+        else:
+            if self.DAL:
+                self.discriminator = MoCo_discriminator(out_dim=out_dim) 
+            self.projector = MoCo_projector(out_dim=out_dim)
+        self.transfer = transfer
+        
+
+    def forward(self, x):
+        h = self.encoder(x)
+        if self.transfer:
+            y = self.classifier(h)
+            return y
+        else:
+            z = self.projector(h)
+            if self.DAL:
+                d = self.discriminator(h)
+            else:
+                d = None
+            return z, d
+
+
+class MoCo_classifier(nn.Module):
+    def __init__(self, classes=6, dims=32, classifier_dim=None, final_dim=8, drop=0.1):
+        super(MoCo_classifier, self).__init__()
+
+        self.gru = torch.nn.GRU(dims, final_dim, num_layers=1, batch_first=True, bidirectional=True) #??? why decrease it....
+        self.MLP = nn.Sequential(nn.Linear(in_features=3200, out_features=classifier_dim), # 1920 for 120
+                                nn.ReLU(),
+                                nn.Linear(in_features=classifier_dim, out_features=classes))
+        self.dropout = torch.nn.Dropout(p=drop)
+    
+    def forward(self, h):
+        self.gru.flatten_parameters()
+        # h, _ = self.gru1(h)
+        # h = self.dropout(h)
+        h, _ = self.gru(h)
+        h = self.dropout(h)
+        h = h.reshape(h.shape[0], -1)
+        h = self.MLP(h)
+        return h
+
+class MoCo_discriminator(nn.Module):
+    def __init__(self, out_dim=32):
+        super(MoCo_discriminator, self).__init__()
+        self.discriminator = nn.Sequential(
+                                GradientReversal(),
+                                nn.Linear(6400, out_dim*4),
+                                nn.ReLU(),
+                                nn.Linear(out_dim*4, out_dim*2),
+                                nn.ReLU(),
+                                nn.Linear(out_dim*2, out_dim)
+                            )
+    
+    def forward(self, h):
+        h = h.reshape(h.shape[0], -1)
+        h = self.discriminator(h)
+        return h
+
+
+class GradientReversalFunction(Function):
+    """
+    Gradient Reversal Layer from:
+    Unsupervised Domain Adaptation by Backpropagation (Ganin & Lempitsky, 2015)
+
+    Forward pass is the identity function. In the backward pass,
+    the upstream gradients are multiplied by -lambda (i.e. gradient is reversed)
+    """
+
+    @staticmethod
+    def forward(ctx, x, lambda_):
+        ctx.lambda_ = lambda_
+        return x.clone()
+
+    @staticmethod
+    def backward(ctx, grads):
+        lambda_ = ctx.lambda_
+        lambda_ = grads.new_tensor(lambda_)
+        dx = -lambda_ * grads
+        return dx, None
+
+
+class GradientReversal(torch.nn.Module):
+    def __init__(self, lambda_=1):
+        super(GradientReversal, self).__init__()
+        self.lambda_ = lambda_
+
+    def forward(self, x):
+        return GradientReversalFunction.apply(x, self.lambda_)
+    
+
+
+class MoCo_projector(nn.Module):
+    def __init__(self, out_dim=512):
+        super(MoCo_projector, self).__init__()
+        self.linear1= torch.nn.Linear(in_features=6400, out_features=out_dim*4)  # 3840 for 120
+        self.linear2 = torch.nn.Linear(in_features=out_dim*4, out_features=out_dim*2)
+        self.linear3 = torch.nn.Linear(in_features=out_dim*2, out_features=out_dim)
+        self.relu = torch.nn.ReLU()
+    
+    def forward(self, h):
+        # keep the output layer constant with the SimCLR output
+        h = h.reshape(h.shape[0], -1)
+        h = self.relu(self.linear1(h))
+        h = self.relu(self.linear2(h))  # add nonlinear / add linear
+        z = self.linear3(h)
+        return z
+
+
 class MoCo_encoder(nn.Module):
 
-    def __init__(self, transfer=False, out_dim=512, classes=6, dims=32, classifier_dim=None, final_dim=8, momentum=0.9, drop=0.1):
+    def __init__(self, dims=32, momentum=0.9, drop=0.1):
         super(MoCo_encoder, self).__init__()
-        self.transfer = transfer
 
         self.dropout = torch.nn.Dropout(p=drop)
         self.relu = torch.nn.ReLU()
@@ -73,23 +190,6 @@ class MoCo_encoder(nn.Module):
         self.norm1 = LayerNorm(dims)
         self.pwff = PositionWiseFeedForward(hidden_dim=dims, hidden_ff=dims*2)
         self.norm2 = LayerNorm(dims)
-
-        # self.gru0 = torch.nn.GRU(dims, int(dims/2), num_layers=2, batch_first=True, bidirectional=True)
-
-        # self.linear = torch.nn.Linear(in_features=384*2, out_features=out_dim)
-        self.linear = torch.nn.Linear(in_features=6400, out_features=out_dim*4)  # 3840 for 120
-        self.linear3 = torch.nn.Linear(in_features=out_dim*4, out_features=out_dim*2)
-        self.linear4 = torch.nn.Linear(in_features=out_dim*2, out_features=out_dim)
-
-        if self.transfer:
-            # self.gru1 = torch.nn.GRU(dims, int(dims/2), num_layers=1, batch_first=True, bidirectional=True)
-            self.gru2 = torch.nn.GRU(dims, final_dim, num_layers=1, batch_first=True, bidirectional=True) #??? why decrease it....
-            self.classifier = nn.Sequential(nn.Linear(in_features=3200, out_features=classifier_dim), # 1920 for 120
-                                            nn.ReLU(),
-                                            nn.Linear(in_features=classifier_dim, out_features=classes))
-            # self.classifier = nn.Sequential(nn.Linear(in_features=928*int(final_dim/4), out_features=classifier_dim),
-            #                                 nn.ReLU(),
-            #                                 nn.Linear(in_features=classifier_dim, out_features=classes))
 
 
     def forward(self, x):
@@ -136,25 +236,10 @@ class MoCo_encoder(nn.Module):
         h = self.attn(h)
         h = self.norm1(h + self.proj(h))
         h = self.norm2(h + self.pwff(h))
-
         h = self.dropout(h)
-        
-        if self.transfer:  # this is the head for HAR
-            # self.gru1.flatten_parameters()
-            self.gru2.flatten_parameters()
-            # h, _ = self.gru1(h)
-            # h = self.dropout(h)
-            h, _ = self.gru2(h)
-            h = self.dropout(h)
-            h = h.reshape(h.shape[0], -1)
-            h = self.classifier(h)
-        else:
-            # keep the output layer constant with the SimCLR output
-            h = h.reshape(h.shape[0], -1)
-            h = self.relu(self.linear(h))
-            h = self.relu(self.linear3(h))  # add nonlinear / add linear
-            h = self.linear4(h)
+
         return h
+
 
 
 # utils
@@ -192,13 +277,13 @@ class MoCo_v1(nn.Module):
         self.T = T
         self.T_labels = T_labels
         self.label_type = label_type
-        self.if_cross_entropy = True
+        self.if_cross_entropy = False
 
         # create the encoders
         # num_classes is the output fc dimension
         if mol == 'MoCo':
-            self.encoder_q = MoCo_encoder(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, final_dim=final_dim, momentum=momentum, drop=drop)
-            self.encoder_k = MoCo_encoder(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, final_dim=final_dim, momentum=momentum, drop=drop)
+            self.encoder_q = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, final_dim=final_dim, momentum=momentum, drop=drop)
+            self.encoder_k = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, final_dim=final_dim, momentum=momentum, drop=drop)
         elif mol == 'DeepSense':
             self.encoder_q = DeepSense_encoder(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims)
             self.encoder_k = DeepSense_encoder(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims)
@@ -321,14 +406,14 @@ class MoCo_v1(nn.Module):
             if sen_q.is_cuda
             else torch.device('cpu'))
 
-        q = self.encoder_q(sen_q)  # queries: NxC
+        q, d = self.encoder_q(sen_q)  # queries: NxC
         q = F.normalize(q, dim=1)
 
         # compute key features
         with torch.no_grad():  # no gradient to keys
             self._momentum_update_key_encoder()  # update the key encoder
 
-            k = self.encoder_k(sen_k)  # keys: NxC
+            k, d = self.encoder_k(sen_k)  # keys: NxC
             k = F.normalize(k, dim=1)
 
         # compute logits
@@ -576,8 +661,8 @@ class MoCo(object):
                 no gradient), which are part of the model parameters too.
                 """
                 self.model.eval()
-                # self.model.gru1.train()
-                self.model.gru2.train()
+                self.model.classifier.train()
+                
             for sensor, target in tune_loader:
 
                 sensor = sensor.to(self.args.device)

@@ -14,7 +14,7 @@ from torchvision import models
 
 from CPC import CPCV1, CPC
 from DeepSense import DeepSense_encoder
-from MoCo import MoCo_v1, MoCo_encoder, MoCo
+from MoCo import MoCo_model, MoCo_v1, MoCo_encoder, MoCo
 from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 from data_aug.preprocessing import ClassesNum
 from simclr import SimCLR, MyNet, LIMU_encoder
@@ -28,7 +28,7 @@ model_names = sorted(name for name in models.__dict__
 
 parser = argparse.ArgumentParser(description='PyTorch SimCLR for Wearable Sensing')
 
-parser.add_argument('--pretrained', default='./runs/arch_v1_0_0005/model_best.pth.tar', type=str,
+parser.add_argument('--pretrained', default='test_HHAR', type=str,
                     help='path to SimClR pretrained checkpoint')
 parser.add_argument('-ft', '--if-fine-tune', default=False, type=bool, help='to decide whether tune all the layers')
 parser.add_argument('-if-val', default=True, type=bool, help='to decide whether use validation set')
@@ -122,8 +122,8 @@ def main():
     elif args.mol == 'CPC':
         model = CPCV1(timestep=args.timestep, batch_size=args.batch_size, seq_len=104, transfer=True, classes=ClassesNum[args.name], dims=args.d)
     elif args.mol == 'MoCo':
-        model = MoCo_encoder(transfer=True, out_dim=args.out_dim, classes=ClassesNum[args.name], dims=args.d, 
-                            classifier_dim=args.classifer_dims, final_dim=args.final_dim, momentum=args.mo, drop=args.drop)
+        model = MoCo_model(transfer=True, out_dim=args.out_dim, classes=ClassesNum[args.name], dims=args.d, 
+                           classifier_dim=args.classifer_dims, final_dim=args.final_dim, momentum=args.mo, drop=args.drop)
     elif args.mol == 'DeepSense':
         model = DeepSense_encoder(transfer=True, out_dim=args.out_dim, classes=ClassesNum[args.name], dims=args.d)
     else:
@@ -153,7 +153,7 @@ def main():
             if not args.evaluate:
                 if args.mol == 'CPC' or args.mol == 'MoCo':
                     for name, param in model.named_parameters():
-                        if "classifier" in name or "cnn" in name or "gru" in name:
+                        if "classifier" in name:
                             classifier_name.append(name)
                     assert log.missing_keys == classifier_name
                 else:
@@ -172,7 +172,7 @@ def main():
                 if name not in classifier_name:
                     param.requires_grad = False
             else:
-                if name not in ['linear2.weight', 'linear2.bias']:
+                if name not in ['classifier']:
                     param.requires_grad = False
 
     optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay, )
