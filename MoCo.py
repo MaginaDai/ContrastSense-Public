@@ -14,7 +14,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.cuda.amp import GradScaler, autocast
 from torch.utils.tensorboard import SummaryWriter
-from kmeans_pytorch import kmeans
 from tqdm import tqdm
 from DeepSense import DeepSense_encoder
 
@@ -178,7 +177,7 @@ class MoCo_v1(nn.Module):
     Build a MoCo model with: a query encoder, a key encoder, and a queue
     https://arxiv.org/abs/1911.05722
     """
-    def __init__(self, transfer=False, out_dim=128, K=65536, m=0.999, T=0.07, T_labels=None, classes=6, dims=32,\
+    def __init__(self, device, transfer=False, out_dim=128, K=65536, m=0.999, T=0.07, T_labels=None, classes=6, dims=32,\
                  label_type=2, num_clusters=None, mol='MoCo', final_dim=32, momentum=0.9, drop=0.1):
         """
         dim: feature dimension (default: 128)
@@ -193,6 +192,7 @@ class MoCo_v1(nn.Module):
         self.T = T
         self.T_labels = T_labels
         self.label_type = label_type
+        self.if_cross_entropy = True
 
         # create the encoders
         # num_classes is the output fc dimension
@@ -203,7 +203,7 @@ class MoCo_v1(nn.Module):
             self.encoder_q = DeepSense_encoder(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims)
             self.encoder_k = DeepSense_encoder(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims)
 
-        self.sup_loss = SupConLoss(temperature=self.T, base_temperature=self.T)
+        self.sup_loss = SupConLoss(device=device, temperature=self.T, base_temperature=self.T, if_cross_entropy=self.if_cross_entropy)
 
         for param_q, param_k in zip(self.encoder_q.parameters(), self.encoder_k.parameters()):
             param_k.data.copy_(param_q.data)  # initialize
@@ -337,6 +337,8 @@ class MoCo_v1(nn.Module):
         l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)
         # negative logits: NxK
         l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])
+        
+        feature = torch.concat([q, self.queue.clone().detach().T], dim=0)
 
         # logits: Nx(1+K)
         logits = torch.cat([l_pos, l_neg], dim=1)
@@ -384,7 +386,7 @@ class MoCo_v1(nn.Module):
         #         t_SNE_view(h_trans, gt_all, n_iter)
                 
         
-        return logits, targets, logits_labels, cluster_eval, cluster_loss, center_shift
+        return logits, targets, logits_labels, cluster_eval, cluster_loss, center_shift, feature
     
     
     def supervised_CL(self, logits_labels=None, labels=None):
@@ -447,12 +449,15 @@ class MoCo(object):
                 gt_label = labels[:, 0].to(self.args.device) # the first dim is motion labels
                 sup_label = [labels[:, i + 1].to(self.args.device) for i in range(self.args.label_type)]  # the following dim are cheap labels
                 with autocast(enabled=self.args.fp16_precision):
-                    output, target, logits_labels, cluster_eval, cluster_loss, center_shift = self.model(sensor[0], sensor[1], labels=sup_label, 
+                    output, target, logits_labels, cluster_eval, cluster_loss, center_shift, feature = self.model(sensor[0], sensor[1], labels=sup_label, 
                                                                                                         num_clusters=self.args.num_clusters, 
                                                                                                         iter_tol=self.args.iter_tol,
                                                                                                         gt=gt_label, if_plot=see_cluster_effect,
                                                                                                         n_iter=n_iter)
-                    sup_loss = self.model.supervised_CL(logits_labels=logits_labels, labels=sup_label)
+                    if self.model.if_cross_entropy:
+                        sup_loss = self.model.supervised_CL(logits_labels=feature, labels=sup_label)
+                    else:
+                        sup_loss = self.model.supervised_CL(logits_labels=logits_labels, labels=sup_label)
                     if cluster_loss is not None:
                         loss = cluster_loss
                     else:

@@ -21,7 +21,6 @@ import torch.multiprocessing
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
-
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 
 parser.add_argument('-lr', '--learning-rate', default=0.0001, type=float,
@@ -115,7 +114,7 @@ def main():
     elif args.mol == 'CPC':
         model = CPCV1(timestep=args.timestep, batch_size=args.batch_size, seq_len=96, transfer=False, classes=6, dims=args.d, temperature=args.temperature)
     elif args.mol == 'MoCo' or args.mol == 'DeepSense':
-        model = MoCo_v1(out_dim=args.out_dim, K=args.moco_K, m=args.moco_m, T=args.temperature, 
+        model = MoCo_v1(device=args.device, out_dim=args.out_dim, K=args.moco_K, m=args.moco_m, T=args.temperature, 
                         T_labels=args.tem_labels, dims=args.d, label_type=args.label_type, 
                         num_clusters=args.num_clusters, mol=args.mol, final_dim=args.final_dim, momentum=args.mo, drop=args.drop)
     else:

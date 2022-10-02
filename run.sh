@@ -20,20 +20,25 @@
 # done
 
 
-name="cos"
+# name="cos_epoch_wo"
+# for e in 2000
+# do
+#     for a in 0.3
+#     do
+#         python main.py -g 0 -e ${e}  -label_type 0 -slr ${a} -name MotionSense --store "${name}_${e}_MotionSense" &
+#         python main.py -g 0 -e ${e}  -label_type 0 -slr ${a} -name HASC --store "${name}_${e}_HASC" &
+#         python main.py -g 1 -e ${e}  -label_type 0 -slr ${a} -name HHAR --store "${name}_${e}_HHAR" &
+#         python main.py -g 1 -e ${e}  -label_type 0 -slr ${a} -name Shoaib --store "${name}_${e}_Shoaib" 
 
+#         wait
 
-python main.py -g 1 -e 1000  -label_type 1 -name HASC --store "${name}_HASC" &
-python main.py -g 2 -e 1000  -label_type 1 -name HHAR --store "${name}_HHAR" &
-python main.py -g 3 -e 1000  -label_type 1 -name Shoaib --store "${name}_Shoaib" 
+#         python main_transfer.py -g 0 -ft True -lr 0.0005 -name HASC --pretrained "${name}_${e}_HASC" &
+#         python main_transfer.py -g 0 -ft True -lr 0.0005 -name HHAR --pretrained "${name}_${e}_HHAR" &
+#         python main_transfer.py -g 1 -ft True -lr 0.0005 -name Shoaib --pretrained "${name}_${e}_Shoaib" &
+#         python main_transfer.py -g 1 -ft True -lr 0.0005 -name MotionSense  --pretrained "${name}_${e}_MotionSense"
 
-wait
-
-python main.py -g 1 -e 1000  -label_type 1 -name MotionSense --store "${name}_MotionSense" &
-python main_transfer.py -g 2 -ft True -lr 0.0005 -name HASC --pretrained "${name}_HASC"  &
-python main_transfer.py -g 3 -ft True -lr 0.0005 -name HHAR --pretrained "${name}_HHAR" 
-
-wait
-
-python main_transfer.py -g 1 -ft True -lr 0.0005 -name Shoaib --pretrained "${name}_Shoaib" &
-python main_transfer.py -g 2 -ft True -lr 0.0005 -name MotionSense  --pretrained "${name}_MotionSense"
+#         wait
+#     done
+# done
+name="CE"
+python main.py -g 1 -label_type 1 -slr 0.3 -name HHAR --store "${name}_HHAR" 

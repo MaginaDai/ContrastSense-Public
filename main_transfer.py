@@ -20,7 +20,6 @@ from data_aug.preprocessing import ClassesNum
 from simclr import SimCLR, MyNet, LIMU_encoder
 from utils import MoCo_evaluate, evaluate, load_model_config, CPC_evaluate, seed_torch
 import torch.multiprocessing
-
 torch.multiprocessing.set_sharing_strategy('file_system')
 
 model_names = sorted(name for name in models.__dict__
