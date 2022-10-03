@@ -158,7 +158,7 @@ def preprocessing_dataset_cross_person_val(dir, dataset, test_portion=0.6, val_p
     val_num =  [j for j in range(num) if u[j] in users_val_name]
 
     # write_dataset(dir, train_num, val_num, test_num)
-    # write_balance_tune_set(dir, dataset, dataset_size=num)
+    write_balance_tune_set(dir, dataset, dataset_size=num)
     return
 
 
@@ -188,9 +188,9 @@ def write_dataset(dir, train_num, val_num, test_num):
     print(len(train_set))
     print(len(val_set))
     print(len(test_set))
-    np.savez(os.path.join(dir, 'train_set' + '.npz'), train_set=train_set)
-    np.savez(os.path.join(dir, 'val_set' + '.npz'), val_set=val_set)
-    np.savez(os.path.join(dir, 'test_set' + '.npz'), test_set=test_set)    
+    # np.savez(os.path.join(dir, 'train_set' + '.npz'), train_set=train_set)
+    # np.savez(os.path.join(dir, 'val_set' + '.npz'), val_set=val_set)
+    # np.savez(os.path.join(dir, 'test_set' + '.npz'), test_set=test_set)    
     return
 
 def write_tune_set(dir):
@@ -206,7 +206,7 @@ def write_tune_set(dir):
         tune_set.sort()
         print(len(tune_set))
         loc = dir + 'tune_set_' + str(per).replace('.', '_') + '.npz'
-        np.savez(loc, tune_set=tune_set)
+        # np.savez(loc, tune_set=tune_set)
     return
 
 
@@ -253,7 +253,7 @@ def write_balance_tune_set(dir, dataset, dataset_size=None):
         print(f"percent {per}: {len(tune_set)}")
         print(f"each class {counter}")
         loca = dir + 'tune_set_' + str(per).replace('.', '_') + '.npz'
-        np.savez(loca, tune_set=tune_set)
+        # np.savez(loca, tune_set=tune_set)
     return
 
 
@@ -324,8 +324,8 @@ if __name__ == '__main__':
     preprocessing_dataset_cross_person_val(dir=r'datasets/HHAR_50_200/', dataset='HHAR')
     preprocessing_dataset_cross_person_val(dir=r'datasets/MotionSense_50_200/', dataset='MotionSense')
     preprocessing_dataset_cross_person_val(dir=r'datasets/Shoaib_50_200/', dataset='Shoaib')
-    preprocessing_dataset_cross_person_val(dir=r'datasets/UCI_50_200/', dataset='UCI')
-    preprocessing_dataset_cross_person_val(dir=r'datasets/ICHAR_50_200/', dataset='ICHAR')
+    # preprocessing_dataset_cross_person_val(dir=r'datasets/UCI_50_200/', dataset='UCI')
+    # preprocessing_dataset_cross_person_val(dir=r'datasets/ICHAR_50_200/', dataset='ICHAR')
     preprocessing_dataset_cross_person_val(dir=r'datasets/HASC_50_200/', dataset='HASC')
  
     # datasets_shot_record(dir=r'datasets/HHAR_50_200/', datasets='HHAR')

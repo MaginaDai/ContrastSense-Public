@@ -262,7 +262,7 @@ class MoCo_v1(nn.Module):
     https://arxiv.org/abs/1911.05722
     """
     def __init__(self, device, transfer=False, out_dim=128, K=65536, m=0.999, T=0.07, T_labels=None, classes=6, dims=32,\
-                 label_type=2, num_clusters=None, mol='MoCo', final_dim=32, momentum=0.9, drop=0.1, DAL=False):
+                 label_type=2, num_clusters=None, mol='MoCo', final_dim=32, momentum=0.9, drop=0.1, DAL=False, if_cross_entropy=False):
         """
         dim: feature dimension (default: 128)
         K: queue size; number of negative keys (default: 65536)
@@ -276,7 +276,7 @@ class MoCo_v1(nn.Module):
         self.T = T
         self.T_labels = T_labels
         self.label_type = label_type
-        self.if_cross_entropy = False
+        self.if_cross_entropy = if_cross_entropy
         self.DAL = DAL
 
         # create the encoders

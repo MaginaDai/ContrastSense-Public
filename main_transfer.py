@@ -177,10 +177,9 @@ def main():
 
     optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay, )
 
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=0,
-    #                                                        last_epoch=-1)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)
 
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[150], gamma=args.s_gamma, last_epoch=-1)
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[150], gamma=args.s_gamma, last_epoch=-1)
 
     # optionally resume from a checkpoint
     if args.resume:

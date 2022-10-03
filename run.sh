@@ -20,25 +20,52 @@
 # done
 
 
-name="DAL"
+a=0.3
 for e in 2000
-do
-    for a in 0.3
-    do
-        python main.py -g 0 -e ${e}  -label_type 1 -slr ${a} -name MotionSense --store "${name}_MotionSense" &
-        python main.py -g 0 -e ${e}  -label_type 1 -slr ${a} -name HASC --store "${name}_HASC" &
-        python main.py -g 1 -e ${e}  -label_type 1 -slr ${a} -name HHAR --store "${name}_HHAR" &
-        python main.py -g 1 -e ${e}  -label_type 1 -slr ${a} -name Shoaib --store "${name}_Shoaib" 
+do 
+    name="DAL"
+    namea="CE_2000_cos_trans"
+    nameb="contrast_wo"
+    namec="no"
+    # python main.py -g 0 -e ${e}  -label_type 1 -slr ${a} -CE True -name MotionSense --store "${name}_MotionSense" &
+    # python main.py -g 0 -e ${e}  -label_type 1 -slr ${a} -CE True -name HASC --store "${name}_HASC" &
+    # python main.py -g 1 -e ${e}  -label_type 1 -slr ${a} -CE True -name HHAR --store "${name}_HHAR" &
+    # python main.py -g 1 -e ${e}  -label_type 1 -slr ${a} -CE True -name Shoaib --store "${name}_Shoaib" 
 
-        wait
+    # wait
 
-        python main_transfer.py -g 0 -ft True -lr 0.0005 -name HASC --pretrained "${name}_HASC" &
-        python main_transfer.py -g 0 -ft True -lr 0.0005 -name HHAR --pretrained "${name}_HHAR" &
-        python main_transfer.py -g 1 -ft True -lr 0.0005 -name Shoaib --pretrained "${name}_Shoaib" &
-        python main_transfer.py -g 1 -ft True -lr 0.0005 -name MotionSense  --pretrained "${name}_MotionSense"
+    python main_transfer.py -g 0 -ft True -lr 0.0005 -name HASC --pretrained "${name}_HASC" --store "${name}_1_HASC" &
+    python main_transfer.py -g 0 -ft True -lr 0.0005 -name HHAR --pretrained "${name}_HHAR" --store "${name}_1_HHAR" &
+    python main_transfer.py -g 1 -ft True -lr 0.0005 -name Shoaib --pretrained "${name}_Shoaib" --store "${name}_1_Shoaib" &
+    python main_transfer.py -g 1 -ft True -lr 0.0005 -name MotionSense  --pretrained "${name}_MotionSense" --store "${name}_1_MotionSense" 
 
-        wait
-    done
+    # wait
+
+
+    # python main.py -g 0 -e ${e}  -label_type 0 -slr ${a} -name MotionSense --store "${name}_MotionSense" &
+    # python main.py -g 0 -e ${e}  -label_type 0 -slr ${a} -name HASC --store "${name}_HASC" &
+    # python main.py -g 1 -e ${e}  -label_type 0 -slr ${a} -name HHAR --store "${name}_HHAR" &
+    # python main.py -g 1 -e ${e}  -label_type 0 -slr ${a} -name Shoaib --store "${name}_Shoaib" 
+
+    # wait
+
+    # wait
+
+
+
+    # python main_transfer.py -g 0 -ft True -lr 0.0005 -name HASC --pretrained "${nameb}_HASC" --store "${nameb}_cos_trans_HASC" &
+    # python main_transfer.py -g 0 -ft True -lr 0.0005 -name HHAR --pretrained "${nameb}_HHAR" --store "${nameb}_cos_trans_HHAR" &
+    # python main_transfer.py -g 1 -ft True -lr 0.0005 -name Shoaib --pretrained "${nameb}_Shoaib" --store "${nameb}_cos_trans_Shoaib" &
+    # python main_transfer.py -g 1 -ft True -lr 0.0005 -name MotionSense  --pretrained "${nameb}_MotionSense" --store "${nameb}_cos_trans_MotionSense"
+
+    # wait
+    
+    # python main_transfer.py -g 0 -ft True -lr 0.0005 -name HASC --pretrained "${namec}_HASC" &
+    # python main_transfer.py -g 0 -ft True -lr 0.0005 -name HHAR --pretrained "${namec}_HHAR" &
+    # python main_transfer.py -g 1 -ft True -lr 0.0005 -name Shoaib --pretrained "${namec}_Shoaib" &
+    # python main_transfer.py -g 1 -ft True -lr 0.0005 -name MotionSense  --pretrained "${namec}_MotionSense"
+
+
 done
 # name="DAL"
 # python main.py -g 1 -name HHAR --store "${name}_HHAR" -DAL True
