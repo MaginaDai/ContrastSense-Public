@@ -77,30 +77,30 @@ class ContrastiveLearningDataset:
                                               imu_toTensor])
         return data_transforms
 
-    def get_dataset(self, split, n_views=2, percent=20):
+    def get_dataset(self, split, n_views=2, percent=20, shot=None):
         if self.transfer is False:
             # here it is for generating positive samples and negative samples
             return Dataset4Training(self.datasets_name, self.version, n_views, 
                                     transform=ContrastiveLearningViewGenerator(
                                         self.get_simclr_pipeline_transform(),
                                         n_views),
-                                    split=split, transfer=self.transfer, percent=percent)
+                                    split=split, transfer=self.transfer, percent=percent, shot=shot)
         elif split == 'train' or split == 'tune':
                 # here it is for data augmentation, make it more challenging.
             return Dataset4Training(self.datasets_name, self.version, n_views,
                                     self.get_simclr_pipeline_transform(),
-                                    split=split, transfer=self.transfer, percent=percent)
+                                    split=split, transfer=self.transfer, percent=percent, shot=shot)
         else:  # val or test
             return Dataset4Training(self.datasets_name, self.version, n_views,
                                     transform=transforms.Compose([
                                         imu_transforms.ToTensor()
                                         ]),
-                                    split=split, transfer=self.transfer, percent=percent)
+                                    split=split, transfer=self.transfer, percent=percent, shot=shot)
 
 
 class Dataset4Training(Dataset):
 
-    def __init__(self, datasets_name, version, n_views=2, transform=None, split='train', transfer=True, percent=20):
+    def __init__(self, datasets_name, version, n_views=2, transform=None, split='train', transfer=True, percent=20, shot=None):
         """
         Args:
             datasets_name (string): dataset name.
@@ -125,10 +125,13 @@ class Dataset4Training(Dataset):
             data = np.load(val_dir)
             self.windows_frame = data['val_set']
         elif self.split == 'tune':
-            if percent <= 0.99:
-                tune_dir = root_dir + '/tune_set_' + str(percent).replace('.', '_') + '.npz'
+            if shot:
+                tune_dir = root_dir + '/tune_set_' + str(int(shot)) + '.npz'
             else:
-                tune_dir = root_dir + '/tune_set_' + str(int(percent)) + '.npz'
+                if percent <= 0.99:
+                    tune_dir = root_dir + '/tune_set_' + str(percent).replace('.', '_') + '.npz'
+                else:
+                    tune_dir = root_dir + '/tune_set_' + str(int(percent)) + '.npz'
             data = np.load(tune_dir)
             self.windows_frame = data['tune_set']
         else:
@@ -154,12 +157,6 @@ class Dataset4Training(Dataset):
 
         if self.transform:
             sensor = self.transform(sensor)
-
-        # if not self.transfer:
-        #     sensor = [sample[i]['sensor'] for i in range(self.n_views)]
-        #     return sensor, label
-        # else:
-        #     return sensor, label
         return sensor, label
 
 

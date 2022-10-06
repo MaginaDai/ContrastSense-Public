@@ -510,6 +510,10 @@ class MoCo(object):
                 writer_pos += self.args.name + '_ft'
             else:
                 writer_pos += self.args.name + '_le'
+            if self.args.shot:
+                writer_pos += f'_shot_{self.args.shot}'
+            else:
+                writer_pos += f'_percent_{self.args.percent}'
         self.writer = SummaryWriter(writer_pos)
         logging.basicConfig(filename=os.path.join(self.writer.log_dir, 'training.log'), level=logging.DEBUG)
         self.criterion = torch.nn.CrossEntropyLoss().to(self.args.device)

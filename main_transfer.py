@@ -33,6 +33,7 @@ parser.add_argument('--pretrained', default='test_HHAR', type=str,
 parser.add_argument('-ft', '--if-fine-tune', default=False, type=bool, help='to decide whether tune all the layers')
 parser.add_argument('-if-val', default=True, type=bool, help='to decide whether use validation set')
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
+parser.add_argument('-shot', default=None, type=int, help='how many shots of labels to use')
 
 parser.add_argument('-name', default='HHAR',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'ICHAR', 'HASC'])
@@ -100,7 +101,7 @@ def main():
     args.pretrained = './runs/' + args.pretrained + '/model_best.pth.tar'
 
     dataset = ContrastiveLearningDataset(transfer=True, version=args.version, datasets_name=args.name)
-    tune_dataset = dataset.get_dataset('tune', percent=args.percent)
+    tune_dataset = dataset.get_dataset('tune', percent=args.percent, shot=args.shot)
     val_dataset = dataset.get_dataset('val')
     test_dataset = dataset.get_dataset('test')
 

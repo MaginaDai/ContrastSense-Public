@@ -9,14 +9,12 @@
 #     python main_transfer.py --pretrained "${name}_${dataset}" -g 2 --seed 0 -name ${dataset} -version '50_200' -percent 1  -ft True -lr 0.0005
 # done
 
-# name=grid
-# for b in 512 1024 2048 3072 4096
+# name=DAL_lambda
+# for b in 0 0.1 0.3 0.5 0.7 0.9 1.0
 # do
-#     for a in 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
-#     do
-#         python main.py --store "${name}_queue_${b}_lambda_${a}_UCI" -name UCI -version '50_200' -g 2 -b 256 -e 1000  -label_type 1 -slr 0.75 -moco_K 1024
-#         python main_transfer.py --pretrained "${name}_${b}_e1000_UCI" -name UCI -version '50_200' -g 2 -ft True -lr 0.0005
-#     done
+#     for dataset in 'HASC' 'HHAR' 'MotionSense' ''
+#     python main.py --store "${name}_${a}_UCI" -name UCI -version '50_200' -g 2 -b 256 -e 1000  -label_type 1 -slr 0.75 -moco_K 1024
+#     python main_transfer.py --pretrained "${name}_${b}_e1000_UCI" -name UCI -version '50_200' -g 2 -ft True -lr 0.0005
 # done
 
 
@@ -74,23 +72,40 @@
 
 ######### transfer learning ##########
 
-name=contrast_w
-python main_transfer.py -g 0 -ft True -lr 0.0005 -name HASC --pretrained "${name}_HHAR" &
-python main_transfer.py -g 0 -ft True -lr 0.0005 -name HHAR --pretrained "${name}_HHAR" &
-python main_transfer.py -g 1 -ft True -lr 0.0005 -name Shoaib --pretrained "${name}_HHAR" &
-python main_transfer.py -g 1 -ft True -lr 0.0005 -name MotionSense  --pretrained "${name}_HHAR"
-wait
-python main_transfer.py -g 0 -ft True -lr 0.0005 -name HASC --pretrained "${name}_HASC" &
-python main_transfer.py -g 0 -ft True -lr 0.0005 -name HHAR --pretrained "${name}_HASC" &
-python main_transfer.py -g 1 -ft True -lr 0.0005 -name Shoaib --pretrained "${name}_HASC" &
-python main_transfer.py -g 1 -ft True -lr 0.0005 -name MotionSense  --pretrained "${name}_HASC"
-wait
-python main_transfer.py -g 0 -ft True -lr 0.0005 -name HASC --pretrained "${name}_Shoaib" &
-python main_transfer.py -g 0 -ft True -lr 0.0005 -name HHAR --pretrained "${name}_Shoaib" &
-python main_transfer.py -g 1 -ft True -lr 0.0005 -name Shoaib --pretrained "${name}_Shoaib" &
-python main_transfer.py -g 1 -ft True -lr 0.0005 -name MotionSense  --pretrained "${name}_Shoaib"
-wait
-python main_transfer.py -g 0 -ft True -lr 0.0005 -name HASC --pretrained "${name}_MotionSense" &
-python main_transfer.py -g 0 -ft True -lr 0.0005 -name HHAR --pretrained "${name}_MotionSense" &
-python main_transfer.py -g 1 -ft True -lr 0.0005 -name Shoaib --pretrained "${name}_MotionSense" &
-python main_transfer.py -g 1 -ft True -lr 0.0005 -name MotionSense  --pretrained "${name}_MotionSense"
+name=contrast_w  # contrastive learning without loss 
+for lr in 0.00001 0.00005 0.0001
+do
+    python main_transfer.py -g 1 -ft True -lr ${lr} -version 50_200_shot -shot 10 -name HASC --pretrained "${name}_HASC" --store "${name}_HASC_shot_lr_${lr}" &
+    python main_transfer.py -g 1 -ft True -lr ${lr} -version 50_200_shot -shot 10 -name HHAR --pretrained "${name}_HHAR" --store "${name}_HHAR_shot_lr_${lr}" &
+    python main_transfer.py -g 1 -ft True -lr ${lr} -version 50_200_shot -shot 10 -name Shoaib --pretrained "${name}_Shoaib" --store "${name}_Shoaib_shot_lr_${lr}" &
+    python main_transfer.py -g 1 -ft True -lr ${lr} -version 50_200_shot -shot 10 -name MotionSense  --pretrained "${name}_MotionSense" --store "${name}_MotionSense_shot_lr_${lr}"
+    wait
+done
+
+# wait
+
+# name=no  # contrastive learning without loss 
+# for shot in 1 5 10 15 20 50
+# do
+#     python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -shot ${shot} -name HASC --pretrained "${name}_HASC" --store "${name}_HASC_shot" &
+#     python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -shot ${shot} -name HHAR --pretrained "${name}_HHAR" --store "${name}_HHAR_shot" &
+#     python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -shot ${shot} -name Shoaib --pretrained "${name}_Shoaib" --store "${name}_Shoaib_shot" &
+#     python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -shot ${shot} -name MotionSense  --pretrained "${name}_MotionSense" --store "${name}_MotionSense_shot"
+#     wait
+# done
+
+# wait
+# python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -name HASC --pretrained "${name}_HASC" &
+# python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -name HHAR --pretrained "${name}_HASC" &
+# python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -name Shoaib --pretrained "${name}_HASC" &
+# python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -name MotionSense  --pretrained "${name}_HASC"
+# wait
+# python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -name HASC --pretrained "${name}_Shoaib" &
+# python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -name HHAR --pretrained "${name}_Shoaib" &
+# python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -name Shoaib --pretrained "${name}_Shoaib" &
+# python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -name MotionSense  --pretrained "${name}_Shoaib"
+# wait
+# python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -name HASC --pretrained "${name}_MotionSense" &
+# python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -name HHAR --pretrained "${name}_MotionSense" &
+# python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -name Shoaib --pretrained "${name}_MotionSense" &
+# python main_transfer.py -g 1 -ft True -lr 0.0005 -version 50_200_shot -name MotionSense  --pretrained "${name}_MotionSense"

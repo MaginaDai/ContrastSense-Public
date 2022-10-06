@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# num=balance
+num=15
 
-# cp -r 'datasets/HHAR person/' "datasets/HHAR person ${num}"
-# cp -r 'datasets/MotionSense person/' "datasets/MotionSense person ${num}"
-# cp -r 'datasets/Shoaib person/' "datasets/Shoaib person ${num}"
-# cp -r 'datasets/UCI person/' "datasets/UCI person ${num}"
+cp -r 'datasets/HHAR_50_200/' "datasets/HHAR_50_200_${num}"
+cp -r 'datasets/MotionSense_50_200/' "datasets/MotionSense_50_200_${num}"
+cp -r 'datasets/Shoaib_50_200/' "datasets/Shoaib_50_200_${num}"
+cp -r 'datasets/HASC_50_200/' "datasets/HASC_50_200_${num}"
 
 # python data_aug/shoaib.py
 
@@ -16,5 +16,4 @@
 # python data_aug/ichar.py
 
 # python data_aug/preprocessing.py
-
 

@@ -72,6 +72,7 @@ test_num_of_user = 3
 
 # MAX_INDEX = 9166
 percent = [0.2, 0.5, 1, 2, 5, 10]
+shot_num = [1, 5, 10, 15, 20, 50]
 
 
 def preprocessing_HHAR_cross_person(main_dir):
@@ -120,12 +121,15 @@ def preprocessing_dataset_cross_person(dir, dataset):
     return
 
 
+def fetch_instance_number_of_dataset(dir):
+    file_name_list = [file for file in os.listdir(dir) if 'set' not in file]
+    return len(file_name_list)
+
+
 def preprocessing_dataset_cross_person_val(dir, dataset, test_portion=0.6, val_portion=0.15):
     print(dataset)
     
-    file_name_list = [file for file in os.listdir(dir) if 'set' not in file]
-    
-    num = len(file_name_list)
+    num = fetch_instance_number_of_dataset(dir)
     u = []
     # label_distribution = np.zeros(6)
     for i in range(num):
@@ -210,7 +214,7 @@ def write_tune_set(dir):
     return
 
 
-def write_balance_tune_set(dir, dataset, dataset_size=None):
+def write_balance_tune_set(dir, dataset, dataset_size=None, if_percent=False):
     loc = dir + 'train_set' + '.npz'
     data = np.load(loc)
     train_set = data['train_set']
@@ -232,28 +236,46 @@ def write_balance_tune_set(dir, dataset, dataset_size=None):
     print(f"motion classes {label_type_num}, total train num {len(label)}")
 
     if dataset_size is None:
-        set_size = MAX_INDEX[dataset]  # select 1% of the whole dataset from training set.
+        set_size = fetch_instance_number_of_dataset(dir)
     else:
         set_size = dataset_size
-    for per in percent:
-        label_num = per*0.01*set_size
-        label_per_class = int(label_num / label_type_num)
-        tune_set = []
-        counter = []
-        if label_per_class < 1:
-            label_per_class = 1  # at least one label for each class
-            print("at least one sample per class")
-        
-        for i in label_type:
-            idx = np.argwhere(label == i).squeeze()
-            np.random.shuffle(idx)
-            tune_set.extend(train_set[idx[:label_per_class]])
-            counter.append(len(list(idx[:label_per_class])))
+    if if_percent:
+        for per in percent:
+            label_num = per*0.01*set_size
+            label_per_class = int(label_num / label_type_num)
+            tune_set = []
+            counter = []
+            if label_per_class < 1:
+                label_per_class = 1  # at least one label for each class
+                print("at least one sample per class")
+            
+            for i in label_type:
+                idx = np.argwhere(label == i).squeeze()
+                np.random.shuffle(idx)
+                tune_set.extend(train_set[idx[:label_per_class]])
+                counter.append(len(list(idx[:label_per_class])))
 
-        print(f"percent {per}: {len(tune_set)}")
-        print(f"each class {counter}")
-        loca = dir + 'tune_set_' + str(per).replace('.', '_') + '.npz'
-        # np.savez(loca, tune_set=tune_set)
+            print(f"percent {per}: {len(tune_set)}")
+            print(f"each class {counter}")
+            loca = dir + 'tune_set_' + str(per).replace('.', '_') + '.npz'
+            np.savez(loca, tune_set=tune_set)
+    else:
+        for label_per_class in shot_num:
+            tune_set = []
+            counter = []
+            if label_per_class < 1:
+                label_per_class = 1  # at least one label for each class
+                print("at least one sample per class")
+            
+            for i in label_type:
+                idx = np.argwhere(label == i).squeeze()
+                np.random.shuffle(idx)
+                tune_set.extend(train_set[idx[:label_per_class]])
+                counter.append(len(list(idx[:label_per_class])))
+
+            print(f"Shot num {label_per_class}: {len(tune_set)}")
+            loca = dir + 'tune_set_' + str(label_per_class).replace('.', '_') + '.npz'
+            np.savez(loca, tune_set=tune_set)
     return
 
 
@@ -321,12 +343,12 @@ if __name__ == '__main__':
 
     # preprocessing_HHAR_cross_person(main_dir=r'../datasets/HHAR person/')
 
-    preprocessing_dataset_cross_person_val(dir=r'datasets/HHAR_50_200/', dataset='HHAR')
-    preprocessing_dataset_cross_person_val(dir=r'datasets/MotionSense_50_200/', dataset='MotionSense')
-    preprocessing_dataset_cross_person_val(dir=r'datasets/Shoaib_50_200/', dataset='Shoaib')
+    # preprocessing_dataset_cross_person_val(dir=r'datasets/HHAR_50_200/', dataset='HHAR')
+    # preprocessing_dataset_cross_person_val(dir=r'datasets/MotionSense_50_200/', dataset='MotionSense')
+    # preprocessing_dataset_cross_person_val(dir=r'datasets/Shoaib_50_200/', dataset='Shoaib')
+    # preprocessing_dataset_cross_person_val(dir=r'datasets/HASC_50_200/', dataset='HASC')
     # preprocessing_dataset_cross_person_val(dir=r'datasets/UCI_50_200/', dataset='UCI')
     # preprocessing_dataset_cross_person_val(dir=r'datasets/ICHAR_50_200/', dataset='ICHAR')
-    preprocessing_dataset_cross_person_val(dir=r'datasets/HASC_50_200/', dataset='HASC')
  
     # datasets_shot_record(dir=r'datasets/HHAR_50_200/', datasets='HHAR')
 
@@ -337,6 +359,11 @@ if __name__ == '__main__':
     # datasets_users_record(dir=r'datasets/ICHAR_50_200/', datasets='ICHAR')
     # datasets_users_record(dir=r'datasets/HASC_50_200/', datasets='HASC')
 
+
+    write_balance_tune_set(dir=r'datasets/HHAR_50_200_shot/', dataset='HHAR')
+    write_balance_tune_set(dir=r'datasets/MotionSense_50_200_shot/', dataset='MotionSense')
+    write_balance_tune_set(dir=r'datasets/Shoaib_50_200_shot/', dataset='Shoaib')
+    write_balance_tune_set(dir=r'datasets/HASC_50_200_shot/', dataset='HASC')
 
     
 
