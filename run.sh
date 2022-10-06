@@ -73,7 +73,7 @@
 ######### transfer learning ##########
 
 name=contrast_w  # contrastive learning without loss 
-for lr in 0.00001 0.00005 0.0001
+for lr in 0.001 0.005
 do
     python main_transfer.py -g 1 -ft True -lr ${lr} -version 50_200_shot -shot 10 -name HASC --pretrained "${name}_HASC" --store "${name}_HASC_shot_lr_${lr}" &
     python main_transfer.py -g 1 -ft True -lr ${lr} -version 50_200_shot -shot 10 -name HHAR --pretrained "${name}_HHAR" --store "${name}_HHAR_shot_lr_${lr}" &

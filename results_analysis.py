@@ -49,7 +49,7 @@ def results_for_each_file(files):
     for i, n in enumerate(files):
         seg = n.split('_')
         dataset = seg[-2]
-        name = dataset + '_ft_shot_50'
+        name = dataset + '_ft_shot_10'
         dir = f'runs/{n}/{name}/training.log'
 
         eval_pattern = r'best\seval\sf1\sis\s+\(*(\d+\.+\d*)'
