@@ -33,18 +33,18 @@ parser.add_argument('--out_dim', default=512, type=int,
                     help='feature dimension (default: 512)')
 parser.add_argument('-t', '--temperature', default=0.1, type=float,
                     help='softmax temperature (default: 1)')
-parser.add_argument('--store', default='lr', type=str, help='define the name head for model storing')
+parser.add_argument('--store', default='test_HHAR', type=str, help='define the name head for model storing')
 parser.add_argument('-b', '--batch-size', default=256, type=int,
                     metavar='N',
                     help='mini-batch size (default: 256), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('-name', default='HHAR',
+parser.add_argument('-name', default='HASC',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'ICHAR', 'HASC'])
 parser.add_argument('-wd', '--weight-decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)',
                     dest='weight_decay')
-parser.add_argument('-j', '--workers', default=10, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=5, type=int, metavar='N',
                     help='number of data loading workers (default: 5)')
 parser.add_argument('-e', '--epochs', default=2000, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -56,13 +56,13 @@ parser.add_argument('--fp16-precision', action='store_true',
                     help='Whether or not to use 16-bit precision GPU training.')
 parser.add_argument('--log-every-n-steps', default=5, type=int, help='Log every n steps')
 
-parser.add_argument('-g', '--gpu-index', default=0, type=int, help='Gpu index.')
+parser.add_argument('-g', '--gpu-index', default=1, type=int, help='Gpu index.')
 parser.add_argument('--best-acc', default=0., type=float, help='The initial best accuracy')
 parser.add_argument('-mol', default='MoCo', type=str, help='which model to use', choices=['SimCLR', 'LIMU', 'CPC', 'MoCo', 'DeepSense'])
 parser.add_argument('--timestep', default=15, type=int, help='how many time steps for CPC')
 parser.add_argument('-d', default=32, type=int, help='how dim for CPC')
 parser.add_argument('-moco_K', default=1024, type=int, help='keys size')
-parser.add_argument('-moco_m', default=0.999, type=int, help='momentum value')
+parser.add_argument('-moco_m', default=0.999, type=float, help='momentum value')
 
 parser.add_argument('-eta_min', default=1e-5, type=float, help='the lowest lr')
 parser.add_argument('-T_max_ratio', default=0.8, type=float, help='the stop-lr-tuning stage')

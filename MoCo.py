@@ -196,21 +196,35 @@ class MoCo_encoder(nn.Module):
 
         # extract in-sensor information
         x_acc = self.conv1_acc(x[:, :, :, 0:3])
+        # x_acc = self.conv1_acc_BN(x_acc)
         x_acc = self.dropout(self.relu(x_acc))
+        # if torch.isnan(x_acc).any():
+        #     pdb.set_trace()
 
         x_gyro = self.conv1_gyro(x[:, :, :, 3:])
+        # x_gyro = self.conv1_gyro_BN(x_gyro)
         x_gyro = self.dropout(self.relu(x_gyro))
+        # if torch.isnan(x_gyro).any():
+        #     pdb.set_trace()
 
         # ResNet Arch for high-level information
         x1 = self.conv2_acc_1(x_acc)
+        # x1 = self.conv2_acc_BN_1(x1)
         x1 = self.dropout(self.relu(x1))
         x1 = self.conv2_acc_2(x1)
+        # x1 = self.conv2_acc_BN_2(x1)
         x_acc = self.dropout(self.relu(x_acc + x1))
+        # if torch.isnan(x_acc).any():
+        #     pdb.set_trace()
 
         x1 = self.conv2_gyro_1(x_gyro)
+        # x1 = self.conv2_gyro_BN_1(x1)
         x1 = self.dropout(self.relu(x1))
         x1 = self.conv2_gyro_2(x1)
+        # x1 = self.conv2_gyro_BN_2(x1)
         x_gyro = self.dropout(self.relu(x_gyro + x1))
+        # if torch.isnan(x_gyro).any():
+        #     pdb.set_trace()
         
         # # we need to normalize the data to make the features comparable
         x_acc = self.BN_acc(x_acc)
@@ -219,25 +233,37 @@ class MoCo_encoder(nn.Module):
         h = torch.cat((x_acc, x_gyro), dim=3)
         # extract intra-sensor information
         h = self.conv3(h)
+        # h = self.conv3_BN(h)
         h = self.dropout(self.relu(h))
+        # if torch.isnan(h).any():
+        #     pdb.set_trace()
 
         # ResNet Arch for high-level information
         x1 = self.conv4_1(h)
+        # x1 = self.conv4_BN_1(h)
         x1 = self.dropout(self.relu(x1))
         x1 = self.conv4_2(x1)
+        # x1 = self.conv4_BN_2(h)
         h = self.dropout(self.relu(h + x1))
+        # if torch.isnan(h).any():
+        #     pdb.set_trace()
 
         h = self.conv5_1(h)
+        # h = self.conv5_BN(h)
         h = self.dropout(self.relu(h))
         
         h = h.view(h.shape[0], h.shape[1], -1)
         h = h.permute(0, 2, 1)
+        # if torch.isnan(h).any():
+        #     pdb.set_trace()
         
         h = self.attn(h)
         h = self.norm1(h + self.proj(h))
         h = self.norm2(h + self.pwff(h))
         h = self.dropout(h)
 
+        # if torch.isnan(h).any():
+        #     pdb.set_trace()
         return h
 
 
@@ -472,9 +498,9 @@ class MoCo_v1(nn.Module):
             cluster_loss = None
             center_shift = None
         
-        if torch.isnan(q).any():
-            # pdb.set_trace()
-            print("now")
+        # if torch.isnan(q).any() or torch.isnan(k).any():
+        #     pdb.set_trace()
+        #     print("now")
 
         # if if_plot:
         #     with torch.no_grad():
@@ -603,7 +629,7 @@ class MoCo(object):
             
             is_best = loss_batch.avg <= best_loss
             if epoch_counter >= 10:  # only after the first 10 epochs, the best_acc is updated.
-                best_loss = max(loss_batch.avg, best_loss)
+                best_loss = min(loss_batch.avg, best_loss)
                 best_acc = max(acc_batch.avg, best_acc)
             if is_best:
                 best_epoch = epoch_counter
@@ -638,7 +664,7 @@ class MoCo(object):
             if best_acc > 99 and epoch_counter >= 50:
                 break  # early stop
 
-            if not_best_counter >= 25 or best_acc > 99:
+            if not_best_counter >= 200 or best_acc > 99:
                 print(f"early stop at {epoch_counter}")
                 break
             

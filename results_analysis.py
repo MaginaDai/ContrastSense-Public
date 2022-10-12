@@ -48,7 +48,7 @@ def results_for_each_file(files):
     acc = np.zeros([len(files)])
     for i, n in enumerate(files):
         seg = n.split('_')
-        dataset = seg[-2]
+        dataset = seg[-1]
         name = dataset + '_ft_shot_10'
         dir = f'runs/{n}/{name}/training.log'
 

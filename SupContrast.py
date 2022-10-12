@@ -18,7 +18,7 @@ class SupConLoss(nn.Module):
         self.criterion = torch.nn.CrossEntropyLoss().to(self.device)
 
     def forward(self, logits, labels=None, queue_labels=None):
-        """Compute supervised loss for model. """
+        """Compute supervised loss for model."""
         if self.if_cross_entropy:
             target = torch.concat([labels, queue_labels.squeeze()])
             loss = self.criterion(logits, target)  # use cross entropy for loss calculation.
@@ -37,11 +37,14 @@ class SupConLoss(nn.Module):
 
         # compute mean of log-likelihood over positive
         mean_log_prob_pos = (mask * log_prob).sum(1) / mask.sum(1)
-
+        # mask_sum = mask.sum(1)
+        # mask_zero = mask_sum != 0
+        # loss = -(mean_log_prob_pos * mask_zero).sum()/ mask_zero.sum()
         # loss
-        loss = - mean_log_prob_pos
-        loss = loss.mean()
-        
+        loss = - mean_log_prob_pos.mean()
         if torch.isnan(loss).any():
+            print(logits)
+            print(mask.sum(1))
+            print(mean_log_prob_pos)
             pdb.set_trace()
         return loss

@@ -7,5 +7,6 @@
 #   python results_analysis.py -name "${name}_HASC" "${name}_HHAR" "${name}_MotionSense" "${name}_Shoaib"
 # done
 
-name="contrast_w"
-python results_analysis.py -name "${name}_HASC_shot" "${name}_HHAR_shot" "${name}_MotionSense_shot" "${name}_Shoaib_shot"
+slr=0.4
+name="BN_w_slr${slr}"
+python results_analysis.py -name "${name}_HASC" "${name}_HHAR" "${name}_MotionSense" "${name}_Shoaib"
