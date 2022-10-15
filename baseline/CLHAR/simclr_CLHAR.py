@@ -16,13 +16,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.cuda.amp import GradScaler, autocast
-from kmeans_pytorch import kmeans
 from utils import accuracy, evaluate, f1_cal, save_checkpoint, save_config_file
 
 N_VIEWS = 2
 LARGE_NUM = 1e9
 
-class SimCLR_cluster(object):
+class SimCLR(object):
 
     def __init__(self, *args, **kwargs):
         self.args = kwargs['args']
@@ -69,54 +68,6 @@ class SimCLR_cluster(object):
         labels = torch.zeros(logits.shape[0], dtype=torch.long).to(self.args.device)
         logits = logits / self.args.temperature
         return logits, labels
-    
-    def cluster_loss(self, p1, p2):
-        p1 = F.normalize(p1, dim=1)
-        p2 = F.normalize(p2, dim=1)
-        labels = range(p1.shape[0])
-
-        logits1 = self.sim(p1, p2, self.t)
-        logits2 = self.sim(p2, p1, self.t)
-        return logits1, logits2, labels
-
-    def sim(self, p1, p2, t):
-        logits_aa = torch.matmul(p1, p1.T) / t
-        logits_ab = torch.matmul(p1, p2.T) / t
-
-        p1_clu, self.cluster_centers = kmeans(
-                X=p1, num_clusters=6, device=self.args.device, tol=self.iter_tol, tqdm_flag=False,
-            )
-        
-        masks_aa = (p1_clu.unsqueeze(0) == p1_clu.unsqueeze(1)).float()
-        logits_aa = logits_aa - masks_aa * LARGE_NUM
-
-        masks_ab = masks_aa - torch.eye(p1.shape[0]).to(self.args.device)
-        logits_ab = logits_ab - masks_ab * LARGE_NUM
-
-        return torch.concat([logits_ab, logits_aa], axis=1)
-
-    def cluster_loss_optimized(self, features):
-        features = F.normalize(features, dim=1)
-        num = int(features.shape[0]/2)
-        p = features[:num, :].detach().clone()
-        p_clu, self.cluster_centers = kmeans(
-                X=p, num_clusters=6, device=self.args.device, tol=1e-3, tqdm_flag=False,
-            )
-        
-        masks_aa = (p_clu.unsqueeze(0) == p_clu.unsqueeze(1)).float()
-        masks_ab = masks_aa - torch.eye(p.shape[0]).to(self.args.device)
-
-        masks_1 = torch.concat([masks_aa, masks_ab], axis=1)
-        masks_2 = torch.concat([masks_ab, masks_aa], axis=1)
-
-        masks = torch.concat([masks_1, masks_2], axis=0)
-        
-        logits = torch.matmul(features, features.T)
-
-        logits = logits - masks * LARGE_NUM
-        
-        labels = torch.concat([torch.arange(num, 2*num), torch.arange(0, num)], axis=0).to(self.args.device)
-        return logits, labels
 
 
     def train(self, train_loader):
@@ -142,20 +93,9 @@ class SimCLR_cluster(object):
                 sensor = sensor.to(self.args.device)
 
                 with autocast(enabled=self.args.fp16_precision):
-                    ##### Improved
                     features = self.model(sensor)
-                    logits, labels = self.cluster_loss_optimized(features)
+                    logits, labels = self.info_nce_loss(features)
                     loss = self.criterion(logits, labels)
-
-                    ##### original
-                    # p1 = self.model(sensor[0])
-                    # p2 = self.model(sensor[1])
-                    
-                    # logits1, logits2, labels = self.cluster_loss(p1, p2)
-                    # loss1 = self.criterion(logits1, labels)
-                    # loss2 = self.criterion(logits2, labels)
-
-                    # loss = loss1 + loss2
 
                 self.optimizer.zero_grad()
 
@@ -174,9 +114,9 @@ class SimCLR_cluster(object):
                     self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter)
 
                 n_iter += 1
-
-            is_best = acc_batch.avg >= best_acc
-            best_acc = max(acc_batch.avg, best_acc)
+            
+            self.scheduler.step()
+            is_best = True # Always save the latest model
             if is_best:
                 best_epoch = epoch_counter
                 checkpoint_name = 'model_best.pth.tar'
@@ -203,16 +143,6 @@ class SimCLR_cluster(object):
         n_iter_train = 0
         logging.info(f"Start SimCLR fine-tuning head for {self.args.epochs} epochs.")
         logging.info(f"Training with gpu: {self.args.disable_cuda}.")
-
-        if not self.args.if_fine_tune:
-            """
-            Switch to eval mode:
-            Under the protocol of linear classification on frozen features/models,
-            it is not legitimate to change any part of the pre-trained model.
-            BatchNorm in train mode may revise running mean/std (even if it receives
-            no gradient), which are part of the model parameters too.
-            """
-            self.model.eval()
 
         acc = 0
         f1 = 0
@@ -256,8 +186,6 @@ class SimCLR_cluster(object):
                 n_iter_train += 1
 
             val_acc, val_f1 = evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
-            if self.args.if_fine_tune:
-                self.model.train()
 
             is_best = val_f1 > best_f1
             best_f1 = max(val_f1, best_acc)
@@ -266,9 +194,9 @@ class SimCLR_cluster(object):
                 best_epoch = epoch_counter
                 checkpoint_name = 'model_best.pth.tar'
                 save_checkpoint({
-                    'epoch': epoch_counter + 1,
+                    'epoch': epoch_counter,
                     'state_dict': self.model.state_dict(),
-                    'best_acc': best_acc,
+                    'best_f1': best_f1,
                     'optimizer': self.optimizer.state_dict(),
                 }, is_best, filename=os.path.join(self.writer.log_dir, checkpoint_name), path_dir=self.writer.log_dir)
 
@@ -290,8 +218,6 @@ class SimCLR_cluster(object):
         test_acc, test_f1 = evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=test_loader)
         logging.info(f"test f1 is {test_f1}.")
         logging.info(f"test acc is {test_acc}.")
-
+        
         print('test f1 is {} for {}'.format(test_f1, self.args.name))
         print('test acc is {} for {}'.format(test_acc, self.args.name))
-
-

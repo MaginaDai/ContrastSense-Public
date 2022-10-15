@@ -45,7 +45,7 @@ def bert_classify(args, frozen_bert=False, balance=True):
                                   Preprocess4Tensor()])  # the second is to transform data to tensor(dtype=float).
     dataset = GenerativeDataset(pipeline=pipeline, version=args.dataset_version, datasets_name=args.name)
 
-    tune_dataset = dataset.get_dataset(split='tune', percent=args.percent)
+    tune_dataset = dataset.get_dataset(split='tune', percent=args.percent, shot=args.shot)
     val_dataset = dataset.get_dataset(split='val')
     test_dataset = dataset.get_dataset(split='test')
     

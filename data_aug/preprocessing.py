@@ -5,6 +5,7 @@ import os
 from os.path import dirname
 import pdb
 import sys
+from numpy.core.memmap import dtype
 import torch
 import pandas as pd
 import numpy as np
@@ -126,7 +127,7 @@ def fetch_instance_number_of_dataset(dir):
     return len(file_name_list)
 
 
-def preprocessing_dataset_cross_person_val(dir, dataset, test_portion=0.6, val_portion=0.15):
+def preprocessing_dataset_cross_person_val(dir, target_dir, dataset, test_portion=0.6, val_portion=0.15):
     print(dataset)
     
     num = fetch_instance_number_of_dataset(dir)
@@ -161,8 +162,8 @@ def preprocessing_dataset_cross_person_val(dir, dataset, test_portion=0.6, val_p
     train_num = [j for j in range(num) if u[j] in users_train_name]
     val_num =  [j for j in range(num) if u[j] in users_val_name]
 
-    # write_dataset(dir, train_num, val_num, test_num)
-    write_balance_tune_set(dir, dataset, dataset_size=num)
+    write_dataset(target_dir, train_num, val_num, test_num)
+    write_balance_tune_set(dir, target_dir, dataset, dataset_size=num)
     return
 
 
@@ -192,9 +193,11 @@ def write_dataset(dir, train_num, val_num, test_num):
     print(len(train_set))
     print(len(val_set))
     print(len(test_set))
-    # np.savez(os.path.join(dir, 'train_set' + '.npz'), train_set=train_set)
-    # np.savez(os.path.join(dir, 'val_set' + '.npz'), val_set=val_set)
-    # np.savez(os.path.join(dir, 'test_set' + '.npz'), test_set=test_set)    
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    np.savez(os.path.join(dir, 'train_set' + '.npz'), train_set=train_set)
+    np.savez(os.path.join(dir, 'val_set' + '.npz'), val_set=val_set)
+    np.savez(os.path.join(dir, 'test_set' + '.npz'), test_set=test_set)    
     return
 
 def write_tune_set(dir):
@@ -214,29 +217,41 @@ def write_tune_set(dir):
     return
 
 
-def write_balance_tune_set(dir, dataset, dataset_size=None, if_percent=False):
-    loc = dir + 'train_set' + '.npz'
+def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_percent=False, if_cross_user=True):
+    loc = target_dir + 'train_set' + '.npz'
     data = np.load(loc)
     train_set = data['train_set']
-
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
     label = []
+    user = []
 
     for i in train_set:
-        sub_dir = dir + i
+        sub_dir = ori_dir + i
         data = np.load(sub_dir, allow_pickle=True)
         label.append(data['add_infor'][0, LabelPosition[dataset]])
+        if dataset == 'Shoaib':
+            user.append(int(data['add_infor'][0, UsersPosition[dataset]]))
+        else:
+            user.append(data['add_infor'][0, UsersPosition[dataset]])
 
     label = np.array(label)
     label_type = np.unique(label)
     label_type_num = len(label_type)
 
+    user_type = np.unique(user)
+    user_selected_num = np.max([int(len(user_type) * 0.4), 1])
+    np.random.shuffle(user_type)
+    user_selected = user_type[:user_selected_num]
+
     print(label_type)
+    print(user_type)
     assert label_type_num == ClassesNum[dataset]
 
-    print(f"motion classes {label_type_num}, total train num {len(label)}")
+    print(f"motion classes {label_type_num}, total train num {len(label)}, total user num {len(user_type)}, user {user_selected} provides label")
 
     if dataset_size is None:
-        set_size = fetch_instance_number_of_dataset(dir)
+        set_size = fetch_instance_number_of_dataset(ori_dir)
     else:
         set_size = dataset_size
     if if_percent:
@@ -257,7 +272,7 @@ def write_balance_tune_set(dir, dataset, dataset_size=None, if_percent=False):
 
             print(f"percent {per}: {len(tune_set)}")
             print(f"each class {counter}")
-            loca = dir + 'tune_set_' + str(per).replace('.', '_') + '.npz'
+            loca = target_dir + 'tune_set_' + str(per).replace('.', '_') + '.npz'
             np.savez(loca, tune_set=tune_set)
     else:
         for label_per_class in shot_num:
@@ -268,13 +283,19 @@ def write_balance_tune_set(dir, dataset, dataset_size=None, if_percent=False):
                 print("at least one sample per class")
             
             for i in label_type:
-                idx = np.argwhere(label == i).squeeze()
+                idx = np.argwhere((label == i)).squeeze()
+                if if_cross_user:
+                    idx_user_selected = []
+                    for j in idx:
+                        if user[j] in user_selected:
+                            idx_user_selected.append(j)
+                    idx = np.array(idx_user_selected)
                 np.random.shuffle(idx)
                 tune_set.extend(train_set[idx[:label_per_class]])
                 counter.append(len(list(idx[:label_per_class])))
 
             print(f"Shot num {label_per_class}: {len(tune_set)}")
-            loca = dir + 'tune_set_' + str(label_per_class).replace('.', '_') + '.npz'
+            loca = target_dir + 'tune_set_' + str(label_per_class).replace('.', '_') + '.npz'
             np.savez(loca, tune_set=tune_set)
     return
 
@@ -343,12 +364,12 @@ if __name__ == '__main__':
 
     # preprocessing_HHAR_cross_person(main_dir=r'../datasets/HHAR person/')
 
-    # preprocessing_dataset_cross_person_val(dir=r'datasets/HHAR_50_200/', dataset='HHAR')
-    # preprocessing_dataset_cross_person_val(dir=r'datasets/MotionSense_50_200/', dataset='MotionSense')
-    # preprocessing_dataset_cross_person_val(dir=r'datasets/Shoaib_50_200/', dataset='Shoaib')
-    # preprocessing_dataset_cross_person_val(dir=r'datasets/HASC_50_200/', dataset='HASC')
-    # preprocessing_dataset_cross_person_val(dir=r'datasets/UCI_50_200/', dataset='UCI')
-    # preprocessing_dataset_cross_person_val(dir=r'datasets/ICHAR_50_200/', dataset='ICHAR')
+    preprocessing_dataset_cross_person_val(dir=r'datasets/HHAR/', target_dir=r'datasets/HHAR_shot/', dataset='HHAR')
+    preprocessing_dataset_cross_person_val(dir=r'datasets/MotionSense/', target_dir=r'datasets/MotionSense_shot/', dataset='MotionSense')
+    preprocessing_dataset_cross_person_val(dir=r'datasets/Shoaib/', target_dir=r'datasets/Shoaib_shot/', dataset='Shoaib')
+    preprocessing_dataset_cross_person_val(dir=r'datasets/HASC/', target_dir=r'datasets/HASC_shot/', dataset='HASC')
+    # preprocessing_dataset_cross_person_val(dir=r'datasets/UCI/', target_dir=r'datasets/HHAR_shot/', dataset='UCI')
+    # preprocessing_dataset_cross_person_val(dir=r'datasets/ICHAR/', target_dir=r'datasets/HHAR_shot/', dataset='ICHAR')
  
     # datasets_shot_record(dir=r'datasets/HHAR_50_200/', datasets='HHAR')
 
@@ -360,10 +381,7 @@ if __name__ == '__main__':
     # datasets_users_record(dir=r'datasets/HASC_50_200/', datasets='HASC')
 
 
-    write_balance_tune_set(dir=r'datasets/HHAR_50_200_shot/', dataset='HHAR')
-    write_balance_tune_set(dir=r'datasets/MotionSense_50_200_shot/', dataset='MotionSense')
-    write_balance_tune_set(dir=r'datasets/Shoaib_50_200_shot/', dataset='Shoaib')
-    write_balance_tune_set(dir=r'datasets/HASC_50_200_shot/', dataset='HASC')
-
-    
-
+    # write_balance_tune_set(ori_dir=r'datasets/HHAR/', target_dir=r'datasets/HHAR_shot/', dataset='HHAR')
+    # write_balance_tune_set(ori_dir=r'datasets/MotionSense_50_200/', target_dir=r'datasets/MotionSense_50_200_shot/', dataset='MotionSense')
+    # write_balance_tune_set(ori_dir=r'datasets/Shoaib_50_200/', target_dir=r'datasets/Shoaib_50_200_shot/', dataset='Shoaib')
+    # write_balance_tune_set(ori_dir=r'datasets/HASC_50_200/', target_dir=r'datasets/HASC_50_200_shot/', dataset='HASC')

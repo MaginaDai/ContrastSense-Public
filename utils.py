@@ -88,16 +88,17 @@ def f1_cal(output, target, topk=(1, )):
 
 def evaluate(model, criterion, args, data_loader):
     losses = AverageMeter('Loss', ':.4e')
-    acc_batch = AverageMeter('acc1', ':6.2f')
+    acc_eval = AverageMeter('acc_eval', ':6.2f')
+    f1_eval = AverageMeter('f1_eval', ':6.2f')
 
     model.eval()
 
     with torch.no_grad():
         for sensor, target in data_loader:
             sensor = sensor.to(args.device)
-            target = target[:, 0].to(args.device)
             if sensor.shape == 2:
                 sensor = sensor.unsqueeze(dim=0)
+            target = target[:, 0].to(args.device)
 
             with autocast(enabled=args.fp16_precision):
                 logits = model(sensor)
@@ -106,9 +107,11 @@ def evaluate(model, criterion, args, data_loader):
             losses.update(loss.item(), sensor.size(0))
             _, pred = logits.topk(1, 1, True, True)
             acc = accuracy(logits, target, topk=(1,))
-            acc_batch.update(acc, sensor.size(0))
+            f1 = f1_cal(logits, target, topk=(1,))
+            acc_eval.update(acc, sensor.size(0))
+            f1_eval.update(f1, sensor.size(0))
 
-    return acc_batch.avg
+    return acc_eval.avg, f1_eval.avg
 
 
 def MoCo_evaluate(model, criterion, args, data_loader):
@@ -386,6 +389,7 @@ def handle_argv(target, config_train, prefix):
     parser.add_argument('--disable-cuda', action='store_true', help='Disable CUDA')
     parser.add_argument('--log-every-n-steps', default=100, type=int, help='Log every n steps')
     parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
+    parser.add_argument('-shot', default=None, type=int, help='how many shots of labels to use')
 
     try:
         args = parser.parse_args()

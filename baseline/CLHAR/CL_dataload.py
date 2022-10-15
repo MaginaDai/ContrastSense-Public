@@ -14,44 +14,85 @@ from data_aug import imu_transforms
 from exceptions.exceptions import InvalidDatasetSelection
 
 
+class CL_Rotate(object):
+    """ Rotate the IMU sensors reading based on CLHAR design
+
+    Args:
+        p: transformation possibility
+    """
+
+    def __init__(self):
+        
+        return
+
+    def __call__(self, sensor, pos=None):
+        acc, gyro = sensor[:, 0:3], sensor[:, 3:]
+
+        axes = np.random.uniform(low=-1, high=1, size=(1, 3))  # we apply to each sensor rather than a batch size. 
+        angles = np.random.uniform(low=-np.pi, high=np.pi, size=(1))
+        matrices = axis_angle_to_rotation_matrix_3d_vectorized(axes, angles)[0]
+
+        acc = np.dot(acc, matrices)
+        gyro = np.dot(gyro, matrices)
+        sensor = np.concatenate((acc, gyro), axis=-1)
+        return sensor
+
+def axis_angle_to_rotation_matrix_3d_vectorized(axes, angles):
+    """
+    Copy from CLHAR
+    """
+    axes = axes / np.linalg.norm(axes, ord=2, axis=1, keepdims=True)
+    x = axes[:, 0]; y = axes[:, 1]; z = axes[:, 2]
+    c = np.cos(angles)
+    s = np.sin(angles)
+    C = 1 - c
+
+    xs = x*s;   ys = y*s;   zs = z*s
+    xC = x*C;   yC = y*C;   zC = z*C
+    xyC = x*yC; yzC = y*zC; zxC = z*xC
+
+    m = np.array([
+        [ x*xC+c,   xyC-zs,   zxC+ys ],
+        [ xyC+zs,   y*yC+c,   yzC-xs ],
+        [ zxC-ys,   yzC+xs,   z*zC+c ]])
+    matrix_transposed = np.transpose(m, axes=(2,0,1))
+    return matrix_transposed
 
 
-class ClusterCLDataset:
-    def __init__(self, transfer, M, N, version, datasets_name=None):
+class CLHAR_Dataset:
+    def __init__(self, transfer, version, datasets_name=None):
         self.transfer = transfer
         self.datasets_name = datasets_name
-        self.M = M
-        self.N = N
         self.version = version
 
     def get_simclr_pipeline_transform(self):
         """Return a set of data augmentation transformations as described in my presentation."""
         imu_toTensor = imu_transforms.ToTensor()
-        imu_resample = imu_transforms.IMU_Resampling(M=self.M, N=self.N)
-        data_transforms = transforms.Compose([imu_resample,
+        imu_rotate = CL_Rotate()
+        data_transforms = transforms.Compose([imu_rotate,
                                               imu_toTensor])
         return data_transforms
 
-    def get_dataset(self, split, n_views=2, percent=20):
+    def get_dataset(self, split, n_views=2, percent=20, shot=None):
         if self.transfer is False:
             # here it is for generating positive samples and negative samples
-            return ClusterHARDataset4Training(self.datasets_name, self.version, n_views, 
-                                    transform=SingleViewGenerator(imu_transforms.ToTensor(), self.get_simclr_pipeline_transform()),
-                                    split=split, transfer=self.transfer, percent=percent)
+            return CLHARDataset4Training(self.datasets_name, self.version, n_views, 
+                                    transform=ContrastiveLearningViewGenerator(self.get_simclr_pipeline_transform(), n_views=n_views),
+                                    split=split, transfer=self.transfer, percent=percent, shot=shot)
         elif split == 'train' or split == 'tune':
                 # here it is for data augmentation, make it more challenging.
-            return ClusterHARDataset4Training(self.datasets_name, self.version, n_views,
+            return CLHARDataset4Training(self.datasets_name, self.version, n_views,
                                     self.get_simclr_pipeline_transform(),
-                                    split=split, transfer=self.transfer, percent=percent)
+                                    split=split, transfer=self.transfer, percent=percent, shot=shot)
         else:  # val or test
-            return ClusterHARDataset4Training(self.datasets_name, self.version, n_views,
+            return CLHARDataset4Training(self.datasets_name, self.version, n_views,
                                     transform=transforms.Compose([
                                         imu_transforms.ToTensor()
                                         ]),
-                                    split=split, transfer=self.transfer, percent=percent)
+                                    split=split, transfer=self.transfer, percent=percent, shot=shot)
 
 
-class ClusterHARDataset4Training(Dataset):
+class CLHARDataset4Training(Dataset):
 
     def __init__(self, datasets_name, version, n_views=2, transform=None, split='train', transfer=True, percent=20, shot=None):
         """

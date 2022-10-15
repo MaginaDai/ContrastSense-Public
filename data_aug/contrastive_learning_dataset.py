@@ -26,7 +26,7 @@ users = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
 devices = ['s3', 'nexus4', 's3mini', 'samsungold']
 
 
-def fetch_dataset_root(dataset_name, version):
+def fetch_dataset_root(dataset_name):
     root = {'HHAR': './datasets/HHAR',
             'MotionSense': './datasets/MotionSense',
             'UCI': './datasets/UCI',
@@ -34,7 +34,7 @@ def fetch_dataset_root(dataset_name, version):
             'ICHAR': './datasets/ICHAR',
             'HASC': './datasets/HASC'}
     try:
-        root_dir = root[dataset_name] + '_' + version
+        root_dir = root[dataset_name]
     except KeyError:
         raise InvalidDatasetSelection()
     else:
@@ -109,11 +109,11 @@ class Dataset4Training(Dataset):
             n_views: the defined views. defalt=2
             split: to specify train set or test set.
         """
-        root_dir = fetch_dataset_root(datasets_name, version)
+        root_dir = fetch_dataset_root(datasets_name)
 
-        train_dir = root_dir + '/train_set.npz'
-        val_dir = root_dir + '/val_set.npz'
-        test_dir = root_dir + '/test_set.npz'
+        train_dir = root_dir + '_' + version + '/train_set.npz'
+        val_dir = root_dir + '_' + version + '/val_set.npz'
+        test_dir = root_dir + '_' + version + '/test_set.npz'
 
         self.datasets_name = datasets_name
         self.transfer = transfer
@@ -126,12 +126,12 @@ class Dataset4Training(Dataset):
             self.windows_frame = data['val_set']
         elif self.split == 'tune':
             if shot:
-                tune_dir = root_dir + '/tune_set_' + str(int(shot)) + '.npz'
+                tune_dir = root_dir + '_' + version + '/tune_set_' + str(int(shot)) + '.npz'
             else:
                 if percent <= 0.99:
-                    tune_dir = root_dir + '/tune_set_' + str(percent).replace('.', '_') + '.npz'
+                    tune_dir = root_dir + '_' + version + '/tune_set_' + str(percent).replace('.', '_') + '.npz'
                 else:
-                    tune_dir = root_dir + '/tune_set_' + str(int(percent)) + '.npz'
+                    tune_dir = root_dir + '_' + version + '/tune_set_' + str(int(percent)) + '.npz'
             data = np.load(tune_dir)
             self.windows_frame = data['tune_set']
         else:
@@ -186,15 +186,15 @@ class GenerativeDataset():
         self.version = version
         self.datasets_name = datasets_name
     
-    def get_dataset(self, split, percent=20):
-        root = fetch_dataset_root(self.datasets_name, self.version)
-        return LIMUDataset4Training(root, transform=self.pipeline, split=split, percent=percent)
+    def get_dataset(self, split, percent=20, shot=None):
+        root = fetch_dataset_root(self.datasets_name)
+        return LIMUDataset4Training(root, transform=self.pipeline, split=split, percent=percent, version=self.version, shot=shot)
 ############# mind the data transformation part or the pipeline part############
 
 
 class LIMUDataset4Training(Dataset):
 
-    def __init__(self, root_dir, transform=None, split='train', percent=20):
+    def __init__(self, root_dir, transform=None, split='train', percent=20, version=None, shot=None):
         """
         Args:
             root_dir (string): Path to all the npz file.
@@ -204,9 +204,9 @@ class LIMUDataset4Training(Dataset):
             split: to specify train set or test set.
         """
 
-        train_dir = '../../' + root_dir + '/train_set.npz'
-        val_dir = '../../' + root_dir + '/val_set.npz'
-        test_dir = '../../' + root_dir + '/test_set.npz'
+        train_dir = '../../' + root_dir + '_' + version + '/train_set.npz'
+        val_dir = '../../' + root_dir + '_' + version + '/val_set.npz'
+        test_dir = '../../' + root_dir + '_' + version + '/test_set.npz'
         self.split = split
         if self.split == 'train':
             data = np.load(train_dir)
@@ -215,15 +215,22 @@ class LIMUDataset4Training(Dataset):
             data = np.load(val_dir)
             self.windows_frame = data['val_set']
         elif self.split == 'tune':
-            if percent < 0.99:
-                tune_dir = '../../' + root_dir + '/tune_set_' + str(percent).replace('.', '_') + '.npz'
+            if shot:
+                tune_dir = '../../' + root_dir + '_' + version + '/tune_set_' + str(int(shot)) + '.npz'
             else:
-                tune_dir = '../../' + root_dir + '/tune_set_' + str(int(percent)) + '.npz'
+                if percent < 0.99:
+                    tune_dir = '../../' + root_dir + '_' + version +  '/tune_set_' + str(percent).replace('.', '_') + '.npz'
+                else:
+                    tune_dir = '../../' + root_dir + '_' + version +  '/tune_set_' + str(int(percent)) + '.npz'
             data = np.load(tune_dir)
             self.windows_frame = data['tune_set']
+            print(tune_dir)
+            print(shot)
         else:
             data = np.load(test_dir)
             self.windows_frame = data['test_set']
+        
+
 
         self.split = split
         self.root_dir = root_dir

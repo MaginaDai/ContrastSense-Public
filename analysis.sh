@@ -7,6 +7,6 @@
 #   python results_analysis.py -name "${name}_HASC" "${name}_HHAR" "${name}_MotionSense" "${name}_Shoaib"
 # done
 
-slr=0.4
-name="BN_w_slr${slr}"
+slr=0.00005
+name="DAL_lr${slr}"
 python results_analysis.py -name "${name}_HASC" "${name}_HHAR" "${name}_MotionSense" "${name}_Shoaib"

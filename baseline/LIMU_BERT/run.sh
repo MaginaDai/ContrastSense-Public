@@ -8,43 +8,47 @@
 
 # python classifier_bert.py v1_v2 20_120 -g 1 -s motion -name 'HHAR person' -f motion -s limu_gru_per05 -percent 0.5
 
-# python -u pretrain.py v1 20_120 -g 0 -s MotionSense -name 'MotionSense' &
-# python -u pretrain.py v1 20_120 -g 0 -s Shoaib -name 'Shoaib' &
-# python -u pretrain.py v1 20_120 -g 0 -s UCI -name 'UCI'
-# python -u pretrain.py v1 50_200 -g 0 -s HHAR_50_200 -name 'HHAR 50_200'
+name='shot'
 
-# wait
+python -u pretrain.py v1 ${name} -g 0 -s MotionSense -name 'MotionSense' &
+python -u pretrain.py v1 ${name} -g 0 -s Shoaib -name 'Shoaib'
 
-name='50_200'
+wait
+
+python -u pretrain.py v1 ${name} -g 0 -s HASC -name 'HASC' &
+python -u pretrain.py v1 ${name} -g 0 -s HHAR -name 'HHAR'
+
+wait
+
 # dataset='ICHAR'
 # python -u pretrain.py v1 ${name} -name ${dataset} -g 0 -s "${dataset}_${name}" 
 # python classifier_bert.py v1_v2 ${name} -p ${dataset} -f "${dataset}_${name}" -name ${dataset} -s "${dataset}_${name}"
 
-python classifier_bert.py v1_v2 ${name} -p MotionSense -f "MotionSense_${name}" -name 'HASC' -s limu_gru_MotionSense &
-python classifier_bert.py v1_v2 ${name} -p Shoaib -f "Shoaib_${name}" -name 'HASC' -s limu_gru_Shoaib &
-python classifier_bert.py v1_v2 ${name} -p HHAR -f "HHAR_${name}" -name 'HASC' -s limu_gru_HHAR &
-python classifier_bert.py v1_v2 ${name} -p HASC -f "HASC_${name}" -name 'HASC' -s limu_gru_HASC
+python classifier_bert.py v1_v2 ${name} -p MotionSense -f "MotionSense" -name 'MotionSense' -s limu_gru_MotionSense &
+python classifier_bert.py v1_v2 ${name} -p Shoaib -f "Shoaib" -name 'Shoaib' -s limu_gru_Shoaib &
+python classifier_bert.py v1_v2 ${name} -p HHAR -f "HHAR" -name 'HHAR' -shot 10 -s limu_gru_HHAR &
+python classifier_bert.py v1_v2 ${name} -p HASC -f "HASC" -name 'HASC' -s limu_gru_HASC
 
-wait
+# wait
 
-python classifier_bert.py v1_v2 ${name} -p MotionSense -f "MotionSense_${name}" -name 'HHAR' -s limu_gru_MotionSense &
-python classifier_bert.py v1_v2 ${name} -p Shoaib -f "Shoaib_${name}" -name 'HHAR' -s limu_gru_Shoaib &
-python classifier_bert.py v1_v2 ${name} -p HHAR -f "HHAR_${name}" -name 'HHAR' -s limu_gru_HHAR &
-python classifier_bert.py v1_v2 ${name} -p HASC -f "HASC_${name}" -name 'HHAR' -s limu_gru_HASC
+# python classifier_bert.py v1_v2 ${name} -p MotionSense -f "MotionSense_${name}" -name 'HHAR' -s limu_gru_MotionSense &
+# python classifier_bert.py v1_v2 ${name} -p Shoaib -f "Shoaib_${name}" -name 'HHAR' -s limu_gru_Shoaib &
+# python classifier_bert.py v1_v2 ${name} -p HHAR -f "HHAR_${name}" -name 'HHAR' -s limu_gru_HHAR &
+# python classifier_bert.py v1_v2 ${name} -p HASC -f "HASC_${name}" -name 'HHAR' -s limu_gru_HASC
 
-wait
+# wait
 
-python classifier_bert.py v1_v2 ${name} -p MotionSense -f "MotionSense_${name}" -name 'MotionSense' -s limu_gru_MotionSense &
-python classifier_bert.py v1_v2 ${name} -p Shoaib -f "Shoaib_${name}" -name 'MotionSense' -s limu_gru_Shoaib &
-python classifier_bert.py v1_v2 ${name} -p HHAR -f "HHAR_${name}" -name 'MotionSense' -s limu_gru_HHAR &
-python classifier_bert.py v1_v2 ${name} -p HASC -f "HASC_${name}" -name 'MotionSense' -s limu_gru_HASC
+# python classifier_bert.py v1_v2 ${name} -p MotionSense -f "MotionSense_${name}" -name 'MotionSense' -s limu_gru_MotionSense &
+# python classifier_bert.py v1_v2 ${name} -p Shoaib -f "Shoaib_${name}" -name 'MotionSense' -s limu_gru_Shoaib &
+# python classifier_bert.py v1_v2 ${name} -p HHAR -f "HHAR_${name}" -name 'MotionSense' -s limu_gru_HHAR &
+# python classifier_bert.py v1_v2 ${name} -p HASC -f "HASC_${name}" -name 'MotionSense' -s limu_gru_HASC
 
-wait
+# wait
 
-python classifier_bert.py v1_v2 ${name} -p MotionSense -f "MotionSense_${name}" -name 'Shoaib' -s limu_gru_MotionSense &
-python classifier_bert.py v1_v2 ${name} -p Shoaib -f "Shoaib_${name}" -name 'Shoaib' -s limu_gru_Shoaib &
-python classifier_bert.py v1_v2 ${name} -p HHAR -f "HHAR_${name}" -name 'Shoaib' -s limu_gru_HHAR &
-python classifier_bert.py v1_v2 ${name} -p HASC -f "HASC_${name}" -name 'Shoaib' -s limu_gru_HASC
+# python classifier_bert.py v1_v2 ${name} -p MotionSense -f "MotionSense_${name}" -name 'Shoaib' -s limu_gru_MotionSense &
+# python classifier_bert.py v1_v2 ${name} -p Shoaib -f "Shoaib_${name}" -name 'Shoaib' -s limu_gru_Shoaib &
+# python classifier_bert.py v1_v2 ${name} -p HHAR -f "HHAR_${name}" -name 'Shoaib' -s limu_gru_HHAR &
+# python classifier_bert.py v1_v2 ${name} -p HASC -f "HASC_${name}" -name 'Shoaib' -s limu_gru_HASC
 
 
 

@@ -44,7 +44,7 @@ parser.add_argument('-name', default='HASC',
 parser.add_argument('-wd', '--weight-decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)',
                     dest='weight_decay')
-parser.add_argument('-j', '--workers', default=5, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=10, type=int, metavar='N',
                     help='number of data loading workers (default: 5)')
 parser.add_argument('-e', '--epochs', default=2000, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -80,7 +80,7 @@ parser.add_argument('-final_dim', default=8, type=int, help='the output dims of 
 parser.add_argument('-mo', default=0.9, type=float, help='the momentum for Batch Normalization')
 
 parser.add_argument('-drop', default=0.1, type=float, help='the dropout portion')
-parser.add_argument('-version', default="50_200", type=str, help='control the version of the setting')
+parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
 parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-CE', default=False, type=bool, help='Use Cross Entropy Domain Loss or not')
 
@@ -120,7 +120,6 @@ def main():
                         final_dim=args.final_dim, momentum=args.mo, drop=args.drop, DAL=args.DAL, if_cross_entropy=args.CE)
     else:
         model = MyNet(transfer=False, out_dim=args.out_dim, if_bn=args.if_bn, if_g=args.if_g, if_lstm=args.if_lstm)
-    
 
     optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)

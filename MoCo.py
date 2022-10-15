@@ -444,6 +444,8 @@ class MoCo_v1(nn.Module):
 
         q, d_q = self.encoder_q(sen_q)  # queries: NxC
         q = F.normalize(q, dim=1)
+        if d_q is not None:
+            d_q = F.normalize(d_q, dim=1)
 
         # compute key features
         with torch.no_grad():  # no gradient to keys
@@ -451,6 +453,8 @@ class MoCo_v1(nn.Module):
 
             k, d_k = self.encoder_k(sen_k)  # keys: NxC
             k = F.normalize(k, dim=1)
+            if d_k is not None:
+                d_k = F.normalize(d_k, dim=1)
 
         # compute logits
         # Einstein sum is more intuitive
@@ -476,7 +480,7 @@ class MoCo_v1(nn.Module):
         if self.DAL: # we do / T when calculating the SupCon
             logits_labels = torch.einsum('nc,ck->nk', [d_q, self.queue_dis.clone().detach()])
         else:
-            logits_labels = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  
+            logits_labels = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])
 
         if num_clusters:
             h = torch.cat((q.detach(), self.queue.clone().T.detach()), 0).to(device)

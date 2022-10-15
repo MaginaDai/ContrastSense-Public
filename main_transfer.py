@@ -233,7 +233,7 @@ def main():
         else:
             simclr = SimCLR(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
             if args.evaluate:
-                test_acc = evaluate(model=simclr.model, criterion=simclr.criterion, args=simclr.args, data_loader=test_loader)
+                test_acc, test_f1 = evaluate(model=simclr.model, criterion=simclr.criterion, args=simclr.args, data_loader=test_loader)
                 print('test acc: {}'.format('%.3f' % test_acc))
                 return
             simclr.transfer_train(tune_loader, val_loader)
