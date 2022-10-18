@@ -1,5 +1,6 @@
 /runs
 /__pycache__
+/datasets
 /original_dataset
 /kmeans_pytorch
 /baseline/__pycache__
@@ -7,5 +8,5 @@
 /baseline/CLHAR/runs
 /baseline/ClusterHAR/runs
 /baseline/LIMU_BERT/__pycache__
-/datasets
+
 

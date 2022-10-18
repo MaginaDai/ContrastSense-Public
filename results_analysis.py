@@ -8,7 +8,7 @@ import pdb
 from xml.sax import default_parser_list
 
 
-dataset = ['HHAR', 'MotionSense', 'Shoaib', 'UCI']
+dataset = ['HASC', 'HHAR', 'MotionSense', 'Shoaib']
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 parser.add_argument('-name', default=["test", "test"], nargs='+', type=str, help='the interested models file')
@@ -21,11 +21,11 @@ def avg_result(name, ft):
         for j, data in enumerate(dataset):
             # print(i, j)
             if ft:
-                dir = f'runs/{n}/{data}_ft/training.log'
+                dir = f'runs/{n}/{data}_ft_shot_10/training.log'
             else:
-                dir = f'runs/{n}/{data}_le/training.log'
-            eval_pattern = r'best\seval\sacc\sis\s+tensor\(\[*(\d+\.+\d*)\]'
-            test_pattern = r'test\sacc\sis\s+tensor\(\[*(\d+\.+\d*)\]'
+                dir = f'runs/{n}/{data}_le_shot_10/training.log'
+            eval_pattern = r'best\seval\sf1\sis\s+\(*(\d+\.+\d*)'
+            test_pattern = r'test\sf1\sis\s+\(*(\d+\.+\d*)'
             with open(dir, "r") as f:  # 打开文件
                 content = f.read()
                 # pdb.set_trace()
@@ -83,5 +83,6 @@ def results_for_each_file(files):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    results_for_each_file(args.name)
+    avg_result(args.name, ft=True)
+    # results_for_each_file(args.name)
     # avg_result(name=args.name, ft=args.ft)

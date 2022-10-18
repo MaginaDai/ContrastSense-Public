@@ -44,6 +44,15 @@ UsersPosition = {
     'HASC': 0,
 }
 
+UsersNum = {
+    'HHAR': 9,
+    'MotionSense': 24,
+    'Shoaib': 10,
+    'UCI': 30,
+    'ICHAR': 10,
+    'HASC': 305,  # actually we have 288 users in total. But the largest user id is 305. 
+}
+
 LabelPosition = {
     'HHAR': -1,
     'MotionSense': -1,
@@ -140,6 +149,7 @@ def preprocessing_dataset_cross_person_val(dir, target_dir, dataset, test_portio
         # label_distribution[int(data['add_infor'][0, -1])] += 1
     
     # print(label_distribution)
+    print(max(u))
     user_type = np.unique(u)
     test_num = int(len(user_type) * test_portion)
     val_num = int(len(user_type) * val_portion)
@@ -162,8 +172,8 @@ def preprocessing_dataset_cross_person_val(dir, target_dir, dataset, test_portio
     train_num = [j for j in range(num) if u[j] in users_train_name]
     val_num =  [j for j in range(num) if u[j] in users_val_name]
 
-    write_dataset(target_dir, train_num, val_num, test_num)
-    write_balance_tune_set(dir, target_dir, dataset, dataset_size=num)
+    # write_dataset(target_dir, train_num, val_num, test_num)
+    # write_balance_tune_set(dir, target_dir, dataset, dataset_size=num)
     return
 
 
@@ -364,9 +374,9 @@ if __name__ == '__main__':
 
     # preprocessing_HHAR_cross_person(main_dir=r'../datasets/HHAR person/')
 
-    preprocessing_dataset_cross_person_val(dir=r'datasets/HHAR/', target_dir=r'datasets/HHAR_shot/', dataset='HHAR')
-    preprocessing_dataset_cross_person_val(dir=r'datasets/MotionSense/', target_dir=r'datasets/MotionSense_shot/', dataset='MotionSense')
-    preprocessing_dataset_cross_person_val(dir=r'datasets/Shoaib/', target_dir=r'datasets/Shoaib_shot/', dataset='Shoaib')
+    # preprocessing_dataset_cross_person_val(dir=r'datasets/HHAR/', target_dir=r'datasets/HHAR_shot/', dataset='HHAR')
+    # preprocessing_dataset_cross_person_val(dir=r'datasets/MotionSense/', target_dir=r'datasets/MotionSense_shot/', dataset='MotionSense')
+    # preprocessing_dataset_cross_person_val(dir=r'datasets/Shoaib/', target_dir=r'datasets/Shoaib_shot/', dataset='Shoaib')
     preprocessing_dataset_cross_person_val(dir=r'datasets/HASC/', target_dir=r'datasets/HASC_shot/', dataset='HASC')
     # preprocessing_dataset_cross_person_val(dir=r'datasets/UCI/', target_dir=r'datasets/HHAR_shot/', dataset='UCI')
     # preprocessing_dataset_cross_person_val(dir=r'datasets/ICHAR/', target_dir=r'datasets/HHAR_shot/', dataset='ICHAR')

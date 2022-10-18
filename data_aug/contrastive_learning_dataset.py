@@ -17,8 +17,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from figure_plot.figure_plot import figure_cmp_transformation
 
-from utils import Preprocess4Normalization,  Preprocess4Mask
-
 
 HHAR_movement = ['stand', 'sit', 'walk', 'stairsup', 'stairsdown', 'bike']
 ACT_Translated_labels = ['Downstairs', 'Upstairs', 'Walking', 'Running', 'Standing', 'Sitting']

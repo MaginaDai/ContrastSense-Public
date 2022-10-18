@@ -22,13 +22,13 @@ from utils import accuracy, evaluate, f1_cal, save_checkpoint, save_config_file
 N_VIEWS = 2
 LARGE_NUM = 1e9
 
-class SimCLR_cluster(object):
+class  SimCLR_cluster(object):
 
     def __init__(self, *args, **kwargs):
         self.args = kwargs['args']
         self.model = kwargs['model'].to(self.args.device)
         self.optimizer = kwargs['optimizer']
-        self.scheduler = kwargs['scheduler']
+
         writer_pos = './runs/' + self.args.store + '/'
         if self.args.transfer is True:
             if self.args.if_fine_tune:
@@ -73,19 +73,17 @@ class SimCLR_cluster(object):
     def cluster_loss(self, p1, p2):
         p1 = F.normalize(p1, dim=1)
         p2 = F.normalize(p2, dim=1)
-        labels = range(p1.shape[0])
+        labels = torch.arange(0, p1.shape[0])
 
-        logits1 = self.sim(p1, p2, self.t)
-        logits2 = self.sim(p2, p1, self.t)
+        logits1 = self.sim(p1, p2, self.args.temperature)
+        logits2 = self.sim(p2, p1, self.args.temperature)
         return logits1, logits2, labels
 
     def sim(self, p1, p2, t):
         logits_aa = torch.matmul(p1, p1.T) / t
         logits_ab = torch.matmul(p1, p2.T) / t
 
-        p1_clu, self.cluster_centers = kmeans(
-                X=p1, num_clusters=6, device=self.args.device, tol=self.iter_tol, tqdm_flag=False,
-            )
+        p1_clu, self.cluster_centers = kmeans(X=p1, num_clusters=6, device=self.args.device, if_tqdm=False)
         
         masks_aa = (p1_clu.unsqueeze(0) == p1_clu.unsqueeze(1)).float()
         logits_aa = logits_aa - masks_aa * LARGE_NUM
@@ -99,10 +97,8 @@ class SimCLR_cluster(object):
         features = F.normalize(features, dim=1)
         num = int(features.shape[0]/2)
         p = features[:num, :].detach().clone()
-        p_clu, self.cluster_centers = kmeans(
-                X=p, num_clusters=6, device=self.args.device, tol=1e-3, tqdm_flag=False,
-            )
-        
+        p_clu, self.cluster_centers = kmeans(X=p, num_clusters=6, device=self.args.device, if_tqdm=False)
+
         masks_aa = (p_clu.unsqueeze(0) == p_clu.unsqueeze(1)).float()
         masks_ab = masks_aa - torch.eye(p.shape[0]).to(self.args.device)
 
@@ -138,24 +134,27 @@ class SimCLR_cluster(object):
             acc_batch = AverageMeter('acc_batch', ':6.2f')
             loss_batch = AverageMeter('loss_batch', ':6.5f')
             for sensor, _ in train_loader:
-                sensor = torch.cat(sensor, dim=0)
-                sensor = sensor.to(self.args.device)
+                # sensor = torch.cat(sensor, dim=0)
+                # sensor = sensor.to(self.args.device)
+                sensor[0] = sensor[0].to(self.args.device)
+                sensor[1] = sensor[1].to(self.args.device)
 
                 with autocast(enabled=self.args.fp16_precision):
                     ##### Improved
-                    features = self.model(sensor)
-                    logits, labels = self.cluster_loss_optimized(features)
-                    loss = self.criterion(logits, labels)
+                    # features = self.model(sensor)
+                    # logits, labels = self.cluster_loss_optimized(features)
+                    # loss = self.criterion(logits, labels)
 
                     ##### original
-                    # p1 = self.model(sensor[0])
-                    # p2 = self.model(sensor[1])
+                    p1 = self.model(sensor[0])
+                    p2 = self.model(sensor[1])
                     
-                    # logits1, logits2, labels = self.cluster_loss(p1, p2)
-                    # loss1 = self.criterion(logits1, labels)
-                    # loss2 = self.criterion(logits2, labels)
+                    logits1, logits2, labels = self.cluster_loss(p1, p2)
+                    labels = labels.to(self.args.device)
+                    loss1 = self.criterion(logits1, labels)
+                    loss2 = self.criterion(logits2, labels)
 
-                    # loss = loss1 + loss2
+                    loss = loss1 + loss2
 
                 self.optimizer.zero_grad()
 
@@ -164,14 +163,14 @@ class SimCLR_cluster(object):
                 scaler.step(self.optimizer)
                 scaler.update()
                 
-                acc = accuracy(logits, labels, topk=(1,))
+                acc = 0.5 * (accuracy(logits1, labels, topk=(1,)) + accuracy(logits2, labels, topk=(1,)))
                 acc_batch.update(acc, sensor[0].size(0))
                 loss_batch.update(loss, sensor[0].size(0))
 
                 if n_iter % self.args.log_every_n_steps == 0:
                     self.writer.add_scalar('loss', loss, global_step=n_iter)
                     self.writer.add_scalar('acc', acc, global_step=n_iter)
-                    self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter)
+                    # self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter)
 
                 n_iter += 1
 
@@ -227,7 +226,7 @@ class SimCLR_cluster(object):
                 self.model.train()
             else: 
                 self.model.eval()
-                self.model.classifier.train()
+                self.model.Classifier.train()
 
             for sensor, target in tune_loader:
 
@@ -251,7 +250,7 @@ class SimCLR_cluster(object):
                     self.writer.add_scalar('loss', loss, global_step=n_iter_train)
                     self.writer.add_scalar('acc', acc, global_step=n_iter_train)
                     self.writer.add_scalar('f1', f1, global_step=n_iter_train)
-                    self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter_train)
+                    # self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter_train)
 
                 n_iter_train += 1
 
@@ -274,7 +273,6 @@ class SimCLR_cluster(object):
 
             self.writer.add_scalar('eval acc', val_acc, global_step=epoch_counter)
             self.writer.add_scalar('eval f1', val_f1, global_step=epoch_counter)
-            self.scheduler.step()
             logging.debug(f"Epoch: {epoch_counter} Loss: {loss} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch.avg: .3f}/{val_f1: .3f}")
         
         logging.info("Fine-tuning has finished.")
@@ -293,5 +291,4 @@ class SimCLR_cluster(object):
 
         print('test f1 is {} for {}'.format(test_f1, self.args.name))
         print('test acc is {} for {}'.format(test_acc, self.args.name))
-
 

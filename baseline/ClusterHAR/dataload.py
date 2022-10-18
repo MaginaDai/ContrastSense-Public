@@ -2,6 +2,8 @@ import torch
 import sys
 import numpy as np
 import os
+import random
+from scipy.interpolate import interp1d
 from os.path import dirname
 sys.path.append(dirname(dirname(sys.path[0])))
 
@@ -15,40 +17,57 @@ from exceptions.exceptions import InvalidDatasetSelection
 
 
 
+class Resampling(object):
+    """ https://arxiv.org/abs/2109.02054 
+        adapted from https://github.com/diheal/resampling
+    """
+    def __call__(self, sensor):
+        M, N = random.choice([[1, 0], [2, 1], [3, 2]])
+
+        time_steps = sensor.shape[0]
+        raw_set = np.arange(sensor.shape[0])
+        interp_steps = np.arange(0, raw_set[-1] + 1e-1, 1 / (M + 1))
+        
+        x_interp = interp1d(raw_set, sensor, axis=0)
+        x_up = x_interp(interp_steps)
+
+        length_inserted = x_up.shape[0]
+        start = random.randint(0, length_inserted - time_steps * (N + 1))
+        index_selected = np.arange(start, start + time_steps * (N + 1), N + 1)
+        return x_up[index_selected, :]
+
 
 class ClusterCLDataset:
-    def __init__(self, transfer, M, N, version, datasets_name=None):
+    def __init__(self, transfer, version, datasets_name=None):
         self.transfer = transfer
         self.datasets_name = datasets_name
-        self.M = M
-        self.N = N
         self.version = version
 
     def get_simclr_pipeline_transform(self):
         """Return a set of data augmentation transformations as described in my presentation."""
         imu_toTensor = imu_transforms.ToTensor()
-        imu_resample = imu_transforms.IMU_Resampling(M=self.M, N=self.N)
+        imu_resample = Resampling()
         data_transforms = transforms.Compose([imu_resample,
                                               imu_toTensor])
         return data_transforms
 
-    def get_dataset(self, split, n_views=2, percent=20):
+    def get_dataset(self, split, n_views=2, percent=20, shot=None):
         if self.transfer is False:
             # here it is for generating positive samples and negative samples
             return ClusterHARDataset4Training(self.datasets_name, self.version, n_views, 
                                     transform=SingleViewGenerator(imu_transforms.ToTensor(), self.get_simclr_pipeline_transform()),
-                                    split=split, transfer=self.transfer, percent=percent)
+                                    split=split, transfer=self.transfer, percent=percent, shot=shot)
         elif split == 'train' or split == 'tune':
                 # here it is for data augmentation, make it more challenging.
             return ClusterHARDataset4Training(self.datasets_name, self.version, n_views,
                                     self.get_simclr_pipeline_transform(),
-                                    split=split, transfer=self.transfer, percent=percent)
+                                    split=split, transfer=self.transfer, percent=percent, shot=shot)
         else:  # val or test
             return ClusterHARDataset4Training(self.datasets_name, self.version, n_views,
                                     transform=transforms.Compose([
                                         imu_transforms.ToTensor()
                                         ]),
-                                    split=split, transfer=self.transfer, percent=percent)
+                                    split=split, transfer=self.transfer, percent=percent, shot=shot)
 
 
 class ClusterHARDataset4Training(Dataset):

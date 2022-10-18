@@ -9,7 +9,9 @@ import torch
 import yaml
 from tqdm import tqdm
 from typing import NamedTuple
+from data_aug.contrastive_learning_dataset import fetch_dataset_root
 from data_aug.imu_transforms import ACT_Translated_labels, HHAR_movement
+from data_aug.preprocessing import UsersPosition
 from exceptions.exceptions import InvalidDatasetSelection
 from judge import AverageMeter
 from torch.cuda.amp import autocast
@@ -129,7 +131,7 @@ def MoCo_evaluate(model, criterion, args, data_loader):
             target = target[:, 0].to(args.device)
 
             with autocast(enabled=args.fp16_precision):
-                logits = model(sensor)
+                logits, _ = model(sensor)
                 loss = criterion(logits, target)
 
             losses.update(loss.item(), sensor.size(0))
@@ -413,3 +415,21 @@ def load_bert_classifier_data_config(args):
 
 def count_model_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
+def identify_users_number(version, dataset):
+    ori_dir = fetch_dataset_root(dataset)
+    dir = ori_dir + '_' + version + '/train_set.npz'
+    data = np.load(dir)
+    train_set = data['train_set']
+    user = []
+    for i in train_set:
+        sub_dir = ori_dir + '/' + i
+        data = np.load(sub_dir, allow_pickle=True)
+        if dataset == 'Shoaib':
+            user.append(int(data['add_infor'][0, UsersPosition[dataset]]))
+        else:
+            user.append(data['add_infor'][0, UsersPosition[dataset]])
+    
+    user_type = np.unique(user)
+    return len(user_type)

@@ -16,9 +16,9 @@ from CPC import CPCV1, CPC
 from DeepSense import DeepSense_encoder
 from MoCo import MoCo_model, MoCo_v1, MoCo_encoder, MoCo
 from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
-from data_aug.preprocessing import ClassesNum
+from data_aug.preprocessing import ClassesNum, UsersNum
 from simclr import SimCLR, MyNet, LIMU_encoder
-from utils import MoCo_evaluate, evaluate, load_model_config, CPC_evaluate, seed_torch
+from utils import MoCo_evaluate, evaluate, identify_users_number, load_model_config, CPC_evaluate, seed_torch
 import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -28,14 +28,14 @@ model_names = sorted(name for name in models.__dict__
 
 parser = argparse.ArgumentParser(description='PyTorch SimCLR for Wearable Sensing')
 
-parser.add_argument('--pretrained', default='test_HHAR', type=str,
+parser.add_argument('--pretrained', default='Origin_wo_HASC', type=str,
                     help='path to SimClR pretrained checkpoint')
-parser.add_argument('-ft', '--if-fine-tune', default=False, type=bool, help='to decide whether tune all the layers')
+parser.add_argument('-ft', '--if-fine-tune', default=True, type=bool, help='to decide whether tune all the layers')
 parser.add_argument('-if-val', default=True, type=bool, help='to decide whether use validation set')
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
-parser.add_argument('-shot', default=None, type=int, help='how many shots of labels to use')
+parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
-parser.add_argument('-name', default='HHAR',
+parser.add_argument('-name', default='Shoaib',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'ICHAR', 'HASC'])
 
 parser.add_argument('-j', '--workers', default=2, type=int, metavar='N',
@@ -67,7 +67,7 @@ parser.add_argument('-t', '--temperature', default=1, type=float,
 parser.add_argument('-g', '--gpu-index', default=0, type=int, help='Gpu index.')
 parser.add_argument('--evaluate', default=False, type=bool, help='To decide whether to evaluate')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
-parser.add_argument('--store', default=None, type=str, help='define the name head for model storing')
+parser.add_argument('--store', default='Origin_wo_transfer_DAL_Shoaib', type=str, help='define the name head for model storing')
 parser.add_argument('--mol', default='MoCo', type=str, help='which model to use', choices=['SimCLR', 'LIMU', 'CPC', 'MoCo', 'DeepSense'])
 
 parser.add_argument('--timestep', default=15, type=int, help='how many time steps for CPC')
@@ -81,7 +81,10 @@ parser.add_argument('-final_dim', default=8, type=int, help='the output dims of 
 parser.add_argument('-mo', default=0.9, type=float, help='the momentum for Batch Normalization')
 
 parser.add_argument('-drop', default=0.1, type=float, help='the dropout portion')
-parser.add_argument('-version', default="50_200", type=str, help='control the version of the setting')
+parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
+parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
+parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate')
+
 
 def main():
     args = parser.parse_args()
@@ -117,6 +120,16 @@ def main():
         test_dataset, batch_size=args.batch_size, shuffle=True,
         num_workers=args.workers, pin_memory=False, drop_last=False)
 
+
+    if args.DAL:
+        user_num = UsersNum[args.name]
+        train_dataset =  dataset.get_dataset('train')
+        train_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=256, shuffle=True,
+        num_workers=args.workers, pin_memory=False, drop_last=False)
+    else:
+        user_num = None
+    
     if args.mol == 'LIMU':
         model_cfg = load_model_config(target='pretrain_base', prefix='base', version='v1')
         model = LIMU_encoder(model_cfg, transfer=True, out_dim=args.out_dim, classes=ClassesNum[args.name])
@@ -124,7 +137,7 @@ def main():
         model = CPCV1(timestep=args.timestep, batch_size=args.batch_size, seq_len=104, transfer=True, classes=ClassesNum[args.name], dims=args.d)
     elif args.mol == 'MoCo':
         model = MoCo_model(transfer=True, out_dim=args.out_dim, classes=ClassesNum[args.name], dims=args.d, 
-                           classifier_dim=args.classifer_dims, final_dim=args.final_dim, momentum=args.mo, drop=args.drop)
+                           classifier_dim=args.classifer_dims, final_dim=args.final_dim, momentum=args.mo, drop=args.drop, DAL=args.DAL, users_class=user_num)
     elif args.mol == 'DeepSense':
         model = DeepSense_encoder(transfer=True, out_dim=args.out_dim, classes=ClassesNum[args.name], dims=args.d)
     else:
@@ -134,6 +147,9 @@ def main():
 
     classifier_name = []
     # load pre-trained model
+    for name, param in model.named_parameters():
+        if "classifier" in name or 'discriminator' in name:
+            classifier_name.append(name)
     if args.pretrained:
         if os.path.isfile(args.pretrained):
             checkpoint = torch.load(args.pretrained, map_location="cpu")
@@ -153,9 +169,6 @@ def main():
             log = model.load_state_dict(state_dict, strict=False)
             if not args.evaluate:
                 if args.mol == 'CPC' or args.mol == 'MoCo':
-                    for name, param in model.named_parameters():
-                        if "classifier" in name:
-                            classifier_name.append(name)
                     assert log.missing_keys == classifier_name
                 else:
                     assert log.missing_keys == ['linear2.weight', 'linear2.bias']
@@ -176,9 +189,12 @@ def main():
                 if name not in ['classifier']:
                     param.requires_grad = False
 
-    optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay, )
-
+    optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)
+    if args.DAL:
+        optimizer_DAL = torch.optim.Adam(model.parameters(), args.ad_lr, weight_decay=args.weight_decay)
+        scheduler_DAL = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_DAL, T_max=args.epochs, last_epoch=-1)
+        
 
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[150], gamma=args.s_gamma, last_epoch=-1)
 
@@ -196,8 +212,7 @@ def main():
             args.best_acc = best_acc
             model.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer'])
-            print("=> loaded checkpoint '{}' (epoch {})"
-                  .format(args.resume, checkpoint['epoch']))
+            print("=> loaded checkpoint '{}' (epoch {})".format(args.resume, checkpoint['epoch']))
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
 
@@ -221,13 +236,19 @@ def main():
             best_model_dir = os.path.join(cpc.writer.log_dir, 'model_best.pth.tar')
             cpc.test_performance(best_model_dir=best_model_dir, test_loader=test_loader)
         elif args.mol == 'MoCo':
-            moco = MoCo(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
+            if args.DAL:
+                moco = MoCo(model=model, optimizer=optimizer, scheduler=scheduler, args=args, optimizer_DAL=optimizer_DAL, scheduler_DAL=scheduler_DAL)
+            else:
+                moco = MoCo(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
             if args.evaluate:
                 test_acc, test_f1 = MoCo_evaluate(model=moco.model, criterion=moco.criterion, args=moco.args, data_loader=test_loader)
                 print('test f1: {}'.format('%.3f' % test_f1))
                 print('test acc: {}'.format('%.3f' % test_acc))
                 return
-            moco.transfer_train(tune_loader, val_loader)
+            if args.DAL and args.if_fine_tune:
+                moco.transfer_train_DAL(tune_loader, val_loader, train_loader)
+            else:
+                moco.transfer_train(tune_loader, val_loader)
             best_model_dir = os.path.join(moco.writer.log_dir, 'model_best.pth.tar')
             moco.test_performance(best_model_dir=best_model_dir, test_loader=test_loader)
         else:

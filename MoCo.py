@@ -4,6 +4,7 @@ from cmath import nan
 from configparser import NoOptionError
 from copy import deepcopy
 from itertools import dropwhile
+import numbers
 import os
 import logging
 import pdb
@@ -21,6 +22,7 @@ from tqdm import tqdm
 from DeepSense import DeepSense_encoder
 
 from SupContrast import SupConLoss
+from data_aug.preprocessing import UsersNum
 from figure_plot.figure_plot import t_SNE_view
 from judge import AverageMeter
 from neg_select import PCA_torch
@@ -33,31 +35,35 @@ from sklearn.manifold import TSNE
 
 
 class MoCo_model(nn.Module):
-    def __init__(self, transfer=False, out_dim=512, classes=6, dims=32, classifier_dim=None, final_dim=8, momentum=0.9, drop=0.1, DAL=False):
+    def __init__(self, transfer=False, out_dim=512, classes=6, dims=32, classifier_dim=None, final_dim=8, momentum=0.9, drop=0.1, DAL=False, users_class=None):
         super(MoCo_model, self).__init__()
         self.DAL = DAL
         self.encoder = MoCo_encoder(dims=dims, momentum=momentum, drop=drop)
         if transfer:
             self.classifier = MoCo_classifier(classes=classes, dims=dims, classifier_dim=classifier_dim, final_dim=final_dim, drop=drop)
         else:
-            if self.DAL:
-                self.discriminator = MoCo_discriminator(out_dim=out_dim)
             self.projector = MoCo_projector(out_dim=out_dim)
+        if self.DAL:
+            if users_class is None:
+                self.discriminator = MoCo_discriminator(out_dim=out_dim)
+            else:
+                self.discriminator = MoCo_discriminator(out_dim=users_class)
+                print(users_class)
         self.transfer = transfer
         
 
     def forward(self, x):
         h = self.encoder(x)
         if self.transfer:
-            y = self.classifier(h)
-            return y
+            z = self.classifier(h)
         else:
             z = self.projector(h)
-            if self.DAL:
-                d = self.discriminator(h)
-            else:
-                d = None
-            return z, d
+
+        if self.DAL:
+            d = self.discriminator(h)
+        else:
+            d = None
+        return z, d
 
 
 class MoCo_classifier(nn.Module):
@@ -288,7 +294,7 @@ class MoCo_v1(nn.Module):
     https://arxiv.org/abs/1911.05722
     """
     def __init__(self, device, transfer=False, out_dim=128, K=65536, m=0.999, T=0.07, T_labels=None, classes=6, dims=32,\
-                 label_type=2, num_clusters=None, mol='MoCo', final_dim=32, momentum=0.9, drop=0.1, DAL=False, if_cross_entropy=False):
+                 label_type=2, num_clusters=None, mol='MoCo', final_dim=32, momentum=0.9, drop=0.1, DAL=False, if_cross_entropy=False, users_class=None):
         """
         dim: feature dimension (default: 128)
         K: queue size; number of negative keys (default: 65536)
@@ -308,8 +314,14 @@ class MoCo_v1(nn.Module):
         # create the encoders
         # num_classes is the output fc dimension
         if mol == 'MoCo':
-            self.encoder_q = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, final_dim=final_dim, momentum=momentum, drop=drop, DAL=self.DAL)
-            self.encoder_k = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, final_dim=final_dim, momentum=momentum, drop=drop, DAL=self.DAL)
+            if self.if_cross_entropy:
+                self.encoder_q = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, 
+                                            final_dim=final_dim, momentum=momentum, drop=drop, DAL=self.DAL, users_class=users_class)
+                self.encoder_k = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims,
+                                            final_dim=final_dim, momentum=momentum, drop=drop, DAL=self.DAL, users_class=users_class)
+            else:
+                self.encoder_q = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, final_dim=final_dim, momentum=momentum, drop=drop, DAL=self.DAL)
+                self.encoder_k = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, final_dim=final_dim, momentum=momentum, drop=drop, DAL=self.DAL)
         elif mol == 'DeepSense':
             self.encoder_q = DeepSense_encoder(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims)
             self.encoder_k = DeepSense_encoder(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims)
@@ -322,7 +334,10 @@ class MoCo_v1(nn.Module):
 
         # create the queue
         self.register_buffer("queue", torch.randn(out_dim, K))
-        self.register_buffer("queue_dis", torch.randn(out_dim, K))
+        if users_class is not None:
+            self.register_buffer("queue_dis", torch.randn(users_class, K))
+        else:
+            self.register_buffer("queue_dis", torch.randn(out_dim, K))
         self.register_buffer("queue_labels", torch.randint(0, 10, [K, label_type]))  # store label for SupCon
         self.register_buffer("queue_gt", torch.randint(0, 10, [K, 1])) # store label for visualization
 
@@ -534,6 +549,9 @@ class MoCo(object):
         self.model = kwargs['model'].to(self.args.device)
         self.optimizer = kwargs['optimizer']
         self.scheduler = kwargs['scheduler']
+        if self.args.DAL and self.args.transfer:
+            self.optimizer_DAL = kwargs['optimizer_DAL']
+            self.scheduler_DAL = kwargs['scheduler_DAL']
         writer_pos = './runs/' + self.args.store + '/'
         if self.args.transfer is True:
             if self.args.if_fine_tune:
@@ -719,7 +737,7 @@ class MoCo(object):
                 target = target[:, 0].to(self.args.device)
 
                 with autocast(enabled=self.args.fp16_precision):
-                    logits = self.model(sensor)
+                    logits, _ = self.model(sensor)
                     loss = self.criterion(logits, target)
 
                 self.optimizer.zero_grad()
@@ -779,3 +797,114 @@ class MoCo(object):
 
         print('test f1 is {} for {}'.format(test_f1, self.args.name))
         print('test acc is {} for {}'.format(test_acc, self.args.name))
+    
+    def transfer_train_DAL(self, tune_loader, val_loader, train_loader):
+        """
+        train loader is for domain adversial learning
+        we only consider fine-tune + DAL. Linear Evaluation is not considered for this type of learning. 
+        """
+        assert self.args.if_fine_tune is True
+        
+        scaler = GradScaler(enabled=self.args.fp16_precision)
+
+        # save config file
+        save_config_file(self.writer.log_dir, self.args)
+
+        n_iter_train = 0
+        n_iter_train_DAL = 0
+        logging.info(f"Start MoCo fine-tuning head for {self.args.epochs} epochs.")
+        logging.info(f"Training with gpu: {not self.args.disable_cuda}.")
+
+        acc = 0
+        f1 = 0
+        best_epoch = 0
+
+        if self.args.resume:
+            best_f1 = self.args.best_f1
+            best_acc = self.args.best_acc
+        else:
+            best_f1 = 0
+            best_acc = 0
+
+        for epoch_counter in tqdm(range(self.args.epochs)):
+            acc_batch = AverageMeter('acc_batch', ':6.2f')
+            f1_batch = AverageMeter('f1_batch', ':6.2f')
+            self.model.train()
+
+            for sensor, target in tune_loader:
+
+                sensor = sensor.to(self.args.device)
+                target = target[:, 0].to(self.args.device)
+
+                with autocast(enabled=self.args.fp16_precision):
+                    h = self.model.encoder(sensor)
+                    logits = self.model.classifier(h)
+                    loss = self.criterion(logits, target)  # fine-tune for HAR
+
+                self.optimizer.zero_grad()
+                scaler.scale(loss).backward()
+                scaler.step(self.optimizer)
+                scaler.update()
+
+                acc = accuracy(logits, target, topk=(1,))
+                f1 = f1_cal(logits, target, topk=(1,))
+                acc_batch.update(acc, sensor.size(0))
+                f1_batch.update(f1, sensor.size(0))
+                if n_iter_train % self.args.log_every_n_steps == 0:
+                    self.writer.add_scalar('loss', loss, global_step=n_iter_train)
+                    self.writer.add_scalar('acc', acc, global_step=n_iter_train)
+                    self.writer.add_scalar('f1', f1, global_step=n_iter_train)
+                    self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter_train)
+
+                n_iter_train += 1
+            
+            for sensor, target in train_loader:
+
+                sensor = sensor.to(self.args.device)
+                target = target[:, 1].to(self.args.device)
+
+                with autocast(enabled=self.args.fp16_precision):
+                    h = self.model.encoder(sensor)
+                    logits = self.model.discriminator(h)
+                    loss = self.criterion(logits, target)  # train for users discrimination
+                
+                if n_iter_train % self.args.log_every_n_steps == 0:
+                    self.writer.add_scalar('loss_DAL', loss, global_step=n_iter_train_DAL)
+                    self.writer.add_scalar('lr_DAL', self.scheduler_DAL.get_last_lr()[0], global_step=n_iter_train_DAL)
+                n_iter_train_DAL += 1
+                self.optimizer_DAL.zero_grad()
+                scaler.scale(loss).backward()
+                scaler.step(self.optimizer_DAL)
+                scaler.update()
+
+            if self.args.if_val:
+                val_acc, val_f1 = MoCo_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
+            else:
+                val_acc = 0
+
+            is_best = val_f1 > best_f1
+
+            if epoch_counter >= 10:  # only after the first 10 epochs, the best_f1/acc is updated.
+                best_f1 = max(val_f1, best_f1)
+                best_acc = max(val_acc, best_acc)
+            if is_best:
+                best_epoch = epoch_counter
+                checkpoint_name = 'model_best.pth.tar'
+                save_checkpoint({
+                    'epoch': epoch_counter,
+                    'state_dict': self.model.state_dict(),
+                    'best_f1': best_f1, 
+                    'optimizer': self.optimizer.state_dict(),
+                }, is_best, filename=os.path.join(self.writer.log_dir, checkpoint_name), path_dir=self.writer.log_dir)
+
+            self.writer.add_scalar('eval acc', val_acc, global_step=epoch_counter)
+            self.writer.add_scalar('eval f1', val_f1, global_step=epoch_counter)
+            self.scheduler.step()
+            self.scheduler_DAL.step()
+            logging.debug(f"Epoch: {epoch_counter} Loss: {loss} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch.avg: .3f}/{val_f1: .3f}")
+
+        logging.info("Fine-tuning has finished.")
+        logging.info(f"best eval f1 is {best_f1} at {best_epoch}.")
+
+        print('best eval f1 is {} for {}'.format(best_f1, self.args.name))
+

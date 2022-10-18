@@ -27,7 +27,7 @@ class Cluster_Projector(nn.Module):
     def __init__(self):
         super(Cluster_Projector, self).__init__()
         self.relu = nn.ReLU()
-        self.linear1 = nn.Linear(155, 96)
+        self.linear1 = nn.Linear(96, 96)
         self.linear2 = nn.Linear(96, 96)
         self.linear3 = nn.Linear(96, 96)
         

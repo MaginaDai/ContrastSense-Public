@@ -28,13 +28,13 @@
 # done
 
 
-name="DAL_w_normalize"
-python main.py -g 1 -label_type 1 -slr 0.5 -lr 0.0001 -DAL True -name 'HASC' --store "${name}_HASC" &
-python main.py -g 1 -label_type 1 -slr 0.5 -lr 0.0001 -DAL True -name 'HHAR' --store "${name}_HHAR" &
-python main.py -g 2 -label_type 1 -slr 0.5 -lr 0.0001 -DAL True -name 'MotionSense' --store "${name}_MotionSense" &
-python main.py -g 2 -label_type 1 -slr 0.5 -lr 0.0001 -DAL True -name 'Shoaib' --store "${name}_Shoaib"
+name="DAL_CE"
+# python main.py -g 1 -label_type 1 -slr 0.5 -lr 0.0001 -CE True -DAL True -name 'HASC' --store "${name}_HASC" &
+# python main.py -g 1 -label_type 1 -slr 0.5 -lr 0.0001 -CE True -DAL True -name 'HHAR' --store "${name}_HHAR" &
+# python main.py -g 2 -label_type 1 -slr 0.5 -lr 0.0001 -CE True -DAL True -name 'MotionSense' --store "${name}_MotionSense" &
+# python main.py -g 2 -label_type 1 -slr 0.5 -lr 0.0001 -CE True -DAL True -name 'Shoaib' --store "${name}_Shoaib"
 
-wait
+# wait
 
 for lr in 0.0001
 do
@@ -44,6 +44,8 @@ do
     python main_transfer.py -g 2 -ft True -lr 0.0001 -version shot -shot 10 -name MotionSense  --pretrained "${name}_MotionSense"  #######
     wait
 done
+
+
 
 # name="DAL"
 # python main.py -g 1 -name HHAR --store "${name}_HHAR" -DAL True
@@ -101,3 +103,12 @@ done
     
 # done
 
+# name="Origin_wo"
+
+# for ad_lr in 0.0000001 0.0000005 0.000005 0.00001 0.00005
+# do
+#     python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -ad-lr ${ad_lr} -name HASC --pretrained "${name}_HASC"  --store "Origin_wo_transfer_DAL_lr${ad_lr}_sep" &
+#     python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -ad-lr ${ad_lr} -name HHAR --pretrained "${name}_HHAR" --store "Origin_wo_transfer_DAL_lr${ad_lr}_sep" &
+#     python main_transfer.py -DAL True -g 1 -ft True -lr 0.0001 -version shot -shot 10 -ad-lr ${ad_lr} -name Shoaib --pretrained "${name}_Shoaib" --store "Origin_wo_transfer_DAL_lr${ad_lr}_sep" &
+#     python main_transfer.py -DAL True -g 1 -ft True -lr 0.0001 -version shot -shot 10 -ad-lr ${ad_lr} -name MotionSense  --pretrained "${name}_MotionSense" --store "Origin_wo_transfer_DAL_lr${ad_lr}_sep"
+# done

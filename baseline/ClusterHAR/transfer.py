@@ -6,7 +6,7 @@ from copy import deepcopy
 from os.path import dirname
 from TPN_model import Encoder, Transfer_Coder
 from dataload import ClusterCLDataset
-from simclr_framework import SimCLR
+from simclr_framework import SimCLR_cluster
 sys.path.append(dirname(dirname(sys.path[0])))
 from data_aug.preprocessing import ClassesNum
 from utils import evaluate, seed_torch
@@ -15,18 +15,17 @@ import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
-parser.add_argument('-lr', '--learning-rate', default=0.1, type=float, metavar='LR', help='initial learning rate', dest='lr')
+parser.add_argument('-lr', '--learning-rate', default=0.01, type=float, metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--transfer', default=False, type=str, help='to tell whether we are doing transfer learning')
 parser.add_argument('--pretrained', default='', type=str, help='path to pretrained checkpoint')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
-parser.add_argument('-b', '--batch-size', default=1024, type=int, metavar='N',
-                    help='mini-batch size (default: 1024), this is the total '
+parser.add_argument('-b', '--batch-size', default=50, type=int, metavar='N',
+                    help='mini-batch size (default: 50), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('-name', default='HHAR', help='datasets name', choices=['UciHarDataset', 'UotHarDataset', 'HHAR',\
-                    'MotionSense', 'UCI', 'Shoaib', 'HHAR 50', 'HHAR 100', 'HHAR 50_200', 'HHAR 50_400'])
-parser.add_argument('-wd', '--weight-decay', default=1e-4, type=float, metavar='W', help='weight decay (default: 1e-4)', dest='weight_decay')
+parser.add_argument('-name', default='HHAR', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR'])
+
 parser.add_argument('--log-every-n-steps', default=5, type=int, help='Log every n steps')
 parser.add_argument('-g', '--gpu-index', default=0, type=int, help='Gpu index.')
 parser.add_argument('--fp16-precision', action='store_true', help='Whether or not to use 16-bit precision GPU training.')
@@ -34,14 +33,16 @@ parser.add_argument('-t', '--temperature', default=0.1, type=float, help='softma
 
 parser.add_argument('--disable-cuda', action='store_true', help='Disable CUDA')
 parser.add_argument('-j', '--workers', default=5, type=int, metavar='N', help='number of data loading workers (default: 5)')
-parser.add_argument('--store', default='lr', type=str, help='define the name head for model storing')
+parser.add_argument('--store', default=None, type=str, help='define the name head for model storing')
 parser.add_argument('-e', '--epochs', default=200, type=int, metavar='N', help='number of total epochs to run')
 parser.add_argument('-M', default=2, type=int, metavar='N', help='Numbers of interpolation points')
 parser.add_argument('-N', default=2, type=int, metavar='N', help='Interval')
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
+parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
+
 parser.add_argument('--evaluate', default=False, type=bool, help='decide whether to evaluate')
 parser.add_argument('-ft', '--if-fine-tune', default=False, type=bool, help='to decide whether tune all the layers')
-parser.add_argument('-version', default="test_3", type=str, help='control the version of the setting')
+parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
 
 
 def main():
@@ -63,8 +64,8 @@ def main():
     
     args.pretrained = './runs/' + args.pretrained + '/model_best.pth.tar'
 
-    dataset = ClusterCLDataset(transfer=True, M=args.M, N=args.N, version=args.version, datasets_name=args.name)
-    tune_dataset = dataset.get_dataset('tune', percent=args.percent)
+    dataset = ClusterCLDataset(transfer=True, version=args.version, datasets_name=args.name)
+    tune_dataset = dataset.get_dataset('tune', percent=args.percent, shot=args.shot)
     val_dataset = dataset.get_dataset('val')
     test_dataset = dataset.get_dataset('test')
 
@@ -80,7 +81,7 @@ def main():
         test_dataset, batch_size=args.batch_size, shuffle=True,
         num_workers=args.workers, pin_memory=False, drop_last=False)
 
-    model = Transfer_Coder(classes=ClassesNum[args.name])
+    model = Transfer_Coder(classes=ClassesNum[args.name], method='Cluster')
 
     # model.to(args.device)
 
@@ -101,16 +102,18 @@ def main():
         else:
             print("=> no checkpoint found at '{}'".format(args.pretrained))
 
-    if not args.if_fine_tune:
-        # froze the parameter
+
+    if args.if_fine_tune:
+        for name, param in model.named_parameters():
+            if 'TPN' in name and 'convA' in name:  # the last two layers are un-freezed
+                param.requires_grad = False
+    else:
+        # froze the parameter of the TPN encoder
         for name, param in model.named_parameters():
             if 'TPN' in name:
                 param.requires_grad = False
 
-    optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
-
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=0,
-    #                                                        last_epoch=-1)
+    optimizer = torch.optim.Adam(model.parameters(), args.lr)
 
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[250], gamma=0.5, last_epoch=-1)
 
@@ -140,9 +143,10 @@ def main():
 
     #  It’s a no-op if the 'gpu_index' argument is a negative integer or None.
     with torch.cuda.device(args.gpu_index):
-        simclr = SimCLR(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
+        simclr = SimCLR_cluster(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
         if args.evaluate:
-            test_acc = evaluate(model=simclr.model, criterion=simclr.criterion, args=simclr.args, data_loader=test_loader)
+            test_acc, test_f1 = evaluate(model=simclr.model, criterion=simclr.criterion, args=simclr.args, data_loader=test_loader)
+            print('test f1: {}'.format('%.3f' % test_f1))
             print('test acc: {}'.format('%.3f' % test_acc))
             return
         simclr.transfer_train(tune_loader, val_loader)
