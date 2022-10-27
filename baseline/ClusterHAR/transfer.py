@@ -86,6 +86,9 @@ def main():
     # model.to(args.device)
 
     classifier_name = []
+    for name, param in model.named_parameters():
+        if "Classifier" in name:
+            classifier_name.append(name)
     # load pre-trained model
     if args.pretrained:
         if os.path.isfile(args.pretrained):
@@ -94,9 +97,6 @@ def main():
             args.start_epoch = 0
             log = model.load_state_dict(state_dict, strict=False)
             if not args.evaluate:
-                for name, param in model.named_parameters():
-                    if "Classifier" in name:
-                        classifier_name.append(name)
                 assert log.missing_keys == classifier_name
             print("=> loaded pre-trained model '{}'".format(args.pretrained))
         else:

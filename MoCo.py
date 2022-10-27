@@ -48,7 +48,7 @@ class MoCo_model(nn.Module):
                 self.discriminator = MoCo_discriminator(out_dim=out_dim)
             else:
                 self.discriminator = MoCo_discriminator(out_dim=users_class)
-                print(users_class)
+                # print(users_class)
         self.transfer = transfer
         
 

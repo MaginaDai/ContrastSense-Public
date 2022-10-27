@@ -11,7 +11,6 @@ class TPN_encoder(nn.Module):
         self.convA = nn.Conv1d(6, 32, kernel_size=(24, 1), stride=1)
         self.convB = nn.Conv1d(32, 64, kernel_size=(16, 1), stride=1)
         self.convC = nn.Conv1d(64, 96, kernel_size=(8, 1), stride=1)
-        nn.MaxPool1d
 
     def forward(self, x):
         x = x.permute(0, 3, 2, 1)
@@ -19,7 +18,7 @@ class TPN_encoder(nn.Module):
         h = self.dropout(self.relu(self.convB(h)))
         h = self.dropout(self.relu(self.convC(h)))
         h = h.reshape(h.shape[0], h.shape[1], -1)
-        h = F.max_pool1d(h, kernel_size=h.size()[-1])  # apply to the feature dims I think
+        h = F.max_pool1d(h, kernel_size=h.size()[-1]) 
         return h
     
 
@@ -46,7 +45,8 @@ class CL_Projector(nn.Module):
         self.linear1 = nn.Linear(96, 256)
         self.linear2 = nn.Linear(256, 128)
         self.linear3 = nn.Linear(128, 50)
-        
+        self.conv1_acc_BN =torch.nn.BatchNorm2d(num_features=256, momentum=0.9, affine=False)
+        self.conv1_acc_BN =torch.nn.BatchNorm2d(num_features=128, momentum=0.9, affine=False)
     
     def forward(self, x):
         x = x.reshape(x.shape[0], -1)

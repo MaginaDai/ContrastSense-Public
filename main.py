@@ -72,7 +72,7 @@ parser.add_argument('-s_gamma', default=0.5, type=float, help='the gamma of Step
 
 parser.add_argument('-label_type', default=1, type=int, help='How many different kinds of labels for pretraining')
 parser.add_argument('-slr', default=[0.3], nargs='+', type=float, help='the ratio of sup_loss')
-parser.add_argument('-tem_labels', default=[0.1, 0.1], nargs='+', type=float, help='the temperature for supervised CL')
+parser.add_argument('-tem_labels', default=[0.1], nargs='+', type=float, help='the temperature for supervised CL')
 
 parser.add_argument('-num_clusters', default=None, type=int, help='number of clusters for K-means')
 parser.add_argument('-iter_tol', default=None, type=float, help='Max iteration number for clustering')
@@ -83,7 +83,7 @@ parser.add_argument('-mo', default=0.9, type=float, help='the momentum for Batch
 parser.add_argument('-drop', default=0.1, type=float, help='the dropout portion')
 parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
 parser.add_argument('-DAL', default=True, type=bool, help='Use Domain Adaversarial Learning or not')
-parser.add_argument('-CE', default=True, type=bool, help='Use Cross Entropy Domain Loss or not')
+parser.add_argument('-CE', default=False, type=bool, help='Use Cross Entropy Domain Loss or not')
 
 
 def main():

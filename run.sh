@@ -18,30 +18,37 @@
 # done
 
 
-# name="DAL"
+name="DAL_t"
 
-# for dataset in 'HASC' 'HHAR' 'MotionSense' 'Shoaib'
-# do
-#     python main.py -g 0 -label_type 1 -slr 0.5 -lr 0.00005 -DAL True -name ${dataset} --store "${name}_lr0.00005_${dataset}" &
-#     python main.py -g 0 -label_type 1 -slr 0.5 -lr 0.0005 -DAL True -name ${dataset} --store "${name}_lr0.0005_${dataset}" &
-#     wait
-# done
+for dataset in 'HASC' 'HHAR' 'MotionSense' 'Shoaib'
+do 
+    python main.py -g 0 -tem_labels 0.06 -label_type 1 -slr 0.5 -DAL True -name ${dataset} --store "${name}_0.06_${dataset}" &
+    python main.py -g 0 -tem_labels 0.07 -label_type 1 -slr 0.5 -DAL True -name ${dataset} --store "${name}_0.07_${dataset}" &
+    python main.py -g 1 -tem_labels 0.08 -label_type 1 -slr 0.5 -DAL True -name ${dataset} --store "${name}_0.08_${dataset}" &
+    python main.py -g 1 -tem_labels 0.09 -label_type 1 -slr 0.5 -DAL True -name ${dataset} --store "${name}_0.09_${dataset}" &
+    python main.py -g 1 -tem_labels 0.1 -label_type 1 -slr 0.5 -DAL True -name ${dataset} --store "${name}_0.1_${dataset}" &
+    python main.py -g 2 -tem_labels 0.2 -label_type 1 -slr 0.5 -DAL True -name ${dataset} --store "${name}_0.2_${dataset}" &
+    python main.py -g 2 -tem_labels 0.3 -label_type 1 -slr 0.5 -DAL True -name ${dataset} --store "${name}_0.3_${dataset}" &
+    python main.py -g 3 -tem_labels 0.4 -label_type 1 -slr 0.5 -DAL True -name ${dataset} --store "${name}_0.4_${dataset}" &
+    python main.py -g 3 -tem_labels 0.5 -label_type 1 -slr 0.5 -DAL True -name ${dataset} --store "${name}_0.5_${dataset}" 
+    wait
+done
 
 
-name="DAL_CE"
-# python main.py -g 1 -label_type 1 -slr 0.5 -lr 0.0001 -CE True -DAL True -name 'HASC' --store "${name}_HASC" &
-# python main.py -g 1 -label_type 1 -slr 0.5 -lr 0.0001 -CE True -DAL True -name 'HHAR' --store "${name}_HHAR" &
-# python main.py -g 2 -label_type 1 -slr 0.5 -lr 0.0001 -CE True -DAL True -name 'MotionSense' --store "${name}_MotionSense" &
-# python main.py -g 2 -label_type 1 -slr 0.5 -lr 0.0001 -CE True -DAL True -name 'Shoaib' --store "${name}_Shoaib"
+# name="DAL_t"
+# python main.py -g 1 -tem_labels 0.1 -label_type 1 -slr 0.5 -lr 0.0001 -DAL True -name 'HASC' --store "${name}_t_0.1_HASC" &
+# python main.py -g 1 -tem_labels 0.1 -label_type 1 -slr 0.5 -lr 0.0001 -DAL True -name 'HHAR' --store "${name}_t_0.1_HHAR" &
+# python main.py -g 2 -tem_labels 0.1 -label_type 1 -slr 0.5 -lr 0.0001 -DAL True -name 'MotionSense' --store "${name}_t_0.1_MotionSense" &
+# python main.py -g 2 -tem_labels 0.1 -label_type 1 -slr 0.5 -lr 0.0001 -DAL True -name 'Shoaib' --store "${name}_t_0.1_Shoaib"
 
 # wait
 
-for lr in 0.0001
+for t in 0.06 0.07 0.08 0.09 0.1 0.2 0.3 0.4 0.5
 do
-    python main_transfer.py -g 1 -ft True -lr 0.0001 -version shot -shot 10 -name HASC --pretrained "${name}_HASC" &
-    python main_transfer.py -g 1 -ft True -lr 0.0001 -version shot -shot 10 -name HHAR --pretrained "${name}_HHAR" &
-    python main_transfer.py -g 2 -ft True -lr 0.0001 -version shot -shot 10 -name Shoaib --pretrained "${name}_Shoaib" &
-    python main_transfer.py -g 2 -ft True -lr 0.0001 -version shot -shot 10 -name MotionSense  --pretrained "${name}_MotionSense"  #######
+    python main_transfer.py -g 1 -ft True -lr 0.0001 -version shot -shot 10 -name HASC --pretrained "${name}_${t}_HASC" &
+    python main_transfer.py -g 1 -ft True -lr 0.0001 -version shot -shot 10 -name HHAR --pretrained "${name}_${t}_HHAR" &
+    python main_transfer.py -g 2 -ft True -lr 0.0001 -version shot -shot 10 -name Shoaib --pretrained "${name}_${t}_Shoaib" &
+    python main_transfer.py -g 2 -ft True -lr 0.0001 -version shot -shot 10 -name MotionSense  --pretrained "${name}_${t}_MotionSense"  #######
     wait
 done
 
@@ -83,7 +90,7 @@ done
 #     python main.py -g 0 -label_type 1 -lr ${lr} -name HHAR --store "${name}_w_HHAR" &
 #     python main.py -g 1 -label_type 1 -lr ${lr} -name MotionSense --store "${name}_w_MotionSense" &
 #     python main.py -g 1 -label_type 1 -lr ${lr} -name Shoaib --store "${name}_w_Shoaib" &
-    
+
 #     wait
 
 #     python main_transfer.py -g 0 -ft True -lr ${lr} -version shot -shot 10 -name HASC --pretrained "${name}_wo_HASC" &
@@ -105,10 +112,11 @@ done
 
 # name="Origin_wo"
 
-# for ad_lr in 0.0000001 0.0000005 0.000005 0.00001 0.00005
+# for ad_lr in 0.000006 0.000007 0.000008 0.000009 0.00001 0.00002 0.00003 0.00004 0.00005
 # do
 #     python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -ad-lr ${ad_lr} -name HASC --pretrained "${name}_HASC"  --store "Origin_wo_transfer_DAL_lr${ad_lr}_sep" &
 #     python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -ad-lr ${ad_lr} -name HHAR --pretrained "${name}_HHAR" --store "Origin_wo_transfer_DAL_lr${ad_lr}_sep" &
 #     python main_transfer.py -DAL True -g 1 -ft True -lr 0.0001 -version shot -shot 10 -ad-lr ${ad_lr} -name Shoaib --pretrained "${name}_Shoaib" --store "Origin_wo_transfer_DAL_lr${ad_lr}_sep" &
 #     python main_transfer.py -DAL True -g 1 -ft True -lr 0.0001 -version shot -shot 10 -ad-lr ${ad_lr} -name MotionSense  --pretrained "${name}_MotionSense" --store "Origin_wo_transfer_DAL_lr${ad_lr}_sep"
+#     wait
 # done

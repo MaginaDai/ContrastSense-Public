@@ -67,7 +67,7 @@ parser.add_argument('-t', '--temperature', default=1, type=float,
 parser.add_argument('-g', '--gpu-index', default=0, type=int, help='Gpu index.')
 parser.add_argument('--evaluate', default=False, type=bool, help='To decide whether to evaluate')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
-parser.add_argument('--store', default='Origin_wo_transfer_DAL_Shoaib', type=str, help='define the name head for model storing')
+parser.add_argument('--store', default=None, type=str, help='define the name head for model storing')
 parser.add_argument('--mol', default='MoCo', type=str, help='which model to use', choices=['SimCLR', 'LIMU', 'CPC', 'MoCo', 'DeepSense'])
 
 parser.add_argument('--timestep', default=15, type=int, help='how many time steps for CPC')

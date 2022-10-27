@@ -2,11 +2,19 @@
 /__pycache__
 /datasets
 /original_dataset
+
 /kmeans_pytorch
+
 /baseline/__pycache__
-/baseline/LIMU_BERT/saved
+
 /baseline/CLHAR/runs
+/baseline/CLHAR/__pycache__
+
 /baseline/ClusterHAR/runs
+/baseline/ClusterHAR/__pycache__
+
+/baseline/LIMU_BERT/saved
 /baseline/LIMU_BERT/__pycache__
 
-
+/baseline/CPCHAR/runs
+/baseline/CPCHAR/__pycache__

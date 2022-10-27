@@ -156,7 +156,7 @@ def CPC_evaluate(model, criterion, args, data_loader):
             target = target.to(args.device)
 
             with autocast(enabled=args.fp16_precision):
-                logits = model.predict(sensor)
+                logits = model(sensor)
                 loss = criterion(logits, target)
 
             losses.update(loss.item(), sensor.size(0))

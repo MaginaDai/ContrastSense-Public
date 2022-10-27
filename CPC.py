@@ -39,11 +39,6 @@ class CPCEncoder(nn.Module):
         self.conv4_1 = torch.nn.Conv1d(dims, dims, kernel_size=5, stride=1, padding=2)
         self.conv4_2 = torch.nn.Conv1d(dims, dims, kernel_size=5, stride=1, padding=2)
 
-        # self.attn = MultiHeadedSelfAttention(dims)
-        # self.proj = nn.Linear(dims, dims)
-        # self.norm1 = LayerNorm(dims)
-        # self.pwff = PositionWiseFeedForward(hidden_dim=dims, hidden_ff=dims*2)
-        # self.norm2 = LayerNorm(dims)
 
     def forward(self, x):
         # extract in-sensor information

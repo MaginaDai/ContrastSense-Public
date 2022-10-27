@@ -83,6 +83,6 @@ def results_for_each_file(files):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    avg_result(args.name, ft=True)
-    # results_for_each_file(args.name)
+    # avg_result(args.name, ft=True)
+    results_for_each_file(args.name)
     # avg_result(name=args.name, ft=args.ft)

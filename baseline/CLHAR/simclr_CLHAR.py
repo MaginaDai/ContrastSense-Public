@@ -1,13 +1,9 @@
-from cProfile import label
-from contextlib import AsyncExitStack
 import logging
 import pdb
-from re import T
 import sys
 from os.path import dirname
-
 sys.path.append(dirname(dirname(sys.path[0])))
-from tkinter.ttk import LabeledScale
+
 from tqdm import tqdm
 from judge import AverageMeter
 from torch.utils.tensorboard import SummaryWriter
@@ -157,7 +153,7 @@ class SimCLR(object):
                 self.model.train()
             else: 
                 self.model.eval()
-                self.model.classifier.train()
+                self.model.Classifier.train()
 
             for sensor, target in tune_loader:
 
@@ -209,7 +205,6 @@ class SimCLR(object):
         logging.info(f"best eval f1 is {best_f1} at {best_epoch}.")
 
         print('best eval f1 is {} for {}'.format(best_f1, self.args.name))
-
 
     def test_performance(self, best_model_dir, test_loader):
         checkpoint = torch.load(best_model_dir, map_location="cpu")
