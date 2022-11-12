@@ -14,6 +14,7 @@ from torch.utils.data import Dataset, DataLoader, random_split
 from torchvision import transforms, utils
 from scipy.interpolate import interp1d
 from collections import Counter
+import random
 
 sys.path.append(dirname(sys.path[0]))
 sys.path.append(dirname(dirname(sys.path[0])))
@@ -172,8 +173,8 @@ def preprocessing_dataset_cross_person_val(dir, target_dir, dataset, test_portio
     train_num = [j for j in range(num) if u[j] in users_train_name]
     val_num =  [j for j in range(num) if u[j] in users_val_name]
 
-    # write_dataset(target_dir, train_num, val_num, test_num)
-    # write_balance_tune_set(dir, target_dir, dataset, dataset_size=num)
+    write_dataset(target_dir, train_num, val_num, test_num)
+    write_balance_tune_set(dir, target_dir, dataset, dataset_size=num)
     return
 
 
@@ -248,65 +249,77 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
     label = np.array(label)
     label_type = np.unique(label)
     label_type_num = len(label_type)
-
-    user_type = np.unique(user)
-    user_selected_num = np.max([int(len(user_type) * 0.4), 1])
-    np.random.shuffle(user_type)
-    user_selected = user_type[:user_selected_num]
-
-    print(label_type)
-    print(user_type)
+    print(label_type) 
     assert label_type_num == ClassesNum[dataset]
 
+    while True:
+        user_type = np.unique(user)
+        user_selected_num = np.max([int(len(user_type) * 0.4), 1])
+
+
+        np.random.shuffle(user_type)
+        user_selected = user_type[:user_selected_num]
+
+        if dataset_size is None:
+            set_size = fetch_instance_number_of_dataset(ori_dir)
+        else:
+            set_size = dataset_size
+        if if_percent:
+            for per in percent:
+                label_num = per*0.01*set_size
+                label_per_class = int(label_num / label_type_num)
+                tune_set = []
+                counter = []
+                if label_per_class < 1:
+                    label_per_class = 1  # at least one label for each class
+                    print("at least one sample per class")
+                
+                for i in label_type:
+                    idx = np.argwhere(label == i).squeeze()
+                    np.random.shuffle(idx)
+                    tune_set.extend(train_set[idx[:label_per_class]])
+                    counter.append(len(list(idx[:label_per_class])))
+
+                print(f"percent {per}: {len(tune_set)}")
+                print(f"each class {counter}")
+                loca = target_dir + 'tune_set_' + str(per).replace('.', '_') + '.npz'
+                np.savez(loca, tune_set=tune_set)
+        else:
+            irreasonable_segmentation = 0
+            for label_per_class in shot_num:
+                tune_set = []
+                counter = []
+                if label_per_class < 1:
+                    label_per_class = 1  # at least one label for each class
+                    print("at least one sample per class")
+                
+                for i in label_type:
+                    idx = np.argwhere((label == i)).squeeze()
+                    if if_cross_user:
+                        idx_user_selected = []
+                        for j in idx:
+                            if user[j] in user_selected:
+                                idx_user_selected.append(j)
+                        idx = np.array(idx_user_selected)
+                    np.random.shuffle(idx)
+                    if len(idx) == 0:
+                        irreasonable_segmentation = 1
+                        break
+                    tune_set.extend(train_set[idx[:label_per_class]])
+                    counter.append(len(list(idx[:label_per_class])))
+                
+                if irreasonable_segmentation:
+                    break
+
+                print(f"Shot num {label_per_class}: {len(tune_set)}")
+                loca = target_dir + 'tune_set_' + str(label_per_class).replace('.', '_') + '.npz'
+                np.savez(loca, tune_set=tune_set)
+            
+            if irreasonable_segmentation == 0:
+                break
+
+    print(user_type)
     print(f"motion classes {label_type_num}, total train num {len(label)}, total user num {len(user_type)}, user {user_selected} provides label")
-
-    if dataset_size is None:
-        set_size = fetch_instance_number_of_dataset(ori_dir)
-    else:
-        set_size = dataset_size
-    if if_percent:
-        for per in percent:
-            label_num = per*0.01*set_size
-            label_per_class = int(label_num / label_type_num)
-            tune_set = []
-            counter = []
-            if label_per_class < 1:
-                label_per_class = 1  # at least one label for each class
-                print("at least one sample per class")
-            
-            for i in label_type:
-                idx = np.argwhere(label == i).squeeze()
-                np.random.shuffle(idx)
-                tune_set.extend(train_set[idx[:label_per_class]])
-                counter.append(len(list(idx[:label_per_class])))
-
-            print(f"percent {per}: {len(tune_set)}")
-            print(f"each class {counter}")
-            loca = target_dir + 'tune_set_' + str(per).replace('.', '_') + '.npz'
-            np.savez(loca, tune_set=tune_set)
-    else:
-        for label_per_class in shot_num:
-            tune_set = []
-            counter = []
-            if label_per_class < 1:
-                label_per_class = 1  # at least one label for each class
-                print("at least one sample per class")
-            
-            for i in label_type:
-                idx = np.argwhere((label == i)).squeeze()
-                if if_cross_user:
-                    idx_user_selected = []
-                    for j in idx:
-                        if user[j] in user_selected:
-                            idx_user_selected.append(j)
-                    idx = np.array(idx_user_selected)
-                np.random.shuffle(idx)
-                tune_set.extend(train_set[idx[:label_per_class]])
-                counter.append(len(list(idx[:label_per_class])))
-
-            print(f"Shot num {label_per_class}: {len(tune_set)}")
-            loca = target_dir + 'tune_set_' + str(label_per_class).replace('.', '_') + '.npz'
-            np.savez(loca, tune_set=tune_set)
     return
 
 
@@ -362,6 +375,17 @@ def extract_and_seg_hhar(path_save, dataset, window_time, seq_len, version, test
 
 DATASET_PATH = r'./original_dataset/hhar/'
 
+def new_segmentation_for_user(seg_types=5, seed=940):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
+    for i in range(seg_types):
+        for dataset in dataset_name:
+            preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot{i}/", dataset=dataset)
+
+    return
+
 if __name__ == '__main__':
     # divide_fewer_labels()
     # data = np.load(os.path.join(path_save, 'val_set' + '.npz'))
@@ -377,7 +401,7 @@ if __name__ == '__main__':
     # preprocessing_dataset_cross_person_val(dir=r'datasets/HHAR/', target_dir=r'datasets/HHAR_shot/', dataset='HHAR')
     # preprocessing_dataset_cross_person_val(dir=r'datasets/MotionSense/', target_dir=r'datasets/MotionSense_shot/', dataset='MotionSense')
     # preprocessing_dataset_cross_person_val(dir=r'datasets/Shoaib/', target_dir=r'datasets/Shoaib_shot/', dataset='Shoaib')
-    preprocessing_dataset_cross_person_val(dir=r'datasets/HASC/', target_dir=r'datasets/HASC_shot/', dataset='HASC')
+    # preprocessing_dataset_cross_person_val(dir=r'datasets/HASC/', target_dir=r'datasets/HASC_shot/', dataset='HASC')
     # preprocessing_dataset_cross_person_val(dir=r'datasets/UCI/', target_dir=r'datasets/HHAR_shot/', dataset='UCI')
     # preprocessing_dataset_cross_person_val(dir=r'datasets/ICHAR/', target_dir=r'datasets/HHAR_shot/', dataset='ICHAR')
  
@@ -395,3 +419,5 @@ if __name__ == '__main__':
     # write_balance_tune_set(ori_dir=r'datasets/MotionSense_50_200/', target_dir=r'datasets/MotionSense_50_200_shot/', dataset='MotionSense')
     # write_balance_tune_set(ori_dir=r'datasets/Shoaib_50_200/', target_dir=r'datasets/Shoaib_50_200_shot/', dataset='Shoaib')
     # write_balance_tune_set(ori_dir=r'datasets/HASC_50_200/', target_dir=r'datasets/HASC_50_200_shot/', dataset='HASC')
+
+    new_segmentation_for_user(seg_types=5)

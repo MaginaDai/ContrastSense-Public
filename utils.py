@@ -392,6 +392,7 @@ def handle_argv(target, config_train, prefix):
     parser.add_argument('--log-every-n-steps', default=100, type=int, help='Log every n steps')
     parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
     parser.add_argument('-shot', default=None, type=int, help='how many shots of labels to use')
+    parser.add_argument('-frozen_bert', default=False, type=int, help='how many shots of labels to use')
 
     try:
         args = parser.parse_args()

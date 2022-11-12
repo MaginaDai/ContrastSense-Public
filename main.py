@@ -97,7 +97,6 @@ def main():
     else:
         args.device = torch.device('cpu')
         args.gpu_index = -1
-    
 
     if args.mol == 'CPC':  # set transfer = True to avoid n_views = 2. Just to make the dataset normal
         dataset = ContrastiveLearningDataset(transfer=True, version=args.version, datasets_name=args.name)

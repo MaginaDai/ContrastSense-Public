@@ -149,12 +149,21 @@ class  SimCLR_cluster(object):
                     p1 = self.model(sensor[0])
                     p2 = self.model(sensor[1])
                     
-                    logits1, logits2, labels = self.cluster_loss(p1, p2)
-                    labels = labels.to(self.args.device)
-                    loss1 = self.criterion(logits1, labels)
-                    loss2 = self.criterion(logits2, labels)
+                    if self.args.do_cluster:
+                        logits1, logits2, labels = self.cluster_loss(p1, p2)
+                        labels = labels.to(self.args.device)
+                        loss1 = self.criterion(logits1, labels)
+                        loss2 = self.criterion(logits2, labels)
 
-                    loss = loss1 + loss2
+                        loss = loss1 + loss2
+                    else:
+                        features = torch.concat([p1, p2], dim=0)
+                        logits, labels = self.info_nce_loss(features)
+                        loss = self.criterion(logits, labels)
+                        loss1 = 0
+                        loss2 = 0
+                        
+
 
                 self.optimizer.zero_grad()
 
@@ -163,7 +172,10 @@ class  SimCLR_cluster(object):
                 scaler.step(self.optimizer)
                 scaler.update()
                 
-                acc = 0.5 * (accuracy(logits1, labels, topk=(1,)) + accuracy(logits2, labels, topk=(1,)))
+                if self.args.do_cluster:
+                    acc = 0.5 * (accuracy(logits1, labels, topk=(1,)) + accuracy(logits2, labels, topk=(1,)))
+                else:
+                    acc = accuracy(logits, labels, topk=(1,))
                 acc_batch.update(acc, sensor[0].size(0))
                 loss_batch.update(loss, sensor[0].size(0))
 
@@ -259,7 +271,7 @@ class  SimCLR_cluster(object):
                 self.model.train()
 
             is_best = val_f1 > best_f1
-            best_f1 = max(val_f1, best_acc)
+            best_f1 = max(val_f1, best_f1)
             best_acc = max(val_acc, best_acc)
             if is_best:
                 best_epoch = epoch_counter

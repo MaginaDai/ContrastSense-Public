@@ -36,7 +36,7 @@ parser.add_argument('-percent', default=1, type=float, help='how much percent of
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
 parser.add_argument('--evaluate', default=False, type=bool, help='decide whether to evaluate')
-parser.add_argument('-ft', '--if-fine-tune', default=True, type=bool, help='to decide whether tune all the layers')
+parser.add_argument('-ft', '--if-fine-tune', default=False, type=bool, help='to decide whether tune all the layers')
 parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
 
 
@@ -138,7 +138,11 @@ def main():
 
     if not args.if_fine_tune:
         # optimize only the linear classifier
-        parameters = list(filter(lambda p: p.requires_grad, model.parameters()))
+        parameters = list(filter(lambda p: p.requires_grad, model.parameters())) 
+        parameters.append('Classifier.softmax.1.running_mean')
+        parameters.append('Classifier.softmax.1.running_var')
+        parameters.append('Classifier.softmax.5.running_mean')
+        parameters.append('Classifier.softmax.5.running_var')
         assert len(parameters) == len(classifier_name)
 
     #  It’s a no-op if the 'gpu_index' argument is a negative integer or None.

@@ -7,6 +7,7 @@ from scipy.interpolate import interp1d
 from os.path import dirname
 sys.path.append(dirname(dirname(sys.path[0])))
 
+from baseline.CLHAR.CL_dataload import CL_Rotate
 from torchvision.transforms import transforms
 from torch.utils.data import Dataset
 from data_aug.contrastive_learning_dataset import ACT_Translated_labels, HHAR_movement, fetch_dataset_root, users, devices
@@ -46,8 +47,9 @@ class ClusterCLDataset:
     def get_simclr_pipeline_transform(self):
         """Return a set of data augmentation transformations as described in my presentation."""
         imu_toTensor = imu_transforms.ToTensor()
-        imu_resample = Resampling()
-        data_transforms = transforms.Compose([imu_resample,
+        imu_rotate = CL_Rotate()
+        # imu_resample = Resampling()
+        data_transforms = transforms.Compose([imu_rotate,
                                               imu_toTensor])
         return data_transforms
 

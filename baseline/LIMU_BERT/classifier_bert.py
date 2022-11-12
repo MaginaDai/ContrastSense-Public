@@ -82,9 +82,8 @@ def bert_classify(args, frozen_bert=False, balance=True):
 
 if __name__ == "__main__":
     balance = True
-    frozen_bert = False
     method = "base_gru"
     args = handle_argv('bert_classifier_' + method, 'bert_classifier_train.json', method)
-    bert_classify(args, frozen_bert=frozen_bert, balance=balance)
+    bert_classify(args, frozen_bert=args.frozen_bert, balance=balance)
 
 

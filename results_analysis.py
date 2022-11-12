@@ -19,11 +19,11 @@ def avg_result(name, ft):
     test = np.zeros([len(name), len(dataset)])
     for i, n in enumerate(name):
         for j, data in enumerate(dataset):
-            # print(i, j)
+            print(n, j)
             if ft:
-                dir = f'runs/{n}/{data}_ft_shot_10/training.log'
+                dir = f'{n}/{data}_ft_shot_10/training.log'
             else:
-                dir = f'runs/{n}/{data}_le_shot_10/training.log'
+                dir = f'{n}/{data}_le_shot_10/training.log'
             eval_pattern = r'best\seval\sf1\sis\s+\(*(\d+\.+\d*)'
             test_pattern = r'test\sf1\sis\s+\(*(\d+\.+\d*)'
             with open(dir, "r") as f:  # 打开文件
@@ -40,7 +40,7 @@ def avg_result(name, ft):
     test_mean = np.expand_dims(np.mean(test, axis=1), 1)
     print("Eval acc is: \n {}".format(np.around(np.concatenate((eval, eval_mean), axis=1), 2)))
     print("Test acc is: \n {}".format(np.around(np.concatenate((test, test_mean), axis=1), 2)))
-    return 
+    return
 
 def results_for_each_file(files):
     eval = np.zeros([len(files)])
@@ -49,8 +49,8 @@ def results_for_each_file(files):
     for i, n in enumerate(files):
         seg = n.split('_')
         dataset = seg[-1]
-        name = dataset + '_ft_shot_10'
-        dir = f'runs/{n}/{name}/training.log'
+        name = dataset + '_le_shot_10'
+        dir = f'{n}/{name}/training.log'
 
         eval_pattern = r'best\seval\sf1\sis\s+\(*(\d+\.+\d*)'
         test_pattern = r'test\sf1\sis\s+\(*(\d+\.+\d*)'
@@ -81,8 +81,43 @@ def results_for_each_file(files):
     # print(f"{eval}\n{test}\n{acc}")
     return
 
+def transfer_ability_access(name, ft):
+    eval = np.zeros([len(name), len(dataset)])
+    test = np.zeros([len(name), len(dataset)])
+    for i, n in enumerate(name):
+        for j, data in enumerate(dataset):
+            # print(n, j)
+            seg = n.split('_')
+            dataset_name = seg[-1]
+            if data == dataset_name:
+                continue
+            if ft:
+                dir = f'{n}/{data}_ft_shot_10/training.log'
+            else:
+                dir = f'{n}/{data}_le_shot_10/training.log'
+            eval_pattern = r'best\seval\sf1\sis\s+\(*(\d+\.+\d*)'
+            test_pattern = r'test\sf1\sis\s+\(*(\d+\.+\d*)'
+            with open(dir, "r") as f:  # 打开文件
+                content = f.read()
+                # pdb.set_trace()
+                eval_extract = np.float64(re.findall(eval_pattern, content))
+                test_extract = np.float64(re.findall(test_pattern, content))
+                if len(eval_extract) > 1 or len(test_extract) > 1:
+                    # pdb.set_trace()
+                    raise ReadError
+                eval[i, j] = eval_extract[0]
+                test[i, j] = test_extract[0]
+    
+    eval_mean = np.expand_dims(np.sum(eval, axis=1)/3, 1)
+    test_mean = np.expand_dims(np.sum(test, axis=1)/3, 1)
+    print("Eval acc is: \n {}".format(np.around(np.concatenate((eval, eval_mean), axis=1), 2)))
+    print("Test acc is: \n {}".format(np.around(np.concatenate((test, test_mean), axis=1), 2)))
+    return 
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
-    # avg_result(args.name, ft=True)
-    results_for_each_file(args.name)
+    avg_result(args.name, ft=True)
+    # results_for_each_file(args.name)
     # avg_result(name=args.name, ft=args.ft)
+    # transfer_ability_access(args.name, ft=True)

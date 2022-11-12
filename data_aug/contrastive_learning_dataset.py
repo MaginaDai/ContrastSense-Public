@@ -222,8 +222,8 @@ class LIMUDataset4Training(Dataset):
                     tune_dir = '../../' + root_dir + '_' + version +  '/tune_set_' + str(int(percent)) + '.npz'
             data = np.load(tune_dir)
             self.windows_frame = data['tune_set']
-            print(tune_dir)
-            print(shot)
+            # print(tune_dir)
+            # print(shot)
         else:
             data = np.load(test_dir)
             self.windows_frame = data['test_set']

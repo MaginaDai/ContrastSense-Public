@@ -1,7 +1,9 @@
+import code
 import logging
 import pdb
 import sys
 from os.path import dirname
+from numpy import pad
 sys.path.append(dirname(dirname(sys.path[0])))
 
 from tqdm import tqdm
@@ -14,16 +16,68 @@ import torch.nn.functional as F
 from torch.cuda.amp import GradScaler, autocast
 from utils import accuracy, evaluate, f1_cal, save_checkpoint, save_config_file
 
-N_VIEWS = 2
-LARGE_NUM = 1e9
 
-class SimCLR(object):
+
+WINDOW_LENGTH = 200
+
+class Encoder(nn.Module):
+    def __init__(self):
+        super(Encoder, self).__init__()
+        
+        # we could not keep the window size all the same but try to avoid a large difference with the original implementation.
+        self.convA = nn.Conv1d(3, 24, kernel_size=10, padding=4)
+        self.Prelu_A = nn.PReLU()
+        self.LN_A = nn.LayerNorm([24, 199], eps=1e-3)
+
+        self.convB = nn.Conv1d(24, 48, kernel_size=8, padding=3)
+        self.Prelu_B = nn.PReLU()
+        self.LN_B = nn.LayerNorm([48, 198], eps=1e-3)
+
+        self.convC = nn.Conv1d(48, 20, kernel_size=4, padding=2)
+        self.Prelu_C = nn.PReLU()
+        self.BN_C = nn.BatchNorm1d(20)
+
+        self.linear = nn.Linear(199*20, 20)
+
+    def forward(self, x):
+        x = x.permute(0, 2, 1)
+        h = self.Prelu_A(self.LN_A(self.convA(x)))
+        h = self.Prelu_B(self.LN_B(self.convB(h)))
+        h = self.Prelu_C(self.convC(h))
+
+        h = self.BN_C(h)
+        h = torch.flatten(h, start_dim=1)
+        h = self.linear(h)
+        return h
+
+
+class Classifier(nn.Module):
+    def __init__(self):
+        super(Classifier, self).__init__()
+
+    def forward(self, h):
+        
+        return h
+
+class COCOA_model(nn.Module):
+    def __init__(self):
+        super(COCOA_model, self).__init__()
+        self.acc_encoder = Encoder()
+        self.gyro_encoder = Encoder()
+
+    def forward(self, x):
+        acc, gyro = x[:, :, 0:3], x[:, :, 3:]
+        h_acc = self.acc_encoder(acc)
+        h_gyro = self.gyro_encoder(gyro)
+        return h_acc, h_gyro
+
+
+class COCOA(object):
 
     def __init__(self, *args, **kwargs):
         self.args = kwargs['args']
         self.model = kwargs['model'].to(self.args.device)
         self.optimizer = kwargs['optimizer']
-        self.scheduler = kwargs['scheduler']
         writer_pos = './runs/' + self.args.store + '/'
         if self.args.transfer is True:
             if self.args.if_fine_tune:
@@ -35,37 +89,73 @@ class SimCLR(object):
             else:
                 writer_pos += f'_percent_{self.args.percent}'
         self.writer = SummaryWriter(writer_pos)
+
+        self.softmax = nn.Softmax(dim=0)
+
         logging.basicConfig(filename=os.path.join(self.writer.log_dir, 'training.log'), level=logging.DEBUG)
-        self.criterion = torch.nn.CrossEntropyLoss().to(self.args.device)
+    
+    def COCOA_loss(self, h_acc, h_gyro):
 
-    def info_nce_loss(self, features):  # something to improve.
+        h_acc = F.normalize(h_acc, dim=1)
+        h_gyro = F.normalize(h_gyro, dim=1)
+        
+        h = torch.stack([h_acc, h_gyro], dim=2)
+        
+        batch_size = h.shape[0]
+        dim_size = h.shape[1]
 
-        labels = torch.cat([torch.arange(self.args.batch_size) for i in range(N_VIEWS)], dim=0)
-        labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
-        labels = labels.to(self.args.device)
+        pos_error = torch.Tensor([0]).to(self.args.device)
+        neg_error = torch.Tensor([0]).to(self.args.device)
+        for i in range(batch_size):
+            sim = torch.matmul(h[i], h[i].T)
+            sim = torch.ones([dim_size, dim_size]).to(self.args.device) - sim
+            sim = torch.exp(sim/self.args.temperature)
+            pos_error += torch.mean(sim)
+        
+        mask = torch.eye(batch_size, dtype=torch.bool).to(self.args.device)
 
-        features = F.normalize(features, dim=1)
+        for i in range(dim_size):
+            sim = torch.matmul(h[:, i, :], h[:, i, :].T)
+            sim = torch.exp(sim/self.args.temperature)
+            neg_error += torch.mean(sim[~mask.bool()])
+        
+        loss = pos_error / batch_size + self.args.weight * neg_error/dim_size
+        
+        with torch.no_grad():
+            similarity_matrix = torch.matmul(h_acc, h_gyro.T)
+            positive_predict = torch.argmax(self.softmax(similarity_matrix), dim=0)
+            positive_actual = torch.arange(0, h_acc.shape[0]).to(self.args.device)
+            accuracy = torch.sum(torch.eq(positive_predict, positive_actual)).item() / h_acc.shape[0] * 100
+        return loss, accuracy
 
-        similarity_matrix = torch.matmul(features, features.T)
 
+    def COCOA_loss_mine(self, h_acc, h_gyro):
+        h_acc = F.normalize(h_acc, dim=1)
+        h_gyro = F.normalize(h_gyro, dim=1)
+
+        similarity_matrix = torch.matmul(h_acc, h_gyro.T)
+        
         # discard the main diagonal from both: labels and similarities matrix
-        mask = torch.eye(labels.shape[0], dtype=torch.bool).to(self.args.device)
-        labels = labels[~mask].view(labels.shape[0], -1)
-        similarity_matrix = similarity_matrix[~mask].view(similarity_matrix.shape[0], -1)
-        # assert similarity_matrix.shape == labels.shape
+        mask = torch.eye(h_acc.shape[0], dtype=torch.bool).to(self.args.device)
 
         # select and combine multiple positives
-        positives = similarity_matrix[labels.bool()].view(labels.shape[0], -1)
+        positives = similarity_matrix[mask.bool()].view(h_acc.shape[0], -1)
+        logits_c = torch.ones([h_acc.shape[0], 1]).to(self.args.device) - positives
+        loss_c = torch.mean(torch.exp(logits_c / self.args.temperature))
 
         # select only the negatives the negatives
-        negatives = similarity_matrix[~labels.bool()].view(similarity_matrix.shape[0], -1)
+        negatives = similarity_matrix[~mask.bool()].view(similarity_matrix.shape[0], -1)
+        loss_d = torch.mean(torch.exp(negatives / self.args.temperature))
+        loss = loss_c + self.args.weight * loss_d
 
-        logits = torch.cat([positives, negatives], dim=1)
-        labels = torch.zeros(logits.shape[0], dtype=torch.long).to(self.args.device)
-        logits = logits / self.args.temperature
-        return logits, labels
+        positive_predict = torch.argmax(self.softmax(similarity_matrix), dim=0)
+        positive_actual = torch.arange(0, h_acc.shape[0]).to(self.args.device)
 
+        accuracy = torch.sum(torch.eq(positive_predict, positive_actual)).item() / h_acc.shape[0] * 100
 
+        return loss, accuracy
+
+    
     def train(self, train_loader):
 
         scaler = GradScaler(enabled=self.args.fp16_precision)
@@ -74,24 +164,23 @@ class SimCLR(object):
         save_config_file(self.writer.log_dir, self.args)
 
         n_iter = 0
-        logging.info(f"Start SimCLR training for {self.args.epochs} epochs.")
+        logging.info(f"Start COCOA training for {self.args.epochs} epochs.")
         logging.info(f"Training with gpu: {self.args.disable_cuda}.")
 
         acc = 0
         best_epoch = 0
         best_acc = 0
-
+        not_best_counter = 0
+        
         for epoch_counter in tqdm(range(self.args.epochs)):
             acc_batch = AverageMeter('acc_batch', ':6.2f')
             loss_batch = AverageMeter('loss_batch', ':6.5f')
             for sensor, _ in train_loader:
-                sensor = torch.cat(sensor, dim=0)
                 sensor = sensor.to(self.args.device)
 
                 with autocast(enabled=self.args.fp16_precision):
-                    features = self.model(sensor)
-                    logits, labels = self.info_nce_loss(features)
-                    loss = self.criterion(logits, labels)
+                    feature_acc, feature_gyro = self.model(sensor)
+                    loss, acc = self.COCOA_loss(feature_acc, feature_gyro)
 
                 self.optimizer.zero_grad()
 
@@ -100,19 +189,16 @@ class SimCLR(object):
                 scaler.step(self.optimizer)
                 scaler.update()
                 
-                acc = accuracy(logits, labels, topk=(1,))
                 acc_batch.update(acc, sensor[0].size(0))
                 loss_batch.update(loss, sensor[0].size(0))
 
                 if n_iter % self.args.log_every_n_steps == 0:
                     self.writer.add_scalar('loss', loss, global_step=n_iter)
                     self.writer.add_scalar('acc', acc, global_step=n_iter)
-                    self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter)
 
                 n_iter += 1
             
-            self.scheduler.step()
-            is_best = True # Always save the latest model
+            is_best = True # Save loss term. 
             if is_best:
                 best_epoch = epoch_counter
                 checkpoint_name = 'model_best.pth.tar'
@@ -137,7 +223,7 @@ class SimCLR(object):
         save_config_file(self.writer.log_dir, self.args)
 
         n_iter_train = 0
-        logging.info(f"Start SimCLR fine-tuning head for {self.args.epochs} epochs.")
+        logging.info(f"Start COCOA fine-tuning head for {self.args.epochs} epochs.")
         logging.info(f"Training with gpu: {self.args.disable_cuda}.")
 
         acc = 0
@@ -184,7 +270,7 @@ class SimCLR(object):
             val_acc, val_f1 = evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
 
             is_best = val_f1 > best_f1
-            best_f1 = max(val_f1, best_f1)
+            best_f1 = max(val_f1, best_acc)
             best_acc = max(val_acc, best_acc)
             if is_best:
                 best_epoch = epoch_counter

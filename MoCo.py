@@ -459,8 +459,8 @@ class MoCo_v1(nn.Module):
 
         q, d_q = self.encoder_q(sen_q)  # queries: NxC
         q = F.normalize(q, dim=1)
-        if d_q is not None:
-            d_q = F.normalize(d_q, dim=1)
+        # if d_q is not None:
+        #     d_q = F.normalize(d_q, dim=1)
 
         # compute key features
         with torch.no_grad():  # no gradient to keys
@@ -468,8 +468,8 @@ class MoCo_v1(nn.Module):
 
             k, d_k = self.encoder_k(sen_k)  # keys: NxC
             k = F.normalize(k, dim=1)
-            if d_k is not None:
-                d_k = F.normalize(d_k, dim=1)
+            # if d_k is not None:
+            #     d_k = F.normalize(d_k, dim=1)
 
         # compute logits
         # Einstein sum is more intuitive
@@ -801,7 +801,10 @@ class MoCo(object):
     def transfer_train_DAL(self, tune_loader, val_loader, train_loader):
         """
         train loader is for domain adversial learning
-        we only consider fine-tune + DAL. Linear Evaluation is not considered for this type of learning. 
+        we only consider fine-tune + DAL. Linear Evaluation is not considered for this type of learning.
+
+        Fix one train one, the performance is not satisfying. 
+        We turn to another design. 
         """
         assert self.args.if_fine_tune is True
         
@@ -908,3 +911,109 @@ class MoCo(object):
 
         print('best eval f1 is {} for {}'.format(best_f1, self.args.name))
 
+    
+    def transfer_train_DAL_v2(self, tune_loader, val_loader, train_loader):
+        """
+        train loader is for domain adversial learning
+        we only consider fine-tune + DAL. Linear Evaluation is not considered for this type of learning.
+
+        Fix one train one, the performance is not satisfying. 
+        We turn to another design. 
+        """
+        assert self.args.if_fine_tune is True
+        
+        scaler = GradScaler(enabled=self.args.fp16_precision)
+
+        # save config file
+        save_config_file(self.writer.log_dir, self.args)
+
+        n_iter_train = 0
+        n_iter_train_DAL = 0
+        logging.info(f"Start MoCo fine-tuning head for {self.args.epochs} epochs.")
+        logging.info(f"Training with gpu: {not self.args.disable_cuda}.")
+
+        acc = 0
+        f1 = 0
+        best_epoch = 0
+
+        if self.args.resume:
+            best_f1 = self.args.best_f1
+            best_acc = self.args.best_acc
+        else:
+            best_f1 = 0
+            best_acc = 0
+
+        for epoch_counter in tqdm(range(self.args.epochs)):
+            acc_batch = AverageMeter('acc_batch', ':6.2f')
+            f1_batch = AverageMeter('f1_batch', ':6.2f')
+            self.model.train()
+            
+            data_loader = zip(tune_loader, train_loader)
+
+            for (sensor, target), (sensor_domain, target_domain) in data_loader:
+
+                sensor= sensor.to(self.args.device)
+                sensor_domain = sensor_domain.to(self.args.device)
+                
+                target = target[:, 0].to(self.args.device)
+                target_domain = target_domain[:, 1].to(self.args.device)
+
+                with autocast(enabled=self.args.fp16_precision):
+                    h = self.model.encoder(torch.concat([sensor, sensor_domain], dim=0))
+                    logits = self.model.classifier(h[:sensor.shape[0]])
+                    loss_class = self.criterion(logits, target)  # fine-tune for HAR
+
+                    logits_domain = self.model.discriminator(h[sensor.shape[0]:])
+                    loss_domain = self.criterion(logits_domain, target_domain)
+
+                    loss = loss_class + self.args.slr * loss_domain
+
+                self.optimizer.zero_grad()
+                scaler.scale(loss).backward()
+                scaler.step(self.optimizer)
+                scaler.update()
+
+                acc = accuracy(logits, target, topk=(1,))
+                f1 = f1_cal(logits, target, topk=(1,))
+                acc_batch.update(acc, sensor.size(0))
+                f1_batch.update(f1, sensor.size(0))
+                if n_iter_train % self.args.log_every_n_steps == 0:
+                    self.writer.add_scalar('loss', loss, global_step=n_iter_train)
+                    self.writer.add_scalar('loss_class', loss_class, global_step=n_iter_train)
+                    self.writer.add_scalar('loss_domain', loss_domain, global_step=n_iter_train)
+
+                    self.writer.add_scalar('acc', acc, global_step=n_iter_train)
+                    self.writer.add_scalar('f1', f1, global_step=n_iter_train)
+                    self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter_train)
+
+                n_iter_train += 1
+
+            if self.args.if_val:
+                val_acc, val_f1 = MoCo_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
+            else:
+                val_acc = 0
+
+            is_best = val_f1 > best_f1
+
+            if epoch_counter >= 10:  # only after the first 10 epochs, the best_f1/acc is updated.
+                best_f1 = max(val_f1, best_f1)
+                best_acc = max(val_acc, best_acc)
+            if is_best:
+                best_epoch = epoch_counter
+                checkpoint_name = 'model_best.pth.tar'
+                save_checkpoint({
+                    'epoch': epoch_counter,
+                    'state_dict': self.model.state_dict(),
+                    'best_f1': best_f1, 
+                    'optimizer': self.optimizer.state_dict(),
+                }, is_best, filename=os.path.join(self.writer.log_dir, checkpoint_name), path_dir=self.writer.log_dir)
+
+            self.writer.add_scalar('eval acc', val_acc, global_step=epoch_counter)
+            self.writer.add_scalar('eval f1', val_f1, global_step=epoch_counter)
+            self.scheduler.step()
+            logging.debug(f"Epoch: {epoch_counter} Loss: {loss} loss_class: {loss_class} loss_domain: {loss_domain} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch.avg: .3f}/{val_f1: .3f}")
+
+        logging.info("Fine-tuning has finished.")
+        logging.info(f"best eval f1 is {best_f1} at {best_epoch}.")
+
+        print('best eval f1 is {} for {}'.format(best_f1, self.args.name))

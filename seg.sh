@@ -24,7 +24,7 @@
 
 # python main_transfer.py -g 2 -ft True -lr 0.0001 -version shot -shot 10 -name HASC --pretrained "${name}_slr0.4_HASC" &
 # python main_transfer.py -g 2 -ft True -lr 0.0001 -version shot -shot 10 -name HASC --pretrained "${name}_slr0.8_HASC"
-name="Origin_wo"
+# name="Origin_wo"
 
-python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -ad-lr 0.0000005 -name HHAR --pretrained "${name}_HHAR" --store "Origin_wo_transfer_DAL_lr0.0000005_sep" &
-python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -ad-lr 0.00000005 -name HHAR --pretrained "${name}_HHAR" --store "Origin_wo_transfer_DAL_lr0.00000005_sep" &
+# python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -ad-lr 0.0000005 -name HHAR --pretrained "${name}_HHAR" --store "Origin_wo_transfer_DAL_lr0.0000005_sep" &
+# python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -ad-lr 0.00000005 -name HHAR --pretrained "${name}_HHAR" --store "Origin_wo_transfer_DAL_lr0.00000005_sep" &

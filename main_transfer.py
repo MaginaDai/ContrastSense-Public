@@ -38,7 +38,7 @@ parser.add_argument('-shot', default=10, type=int, help='how many shots of label
 parser.add_argument('-name', default='Shoaib',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'ICHAR', 'HASC'])
 
-parser.add_argument('-j', '--workers', default=2, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                     help='number of data loading workers (default: 2)')
 parser.add_argument('-e', '--epochs', default=300, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -84,6 +84,7 @@ parser.add_argument('-drop', default=0.1, type=float, help='the dropout portion'
 parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
 parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate')
+parser.add_argument('-slr', default=0.5, type=float, help='DAL learning ratio')
 
 
 def main():
@@ -108,9 +109,7 @@ def main():
     val_dataset = dataset.get_dataset('val')
     test_dataset = dataset.get_dataset('test')
 
-    tune_loader = torch.utils.data.DataLoader(
-        tune_dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=False, drop_last=False)
+    
 
     val_loader = torch.utils.data.DataLoader(
         val_dataset, batch_size=args.batch_size, shuffle=True,
@@ -125,10 +124,18 @@ def main():
         user_num = UsersNum[args.name]
         train_dataset =  dataset.get_dataset('train')
         train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=256, shuffle=True,
+        train_dataset, batch_size=int(args.batch_size/2), shuffle=True,
+        num_workers=args.workers, pin_memory=False, drop_last=False)
+
+        tune_loader = torch.utils.data.DataLoader(
+        tune_dataset, batch_size=int(args.batch_size/2), shuffle=True,
         num_workers=args.workers, pin_memory=False, drop_last=False)
     else:
         user_num = None
+
+        tune_loader = torch.utils.data.DataLoader(
+        tune_dataset, batch_size=args.batch_size, shuffle=True,
+        num_workers=args.workers, pin_memory=False, drop_last=False)
     
     if args.mol == 'LIMU':
         model_cfg = load_model_config(target='pretrain_base', prefix='base', version='v1')
@@ -246,7 +253,8 @@ def main():
                 print('test acc: {}'.format('%.3f' % test_acc))
                 return
             if args.DAL and args.if_fine_tune:
-                moco.transfer_train_DAL(tune_loader, val_loader, train_loader)
+                moco.transfer_train_DAL_v2(tune_loader, val_loader, train_loader)
+                # moco.transfer_train_DAL(tune_loader, val_loader, train_loader)
             else:
                 moco.transfer_train(tune_loader, val_loader)
             best_model_dir = os.path.join(moco.writer.log_dir, 'model_best.pth.tar')

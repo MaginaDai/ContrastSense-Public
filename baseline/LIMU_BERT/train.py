@@ -139,7 +139,11 @@ class Trainer(object):
 
         for e in tqdm(range(self.cfg.n_epochs)):
             loss_sum = 0.0 # the sum of iteration losses to get average loss in every epoch
-            self.model.train()
+            if self.args.frozen_bert:
+                self.model.eval()
+                self.model.classifier.train()
+            else:
+                self.model.train()
             for batch in data_loader_train:
                 batch = [t.to(self.device) for t in batch]
 

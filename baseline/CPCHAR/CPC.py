@@ -295,12 +295,13 @@ class CPC(object):
             
             self.scheduler.step()
             is_best = val_loss < best_loss
-            best_loss = min(acc, best_loss)
+            best_loss = min(val_loss, best_loss)
             if is_best:
+                best_epoch = epoch_counter
                 # checkpoint_name = 'checkpoint_at_{:04d}.pth.tar'.format(epoch_counter)
                 checkpoint_name = 'model_best.pth.tar'
                 save_checkpoint({
-                    'epoch': epoch_counter + 1,
+                    'epoch': epoch_counter,
                     'state_dict': self.model.state_dict(),
                     'best_loss': best_loss,
                     'optimizer': self.optimizer.state_dict(),
@@ -385,7 +386,7 @@ class CPC(object):
             val_acc, val_f1 = evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
 
             is_best = val_f1 > best_f1
-            best_f1 = max(val_f1, best_acc)
+            best_f1 = max(val_f1, best_f1)
             best_acc = max(val_acc, best_acc)
             if is_best:
                 best_epoch = epoch_counter

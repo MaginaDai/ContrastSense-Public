@@ -42,12 +42,17 @@ parser.add_argument('-percent', default=1, type=float, help='how much percent of
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
 parser.add_argument('--evaluate', default=False, type=bool, help='decide whether to evaluate')
-parser.add_argument('-ft', '--if-fine-tune', default=True, type=bool, help='to decide whether tune all the layers')
+parser.add_argument('-ft', '--if-fine-tune', default=False, type=bool, help='to decide whether tune all the layers')
 parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
 
 
 def main():
     args = parser.parse_args()
+    if args.lr is None:
+        if args.ft:
+            args.lr = 0.001
+        else:
+            args.lr = 0.03
 
     seed_torch(seed=args.seed)
 
@@ -113,9 +118,6 @@ def main():
                 param.requires_grad = False
 
     optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
-
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=0,
-    #                                                        last_epoch=-1)
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)
 
