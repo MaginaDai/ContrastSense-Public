@@ -130,15 +130,49 @@
 #     python main_transfer.py -g 2 -ft True -lr ${lr} -version shot -shot 10 -name MotionSense  --pretrained "no"
 
 #     wait
-    
+
 # done
 
+# name="Origin_w"
+# for slr in 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+# do
+#     python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name HASC --pretrained "${name}_HASC"  --store "${name}_transfer_DAL_uni_slr${slr}_bt32" &
+#     python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name HHAR --pretrained "${name}_HHAR" --store "${name}_transfer_DAL_uni_slr${slr}_bt32" &
+#     python main_transfer.py -DAL True -g 1 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name Shoaib --pretrained "${name}_Shoaib" --store "${name}_transfer_DAL_uni_slr${slr}_bt32" &
+#     python main_transfer.py -DAL True -g 1 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name MotionSense  --pretrained "${name}_MotionSense" --store "${name}_transfer_DAL_uni_slr${slr}_bt32"
+#     wait
+# done
+
+# name="Supervised_portion"
+# for s in 1 5 10 15 20 50
+# do
+#     # python main_transfer.py -g 0 -ft True -lr 0.0001 -version shot -shot ${s} -name HASC --pretrained "${name}_HASC"  --store "${name}_transfer_DAL_uni_slr${slr}_bt32" &
+#     python main_transfer.py -g 0 -ft True -lr 0.0001 -version shot -shot ${s} -name HHAR --pretrained "${name}_HHAR" --store "${name}"
+#     # python main_transfer.py -g 1 -ft True -lr 0.0001 -version shot -shot ${s} -name Shoaib --pretrained "${name}_Shoaib" --store "${name}_transfer_DAL_uni_slr${slr}_bt32" &
+#     # python main_transfer.py -g 1 -ft True -lr 0.0001 -version shot -shot ${s} -name MotionSense  --pretrained "${name}_MotionSense" --store "${name}_transfer_DAL_uni_slr${slr}_bt32"
+#     # wait
+# done
+
+
+# python main_transfer.py -g 0 -ft True -lr 0.0001 -version shot -shot 1 -name HHAR --pretrained "${name}_HHAR" --store "${name}" &
+# python main_transfer.py -g 0 -ft True -lr 0.0001 -version shot -shot 5 -name HHAR --pretrained "${name}_HHAR" --store "${name}" &
+# python main_transfer.py -g 0 -ft True -lr 0.0001 -version shot -shot 10 -name HHAR --pretrained "${name}_HHAR" --store "${name}" &
+# python main_transfer.py -g 1 -ft True -lr 0.0001 -version shot -shot 15 -name HHAR --pretrained "${name}_HHAR" --store "${name}" &
+# python main_transfer.py -g 1 -ft True -lr 0.0001 -version shot -shot 20 -name HHAR --pretrained "${name}_HHAR" --store "${name}" &
+# python main_transfer.py -g 1 -ft True -lr 0.0001 -version shot -shot 50 -name HHAR --pretrained "${name}_HHAR" --store "${name}"
 name="Origin_w"
-for slr in 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+
+for lr in 0.0001
 do
-    python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name HASC --pretrained "${name}_HASC"  --store "${name}_transfer_DAL_uni_slr${slr}_bt32" &
-    python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name HHAR --pretrained "${name}_HHAR" --store "${name}_transfer_DAL_uni_slr${slr}_bt32" &
-    python main_transfer.py -DAL True -g 1 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name Shoaib --pretrained "${name}_Shoaib" --store "${name}_transfer_DAL_uni_slr${slr}_bt32" &
-    python main_transfer.py -DAL True -g 1 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name MotionSense  --pretrained "${name}_MotionSense" --store "${name}_transfer_DAL_uni_slr${slr}_bt32"
-    wait
+    for e in 100 200 300 500
+    do
+        python main_trans_ewc.py -lr ${lr} -e ${e} -ft True -name HASC --pretrained "${name}_HASC" --store "Origin_w_ewc_lr${lr}_e${e}" &
+        python main_trans_ewc.py -lr ${lr} -e ${e} -ft True -name HHAR --pretrained "${name}_HHAR" --store "Origin_w_ewc_lr${lr}_e${e}" &
+        python main_trans_ewc.py -lr ${lr} -e ${e} -ft True -name Shoaib --pretrained "${name}_Shoaib" --store "Origin_w_ewc_lr${lr}_e${e}" &
+        python main_trans_ewc.py -lr ${lr} -e ${e} -ft True -name MotionSense --pretrained "${name}_MotionSense" --store "Origin_w_ewc_lr${lr}_e${e}"
+
+        wait
+    done
 done
+
+# _lam${l}

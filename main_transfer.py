@@ -85,6 +85,8 @@ parser.add_argument('-version', default="shot", type=str, help='control the vers
 parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate')
 parser.add_argument('-slr', default=0.5, type=float, help='DAL learning ratio')
+parser.add_argument('-ewc', default=False, type=float, help='Use EWC or not')
+
 
 
 def main():
@@ -108,8 +110,6 @@ def main():
     tune_dataset = dataset.get_dataset('tune', percent=args.percent, shot=args.shot)
     val_dataset = dataset.get_dataset('val')
     test_dataset = dataset.get_dataset('test')
-
-    
 
     val_loader = torch.utils.data.DataLoader(
         val_dataset, batch_size=args.batch_size, shuffle=True,
@@ -268,6 +268,8 @@ def main():
             simclr.transfer_train(tune_loader, val_loader)
             best_model_dir = os.path.join(simclr.writer.log_dir, 'model_best.pth.tar')
             simclr.test_performance(best_model_dir=best_model_dir, test_loader=test_loader)
+    
+    return
 
 
 # Press the green button in the gutter to run the script.

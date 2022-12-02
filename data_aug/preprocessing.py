@@ -420,4 +420,10 @@ if __name__ == '__main__':
     # write_balance_tune_set(ori_dir=r'datasets/Shoaib_50_200/', target_dir=r'datasets/Shoaib_50_200_shot/', dataset='Shoaib')
     # write_balance_tune_set(ori_dir=r'datasets/HASC_50_200/', target_dir=r'datasets/HASC_50_200_shot/', dataset='HASC')
 
-    new_segmentation_for_user(seg_types=5)
+    # new_segmentation_for_user(seg_types=5)
+    
+    dir = r'datasets/HHAR/'
+    preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion35/', dataset='HHAR', test_portion=0.5, val_portion=0.15)
+    preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion50/', dataset='HHAR', test_portion=0.35, val_portion=0.15)
+    preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion60/', dataset='HHAR', test_portion=0.25, val_portion=0.15)
+    preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion75/', dataset='HHAR', test_portion=0.10, val_portion=0.15)

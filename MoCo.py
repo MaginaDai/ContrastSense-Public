@@ -293,8 +293,8 @@ class MoCo_v1(nn.Module):
     Build a MoCo model with: a query encoder, a key encoder, and a queue
     https://arxiv.org/abs/1911.05722
     """
-    def __init__(self, device, transfer=False, out_dim=128, K=65536, m=0.999, T=0.07, T_labels=None, classes=6, dims=32,\
-                 label_type=2, num_clusters=None, mol='MoCo', final_dim=32, momentum=0.9, drop=0.1, DAL=False, if_cross_entropy=False, users_class=None):
+    def __init__(self, device, transfer=False, out_dim=512, K=1024, m=0.999, T=0.1, T_labels=[0.1], classes=6, dims=32,\
+                 label_type=1, num_clusters=None, mol='MoCo', final_dim=8, momentum=0.9, drop=0.1, DAL=False, if_cross_entropy=False, users_class=None):
         """
         dim: feature dimension (default: 128)
         K: queue size; number of negative keys (default: 65536)
@@ -1017,3 +1017,122 @@ class MoCo(object):
         logging.info(f"best eval f1 is {best_f1} at {best_epoch}.")
 
         print('best eval f1 is {} for {}'.format(best_f1, self.args.name))
+    
+    def transfer_train_ewc(self, tune_loader, val_loader, fisher):
+        assert self.args.if_fine_tune is True
+
+        self.fisher = fisher
+        self.mean = {
+            n: p.clone().detach()
+            for n, p in self.model.named_parameters()
+            if p.requires_grad
+        }
+        
+        scaler = GradScaler(enabled=self.args.fp16_precision)
+
+        # save config file
+        save_config_file(self.writer.log_dir, self.args)
+
+        n_iter_train = 0
+        logging.info(f"Start MoCo fine-tuning head for {self.args.epochs} epochs.")
+        logging.info(f"Training with gpu: {not self.args.disable_cuda}.")
+
+        acc = 0
+        f1 = 0
+        best_epoch = 0
+
+        if self.args.resume:
+            best_f1 = self.args.best_f1
+            best_acc = self.args.best_acc
+        else:
+            best_f1 = 0
+            best_acc = 0
+
+        for epoch_counter in tqdm(range(self.args.epochs)):
+            acc_batch = AverageMeter('acc_batch', ':6.2f')
+            f1_batch = AverageMeter('f1_batch', ':6.2f')
+            if self.args.if_fine_tune:
+                self.model.train()
+            else:  
+                """
+                Switch to eval mode:
+                Under the protocol of linear classification on frozen features/models,
+                it is not legitimate to change any part of the pre-trained model.
+                BatchNorm in train mode may revise running mean/std (even if it receives
+                no gradient), which are part of the model parameters too.
+                """
+                self.model.eval()
+                self.model.classifier.train()
+                
+            for sensor, target in tune_loader:
+
+                sensor = sensor.to(self.args.device)
+                target = target[:, 0].to(self.args.device)
+
+                with autocast(enabled=self.args.fp16_precision):
+                    logits, _ = self.model(sensor)
+                    loss_clf = self.criterion(logits, target)
+
+                    loss_ewc = self.compute_ewc()
+
+                    loss = loss_clf + self.args.ewc_lambda * loss_ewc
+
+                self.optimizer.zero_grad()
+                scaler.scale(loss).backward()
+                scaler.step(self.optimizer)
+                scaler.update()
+
+                acc = accuracy(logits, target, topk=(1,))
+                f1 = f1_cal(logits, target, topk=(1,))
+                acc_batch.update(acc, sensor.size(0))
+                f1_batch.update(f1, sensor.size(0))
+                if n_iter_train % self.args.log_every_n_steps == 0:
+                    self.writer.add_scalar('loss', loss, global_step=n_iter_train)
+                    self.writer.add_scalar('acc', acc, global_step=n_iter_train)
+                    self.writer.add_scalar('f1', f1, global_step=n_iter_train)
+                    self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter_train)
+
+                n_iter_train += 1
+
+            if self.args.if_val:
+                val_acc, val_f1 = MoCo_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
+            else:
+                val_acc = 0
+
+            is_best = val_f1 > best_f1
+
+            if epoch_counter >= 10:  # only after the first 10 epochs, the best_f1/acc is updated.
+                best_f1 = max(val_f1, best_f1)
+                best_acc = max(val_acc, best_acc)
+            if is_best:
+                best_epoch = epoch_counter
+                checkpoint_name = 'model_best.pth.tar'
+                save_checkpoint({
+                    'epoch': epoch_counter,
+                    'state_dict': self.model.state_dict(),
+                    'best_f1': best_f1, 
+                    'optimizer': self.optimizer.state_dict(),
+                }, is_best, filename=os.path.join(self.writer.log_dir, checkpoint_name), path_dir=self.writer.log_dir)
+
+            self.writer.add_scalar('eval acc', val_acc, global_step=epoch_counter)
+            self.writer.add_scalar('eval f1', val_f1, global_step=epoch_counter)
+            self.scheduler.step()
+            logging.debug(f"Epoch: {epoch_counter} Loss: {loss} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch.avg: .3f}/{val_f1: .3f}")
+
+        logging.info("Fine-tuning has finished.")
+        logging.info(f"best eval f1 is {best_f1} at {best_epoch}.")
+
+        print('best eval f1 is {} for {}'.format(best_f1, self.args.name))
+
+    def compute_ewc(self):
+        loss = 0
+        for n, p in self.model.named_parameters():
+            if n in self.fisher.keys():
+                loss += (
+                    torch.sum(
+                        (self.fisher[n])
+                        * (p[: len(self.mean[n])] - self.mean[n]).pow(2)
+                    )
+                    / 2
+                )
+        return loss

@@ -61,7 +61,7 @@ parser.add_argument('-g', '--gpu-index', default=1, type=int, help='Gpu index.')
 parser.add_argument('--best-acc', default=0., type=float, help='The initial best accuracy')
 parser.add_argument('-mol', default='MoCo', type=str, help='which model to use', choices=['SimCLR', 'LIMU', 'CPC', 'MoCo', 'DeepSense'])
 parser.add_argument('--timestep', default=15, type=int, help='how many time steps for CPC')
-parser.add_argument('-d', default=32, type=int, help='how dim for CPC')
+parser.add_argument('-d', default=32, type=int, help='feature dimension')
 parser.add_argument('-moco_K', default=1024, type=int, help='keys size')
 parser.add_argument('-moco_m', default=0.999, type=float, help='momentum value')
 
@@ -156,8 +156,11 @@ def main():
         else:
             simclr = SimCLR(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
             simclr.train(train_loader)
+    
+    return
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     main()
+    # getFisherDiagonal()

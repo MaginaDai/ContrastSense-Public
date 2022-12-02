@@ -246,7 +246,19 @@ def cmp_segmentation_performance():
     plt.savefig(f'./figure_plot/cmp_seg.png')
 
 
+def figure_supervised_learning():
+    y = [34.21, 43.95, 45.9, 53.51]
+    x = [1, 5, 15, 50]
+    plt.figure()
+    plt.plot(x, y, 'r-o')
+    plt.xlabel('Shots', fontsize=14)
+    plt.ylabel('F1 Score', fontsize=14)
+    plt.savefig(f'./figure_plot/DeepSense.png')
+    return 
+
+
 if __name__ == '__main__':
-    fig_extract_phone_loss()
+    # fig_extract_phone_loss()
     # cmp_frequency_performance()
     # cmp_segmentation_performance()
+    figure_supervised_learning()
