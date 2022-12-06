@@ -160,19 +160,53 @@
 # python main_transfer.py -g 1 -ft True -lr 0.0001 -version shot -shot 15 -name HHAR --pretrained "${name}_HHAR" --store "${name}" &
 # python main_transfer.py -g 1 -ft True -lr 0.0001 -version shot -shot 20 -name HHAR --pretrained "${name}_HHAR" --store "${name}" &
 # python main_transfer.py -g 1 -ft True -lr 0.0001 -version shot -shot 50 -name HHAR --pretrained "${name}_HHAR" --store "${name}"
-name="Origin_w"
 
-for lr in 0.0001
+name="Origin_w"
+# name=ewc_v4
+
+for fm in 0.01
 do
-    for e in 100 200 300 500
+    for lam in 1000 2500 7500
     do
-        python main_trans_ewc.py -lr ${lr} -e ${e} -ft True -name HASC --pretrained "${name}_HASC" --store "Origin_w_ewc_lr${lr}_e${e}" &
-        python main_trans_ewc.py -lr ${lr} -e ${e} -ft True -name HHAR --pretrained "${name}_HHAR" --store "Origin_w_ewc_lr${lr}_e${e}" &
-        python main_trans_ewc.py -lr ${lr} -e ${e} -ft True -name Shoaib --pretrained "${name}_Shoaib" --store "Origin_w_ewc_lr${lr}_e${e}" &
-        python main_trans_ewc.py -lr ${lr} -e ${e} -ft True -name MotionSense --pretrained "${name}_MotionSense" --store "Origin_w_ewc_lr${lr}_e${e}"
+        python main_trans_ewc.py -ewc_lambda ${lam} -fishermax ${fm} -g 0 -ft True -lr 0.0001 -version "shot" -shot 10 -name HASC --pretrained "${name}_HASC" --store "ewc_v4_fm${fm}_lam${lam}" &
+        python main_trans_ewc.py -ewc_lambda ${lam} -fishermax ${fm} -g 0 -ft True -lr 0.0001 -version "shot" -shot 10 -name HHAR --pretrained "${name}_HHAR" --store "ewc_v4_fm${fm}_lam${lam}" &
+        python main_trans_ewc.py -ewc_lambda ${lam} -fishermax ${fm} -g 1 -ft True -lr 0.0001 -version "shot" -shot 10 -name Shoaib --pretrained "${name}_Shoaib" --store "ewc_v4_fm${fm}_lam${lam}" &
+        python main_trans_ewc.py -ewc_lambda ${lam} -fishermax ${fm} -g 1 -ft True -lr 0.0001 -version "shot" -shot 10 -name MotionSense  --pretrained "${name}_MotionSense" --store "ewc_v4_fm${fm}_lam${lam}"
 
         wait
     done
 done
 
-# _lam${l}
+# name=Shot
+# for v in 0 1 2 3 4
+# do
+    # python main.py -g 0 -label_type 1 -version "shot${v}" -name HASC --store "${name}_${v}_w_HASC" &
+    # python main.py -g 0 -label_type 1 -version "shot${v}" -name HHAR --store "${name}_${v}_w_HHAR" &
+    # python main.py -g 1 -label_type 1 -version "shot${v}" -name MotionSense --store "${name}_${v}_w_MotionSense" &
+    # python main.py -g 1 -label_type 1 -version "shot${v}" -name Shoaib --store "${name}_${v}_w_Shoaib"
+    
+    # wait
+    
+    # python main.py -g 0 -label_type 0 -version "shot${v}" -name HASC --store "${name}_${v}_wo_HASC" &
+    # python main.py -g 0 -label_type 0 -version "shot${v}" -name HHAR --store "${name}_${v}_wo_HHAR" &
+    # python main.py -g 1 -label_type 0 -version "shot${v}" -name MotionSense --store "${name}_${v}_wo_MotionSense" &
+    # python main.py -g 1 -label_type 0 -version "shot${v}" -name Shoaib --store "${name}_${v}_wo_Shoaib"
+
+    # wait
+
+    # python main_transfer.py -g 0 -ft True -lr 0.0001 -version "shot${v}" -shot 10 -name HASC --pretrained "${name}_${v}_w_HASC" &
+    # python main_transfer.py -g 0 -ft True -lr 0.0001 -version "shot${v}" -shot 10 -name HHAR --pretrained "${name}_${v}_w_HHAR" &
+    # python main_transfer.py -g 1 -ft True -lr 0.0001 -version "shot${v}" -shot 10 -name Shoaib --pretrained "${name}_${v}_w_Shoaib" &
+    # python main_transfer.py -g 1 -ft True -lr 0.0001 -version "shot${v}" -shot 10 -name MotionSense  --pretrained "${name}_${v}_w_MotionSense"
+
+    # wait
+
+    # python main_transfer.py -g 0 -ft True -lr 0.0001 -version "shot${v}" -shot 10 -name HASC --pretrained "${name}_${v}_wo_HASC" &
+    # python main_transfer.py -g 0 -ft True -lr 0.0001 -version "shot${v}" -shot 10 -name HHAR --pretrained "${name}_${v}_wo_HHAR" &
+    # python main_transfer.py -g 1 -ft True -lr 0.0001 -version "shot${v}" -shot 10 -name Shoaib --pretrained "${name}_${v}_wo_Shoaib" &
+    # python main_transfer.py -g 1 -ft True -lr 0.0001 -version "shot${v}" -shot 10 -name MotionSense  --pretrained "${name}_${v}_wo_MotionSense"
+
+    # wait
+# done
+
+#  

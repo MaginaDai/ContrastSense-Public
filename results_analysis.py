@@ -38,8 +38,10 @@ def avg_result(name, ft):
                 test[i, j] = test_extract[0]
     eval_mean = np.expand_dims(np.mean(eval, axis=1), 1)
     test_mean = np.expand_dims(np.mean(test, axis=1), 1)
-    print("Eval acc is: \n {}".format(np.around(np.concatenate((eval, eval_mean), axis=1), 2)))
-    print("Test acc is: \n {}".format(np.around(np.concatenate((test, test_mean), axis=1), 2)))
+    print("Eval f1 is: \n {}".format(np.around(np.concatenate((eval, eval_mean), axis=1), 2)))
+    print("Test f1 is: \n {}".format(np.around(np.concatenate((test, test_mean), axis=1), 2)))
+    print("Eval mean is: {}".format(np.mean(eval_mean)))
+    print("Test mean is: {}".format(np.mean(test_mean)))
     return
 
 def results_for_each_file(files):
@@ -49,7 +51,7 @@ def results_for_each_file(files):
     for i, n in enumerate(files):
         seg = n.split('_')
         dataset = seg[-1]
-        name = dataset + '_le_shot_10'
+        name = dataset + '_ft_shot_10'
         dir = f'{n}/{name}/training.log'
 
         eval_pattern = r'best\seval\sf1\sis\s+\(*(\d+\.+\d*)'
@@ -74,9 +76,8 @@ def results_for_each_file(files):
     eval = np.append(eval, np.mean(eval))
     test = np.append(test, np.mean(test))
     acc = np.append(acc, np.mean(acc))
-    print(f"{np.around(eval, decimals=2)}")
-    # print("test")
-    print(f"{np.around(test, decimals=2)}")
+    print(f"eval f1 {np.around(eval, decimals=2)}")
+    print(f"test f1 {np.around(test, decimals=2)}")
     # print(f"{np.around(acc, decimals=2)}")
     # print(f"{eval}\n{test}\n{acc}")
     return

@@ -79,11 +79,12 @@ parser.add_argument('-iter_tol', default=None, type=float, help='Max iteration n
 
 parser.add_argument('-final_dim', default=8, type=int, help='the output dims of the GRU')
 parser.add_argument('-mo', default=0.9, type=float, help='the momentum for Batch Normalization')
-
 parser.add_argument('-drop', default=0.1, type=float, help='the dropout portion')
+
 parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
-parser.add_argument('-DAL', default=True, type=bool, help='Use Domain Adaversarial Learning or not')
+parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-CE', default=False, type=bool, help='Use Cross Entropy Domain Loss or not')
+parser.add_argument('-ewc', default=True, type=float, help='Use EWC or not')
 
 
 def main():
@@ -157,6 +158,8 @@ def main():
             simclr = SimCLR(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
             simclr.train(train_loader)
     
+    if args.ewc:
+        fisher = getFisherDiagonal_success(args)
     return
 
 

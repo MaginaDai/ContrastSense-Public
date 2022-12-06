@@ -19,6 +19,7 @@ from utils import load_model_config, seed_torch
 import numpy as np
 import random
 import torch.multiprocessing
+import torch.nn.functional as F
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -82,12 +83,9 @@ parser.add_argument('-mo', default=0.9, type=float, help='the momentum for Batch
 
 parser.add_argument('-drop', default=0.1, type=float, help='the dropout portion')
 parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
-parser.add_argument('-DAL', default=True, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-CE', default=False, type=bool, help='Use Cross Entropy Domain Loss or not')
 
-fishermax=0.0001
-
-def getFisherDiagonal(args):
+def getFisherDiagonal_initial(args):
     args.label_type = 1
     args.num_clusters = None
     args.iter_tol = None
@@ -97,29 +95,33 @@ def getFisherDiagonal(args):
     train_dataset = dataset.get_dataset(split='train')
 
     train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=True,
+        train_dataset, batch_size=256, shuffle=True,
         num_workers=10, pin_memory=False, drop_last=True)
 
     user_num = None
     model = MoCo_v1(device=args.device, mol=args.mol)
+    optimizer = torch.optim.Adam(model.parameters(), 1e-4, weight_decay=1e-4)
+
     if args.pretrained:
         if os.path.isfile(args.pretrained):
             checkpoint = torch.load(args.pretrained, map_location="cpu")
             state_dict = checkpoint['state_dict']
-            log = model.load_state_dict(state_dict, strict=False)
+            model.load_state_dict(state_dict, strict=False)
+            optimizer.load_state_dict(checkpoint['optimizer'])
     else:
         raise NotADirectoryError
-
-    fisher = {
-            n[len("encoder_q."):]: torch.zeros(p.shape).to(args.device)
-            for n, p in model.named_parameters()
-            if p.requires_grad and n.startswith('encoder_q.encoder')
-        }
     
     model.to(args.device)
+
+    model = replenish_queue(model, train_loader, args)
+
     model.train()
-    
-    optimizer = torch.optim.Adam(model.parameters(), 1e-4, weight_decay=1e-4)
+
+    fisher = {
+        n[len("encoder_q."):]: torch.zeros(p.shape).to(args.device)
+        for n, p in model.named_parameters()
+            if p.requires_grad and n.startswith('encoder_q.encoder')
+    }
 
     for sensor, labels in train_loader:
         sensor = [t.to(args.device) for t in sensor]
@@ -131,18 +133,42 @@ def getFisherDiagonal(args):
                                                                                             gt=gt_label, if_plot=False,
                                                                                             n_iter=0)
         sup_loss = model.supervised_CL(logits_labels=logits_labels, labels=sup_label)
-        loss = - sup_loss
+        loss = - args.cl_slr[0] * sup_loss
         optimizer.zero_grad()
         loss.backward()
-        for n, p in model.named_parameters():
-            if p.grad is not None and n.startswith('encoder_q.encoder'):
-                fisher[n[len("encoder_q."):]] += p.grad.pow(2).clone()
+
+    for n, p in model.named_parameters():
+        if p.grad is not None and n.startswith('encoder_q.encoder'):
+            fisher[n[len("encoder_q."):]] += p.grad.pow(2).clone()
     for n, p in fisher.items():
         fisher[n] = p / len(train_loader)
         fisher[n] = torch.min(fisher[n], torch.tensor(args.fishermax)).to(args.device)
     return fisher
 
+def replenish_queue(model, train_loader, args):
+    # as we use the queue in moco to enlarge the negative samples size, 
+    # we need to re-fresh the queue with real samples, rather than using randomly generated samples.
+
+    model.eval()
+    with torch.no_grad():
+        for sensor, labels in train_loader:
+            sensor = [t.to(args.device) for t in sensor]
+            sup_label = [labels[:, i + 1].to(args.device) for i in range(args.label_type)]  # the following dim are cheap labels
+            
+            sen_q = sensor[0]
+            sen_k = sensor[1]
+            
+            q, _ = model.encoder_q(sen_q)  # queries: NxC
+            q = F.normalize(q, dim=1)
+
+            k, _ = model.encoder_k(sen_k)  # keys: NxC
+            k = F.normalize(k, dim=1)
+
+            model._dequeue_and_enqueue(k, sup_label)
+
+    return model
+
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    fisher = getFisherDiagonal(args)
+    fisher = getFisherDiagonal_initial(args)

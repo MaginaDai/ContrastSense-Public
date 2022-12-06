@@ -17,7 +17,7 @@ from DeepSense import DeepSense_encoder
 from MoCo import MoCo_model, MoCo_v1, MoCo_encoder, MoCo
 from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 from data_aug.preprocessing import ClassesNum, UsersNum
-from getFisherDiagonal import getFisherDiagonal
+from getFisherDiagonal import getFisherDiagonal_initial
 from simclr import SimCLR, MyNet, LIMU_encoder
 from utils import MoCo_evaluate, evaluate, identify_users_number, load_model_config, CPC_evaluate, seed_torch
 import torch.multiprocessing
@@ -35,11 +35,11 @@ parser.add_argument('-if-val', default=True, type=bool, help='to decide whether 
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
-parser.add_argument('--pretrained', default='Origin_w_HHAR', type=str,
+parser.add_argument('--pretrained', default='Shot_0_w_HHAR', type=str,
                     help='path to SimClR pretrained checkpoint')
 parser.add_argument('-name', default='HHAR',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'ICHAR', 'HASC'])
-parser.add_argument('--store', default='Origin_w_ewc_HHAR', type=str, help='define the name head for model storing')
+parser.add_argument('--store', default='Shot_0_w_HHAR_ewc_test', type=str, help='define the name head for model storing')
 
 parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                     help='number of data loading workers (default: 2)')
@@ -52,6 +52,9 @@ parser.add_argument('-b', '--batch-size', default=32, type=int,
                          'using Data Parallel or Distributed Data Parallel')
 parser.add_argument('-lr', '--learning-rate', default=0.001, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
+parser.add_argument('-wd', '--weight-decay', default=1e-4, type=float,
+                    metavar='W', help='weight decay (default: 1e-4)',
+                    dest='weight_decay')
 
 parser.add_argument('--seed', default=0, type=int,
                     help='seed for initializing training. ')
@@ -79,13 +82,14 @@ parser.add_argument('-final_dim', default=8, type=int, help='the output dims of 
 parser.add_argument('-mo', default=0.9, type=float, help='the momentum for Batch Normalization')
 
 parser.add_argument('-drop', default=0.1, type=float, help='the dropout portion')
-parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
+parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
 parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate')
 parser.add_argument('-slr', default=0.5, type=float, help='DAL learning ratio')
 parser.add_argument('-ewc', default=True, type=float, help='Use EWC or not')
-parser.add_argument('-ewc_lambda', default=100, type=float, help='EWC para')
+parser.add_argument('-ewc_lambda', default=1, type=float, help='EWC para')
 parser.add_argument('-fishermax', default=0.01, type=float, help='fishermax')
+parser.add_argument('-cl_slr', default=[0.3], nargs='+', type=float, help='the ratio of sup_loss')
 
 def main():
     args = parser.parse_args()
@@ -94,7 +98,7 @@ def main():
 
     # check if gpu training is available
     if not args.disable_cuda and torch.cuda.is_available():
-        args.device = torch.device('cuda')
+        args.device = torch.device(f'cuda:{args.gpu_index}')
     else:
         args.device = torch.device('cpu')
         args.gpu_index = -1
@@ -165,7 +169,7 @@ def main():
             if name not in classifier_name:
                 param.requires_grad = False
 
-    optimizer = torch.optim.Adam(model.parameters(), args.lr)
+    optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)
 
     # optionally resume from a checkpoint
@@ -196,7 +200,7 @@ def main():
 
     #  It’s a no-op if the 'gpu_index' argument is a negative integer or None.
 
-    fisher = getFisherDiagonal(args)
+    fisher = getFisherDiagonal_initial(args)
     
     with torch.cuda.device(args.gpu_index):
         moco = MoCo(model=model, optimizer=optimizer, scheduler=scheduler, args=args)

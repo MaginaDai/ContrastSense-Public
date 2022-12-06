@@ -443,6 +443,8 @@ class MoCo_v1(nn.Module):
 
         return x_gather[idx_this]
     
+
+    
     def forward(self, sen_q, sen_k, labels, num_clusters, iter_tol, gt, if_plot=False, n_iter=None):
         """
         Input:
@@ -1088,6 +1090,8 @@ class MoCo(object):
                 f1_batch.update(f1, sensor.size(0))
                 if n_iter_train % self.args.log_every_n_steps == 0:
                     self.writer.add_scalar('loss', loss, global_step=n_iter_train)
+                    self.writer.add_scalar('loss_clf', loss_clf, global_step=n_iter_train)
+                    self.writer.add_scalar('loss_ewc', loss_ewc, global_step=n_iter_train)
                     self.writer.add_scalar('acc', acc, global_step=n_iter_train)
                     self.writer.add_scalar('f1', f1, global_step=n_iter_train)
                     self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter_train)
