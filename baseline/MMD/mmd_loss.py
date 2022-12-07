@@ -9,6 +9,7 @@ class MMD_loss(nn.Module):
         
 
     def forward(self, feature, domain):
+        domain = domain.unsqueeze(1)
         mask = torch.eq(domain, domain.T).float()
         neg_mask = (~torch.eq(domain, domain.T)).float()
 
@@ -19,7 +20,7 @@ class MMD_loss(nn.Module):
         kernel_val = [torch.exp(-L2_distance / sigma) for sigma in self.fix_sigma]
         k = sum(kernel_val)
         
-        Ex = torch.sum(mask * k) / torch.sum(mask) 
+        Ex = torch.sum(mask * k) / torch.sum(mask)
         Ey = torch.sum(neg_mask * k) / torch.sum(neg_mask)
 
         loss = Ex - Ey
