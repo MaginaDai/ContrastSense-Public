@@ -6,9 +6,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from os.path import dirname
-
 sys.path.append(dirname(dirname(sys.path[0])))
 
+from MoCo import GradientReversal
 from baseline.MMD.mmd_loss import MMD_loss
 import torch
 import torch.nn as nn
@@ -21,15 +21,23 @@ from utils import f1_cal, save_config_file, accuracy, save_checkpoint, evaluate,
 
 
 class FM_model(nn.Module):
-    def __init__(self, classes):
+    def __init__(self, method, classes, domains=None):
         super(FM_model, self).__init__()
         self.encoder = FM_Encoder()
         self.head = FM_Classifier(classes=classes)
+        self.method = method
+        if self.method == 'CM':
+            self.discriminator = FM_discriminator(domains=domains)
     
     def forward(self, x):
         h = self.encoder(x)
         z = self.head(h)
         return z
+
+    def predict_domain(self, x):
+        h = self.encoder(x)
+        d = self.discriminator(h)
+        return d
 
 
 class FM_Encoder(nn.Module):
@@ -82,6 +90,19 @@ class FM_Classifier(nn.Module):
     def forward(self, h):
         y = self.linear1(h)
         return y
+    
+class FM_discriminator(nn.Module):
+    def __init__(self, domains):
+        super(FM_discriminator, self).__init__()
+        self.reverse_layer = GradientReversal()
+        self.linear1 = nn.Linear(100, 100)
+        self.linear2 = nn.Linear(100, domains)
+    
+    def forward(self, h):
+        h = self.reverse_layer(h)
+        h = self.linear1(h)
+        y = self.linear2(h)
+        return y
 
 
 class FMUDA(object):
@@ -101,7 +122,10 @@ class FMUDA(object):
         logging.basicConfig(filename=os.path.join(self.writer.log_dir, 'training.log'), level=logging.DEBUG)
         
         self.clf_loss = torch.nn.CrossEntropyLoss().to(self.args.device)
-        self.mmd_loss = MMD_loss()
+        if self.args.method == 'FM':
+            self.mmd_loss = MMD_loss()
+        else:
+            self.domain_loss = torch.nn.CrossEntropyLoss().to(self.args.device)
 
     def train(self, train_loader, tune_loader, val_loader, test_loader):
         scaler = GradScaler(enabled=self.args.fp16_precision)
@@ -110,7 +134,7 @@ class FMUDA(object):
         save_config_file(self.writer.log_dir, self.args)
 
         n_iter_train = 0
-        logging.info(f"Start FMUDA training for {self.args.epochs} epochs.")
+        logging.info(f"Start {self.args.method}UDA training for {self.args.epochs} epochs.")
         logging.info(f"Training with gpu: {self.args.disable_cuda}.")
 
         acc = 0
@@ -123,7 +147,7 @@ class FMUDA(object):
             acc_batch = AverageMeter('acc_batch', ':6.2f')
             f1_batch = AverageMeter('f1_batch', ':6.2f')
             loss_clf_batch = AverageMeter('loss_clf_batch', ':6.5f')
-            loss_mmd_batch = AverageMeter('loss_mmd_batch', ':6.5f')
+            loss_uda_batch = AverageMeter('loss_uda_batch', ':6.5f')
 
             data_loader = zip(tune_loader, train_loader)
 
@@ -143,12 +167,18 @@ class FMUDA(object):
                 scaler.step(self.optimizer)
                 scaler.update()
 
-                with autocast(enabled=self.args.fp16_precision):
-                    feature = self.model.encoder(sensor_domain)
-                    loss_mmd = self.mmd_loss(feature, target_domain)
+                
+                if self.args.method == 'FM':
+                    with autocast(enabled=self.args.fp16_precision):
+                        feature = self.model.encoder(sensor_domain)
+                        loss_uda = self.mmd_loss(feature, target_domain)
+                else:
+                    with autocast(enabled=self.args.fp16_precision):
+                        logits_domain = self.model.predict_domain(sensor_domain)
+                        loss_uda = self.domain_loss(logits_domain, target_domain)
 
                 self.optimizer.zero_grad()
-                scaler.scale(loss_mmd).backward()
+                scaler.scale(loss_uda).backward()
                 scaler.step(self.optimizer)
                 scaler.update()
 
@@ -157,10 +187,10 @@ class FMUDA(object):
                 acc_batch.update(acc, sensor.size(0))
                 f1_batch.update(f1, sensor.size(0))
                 loss_clf_batch.update(loss_clf, sensor.size(0))
-                loss_mmd_batch.update(loss_mmd, sensor.size(0))
+                loss_uda_batch.update(loss_uda, sensor.size(0))
 
             self.writer.add_scalar('loss_clf', loss_clf_batch.avg, global_step=epoch_counter)
-            self.writer.add_scalar('loss_mmd', loss_mmd_batch.avg, global_step=epoch_counter)
+            self.writer.add_scalar('loss_uda', loss_uda_batch.avg, global_step=epoch_counter)
             self.writer.add_scalar('acc', acc_batch.avg, global_step=epoch_counter)
             self.writer.add_scalar('f1', f1_batch.avg, global_step=epoch_counter)
 
@@ -183,7 +213,7 @@ class FMUDA(object):
 
             self.writer.add_scalar('eval acc', val_acc, global_step=epoch_counter)
             self.writer.add_scalar('eval f1', val_f1, global_step=epoch_counter)
-            logging.debug(f"Epoch: {epoch_counter} Loss_clf: {loss_clf_batch.avg} Loss_mmd: {loss_mmd_batch.avg} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch.avg: .3f}/{val_f1: .3f}")
+            logging.debug(f"Epoch: {epoch_counter} Loss_clf: {loss_clf_batch.avg} Loss_uda: {loss_uda_batch.avg} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch.avg: .3f}/{val_f1: .3f}")
             
         logging.info("Fine-tuning has finished.")
         logging.info(f"best eval f1 is {best_f1} at {best_epoch}.")

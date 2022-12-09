@@ -16,8 +16,8 @@ class MMD_loss(nn.Module):
         total0 = feature.unsqueeze(0).expand(int(feature.size(0)), int(feature.size(0)), int(feature.size(1)))
         total1 = feature.unsqueeze(1).expand(int(feature.size(0)), int(feature.size(0)), int(feature.size(1)))
 
-        L2_distance = ((total0-total1)**2).sum(2) 
-        kernel_val = [torch.exp(-L2_distance / sigma) for sigma in self.fix_sigma]
+        L2_distance = ((total0-total1)**2).sum(2)
+        kernel_val = [torch.exp(-L2_distance / 2 * sigma) for sigma in self.fix_sigma]
         k = sum(kernel_val)
         
         Ex = torch.sum(mask * k) / torch.sum(mask)

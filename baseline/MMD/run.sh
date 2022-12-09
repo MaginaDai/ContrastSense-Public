@@ -1,11 +1,11 @@
 #!/bin/bash
-name='FM_aug_ep'
-for e in 150 200 250 300 350 400 450 500
+name='CM_v2_ep'
+for e in 2000
 do
-    python main.py -g 0 -e ${e} -name HASC --store "${name}_${e}" &
-    python main.py -g 0 -e ${e} -name HHAR --store "${name}_${e}" &
-    python main.py -g 0 -e ${e} -name MotionSense --store "${name}_${e}" &
-    python main.py -g 0 -e ${e} -name Shoaib --store "${name}_${e}" 
+    python main.py -g 0 -e ${e} -m 'CM' -name HASC --store "${name}_${e}" &
+    python main.py -g 0 -e ${e} -m 'CM' -name HHAR --store "${name}_${e}" &
+    python main.py -g 0 -e ${e} -m 'CM' -name MotionSense --store "${name}_${e}" &
+    python main.py -g 0 -e ${e} -m 'CM' -name Shoaib --store "${name}_${e}" 
 
     wait
 done
