@@ -48,3 +48,33 @@ class SupConLoss(nn.Module):
             print(mean_log_prob_pos)
             pdb.set_trace()
         return loss
+    
+    def transfer_calculate(self, logits, labels):
+        batch_size = logits.shape[0]
+        labels = labels.contiguous().view(-1, 1)
+        if labels.shape[0] != batch_size:
+            raise ValueError('Num of labels does not match num of features')
+        
+        mask = torch.eq(labels, labels.T).float().to(self.device)  # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
+
+        mask = mask - torch.eye(batch_size).to(self.device)  # now is self-comparison so we need to tune it.
+
+        exp_logits = torch.exp(logits)
+        log_prob = logits - torch.log(exp_logits.sum(1, keepdim=True))
+
+        # compute mean of log-likelihood over positive
+        # Only one data point from this domain. SCL requir at least two data form the same domain. So we mask the corresponding value in this case.
+        non_zero_pos = torch.nonzero(mask.sum(1))[:, 0]
+        log_prob_non_zero = log_prob[non_zero_pos, :]
+        mask_non_zero = mask[non_zero_pos, :]
+        
+        mean_log_prob_pos = (mask_non_zero * log_prob_non_zero).sum(1) / mask_non_zero.sum(1)
+        loss = - mean_log_prob_pos.mean()
+
+        if torch.isnan(loss).any():
+            print(logits)
+            print(mask.sum(1))
+            print(mean_log_prob_pos)
+            pdb.set_trace()
+        
+        return loss

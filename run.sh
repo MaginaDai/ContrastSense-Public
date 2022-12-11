@@ -84,20 +84,6 @@
 
 ######### transfer learning ##########
 
-# wait
-
-# name=BN_no  # contrastive learning without loss 
-# for shot in 10
-# do
-#     python main_transfer.py -g 1 -ft True -lr 0.001 -version 50_200_shot -shot ${shot} -name HASC --pretrained "${name}_HASC" --store "${name}_HASC" &
-#     python main_transfer.py -g 1 -ft True -lr 0.001 -version 50_200_shot -shot ${shot} -name HHAR --pretrained "${name}_HHAR" --store "${name}_HHAR" &
-#     python main_transfer.py -g 1 -ft True -lr 0.001 -version 50_200_shot -shot ${shot} -name Shoaib --pretrained "${name}_Shoaib" --store "${name}_Shoaib" &
-#     python main_transfer.py -g 1 -ft True -lr 0.001 -version 50_200_shot -shot ${shot} -name MotionSense  --pretrained "${name}_MotionSense" --store "${name}_MotionSense"
-#     wait
-# done
-
-# wait
-
 
 # name=Origin  # contrastive learning without loss 
 # for lr in 0.0001
@@ -134,12 +120,12 @@
 # done
 
 # name="Origin_w"
-# for slr in 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+# for slr in 0.9
 # do
-#     python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name HASC --pretrained "${name}_HASC"  --store "${name}_transfer_DAL_uni_slr${slr}_bt32" &
-#     python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name HHAR --pretrained "${name}_HHAR" --store "${name}_transfer_DAL_uni_slr${slr}_bt32" &
-#     python main_transfer.py -DAL True -g 1 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name Shoaib --pretrained "${name}_Shoaib" --store "${name}_transfer_DAL_uni_slr${slr}_bt32" &
-#     python main_transfer.py -DAL True -g 1 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name MotionSense  --pretrained "${name}_MotionSense" --store "${name}_transfer_DAL_uni_slr${slr}_bt32"
+#     python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name HASC --pretrained "${name}_HASC"  --store "${name}_transfer_DAL_uni_lr1e-4_slr${slr}_bt32" &
+#     python main_transfer.py -DAL True -g 0 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name HHAR --pretrained "${name}_HHAR" --store "${name}_transfer_DAL_uni_lr1e-4_slr${slr}_bt32" &
+#     python main_transfer.py -DAL True -g 1 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name Shoaib --pretrained "${name}_Shoaib" --store "${name}_transfer_DAL_uni_lr1e-4_slr${slr}_bt32" &
+#     python main_transfer.py -DAL True -g 1 -ft True -lr 0.0001 -version shot -shot 10 -slr ${slr} -name MotionSense  --pretrained "${name}_MotionSense" --store "${name}_transfer_DAL_uni_lr1e-4_slr${slr}_bt32"
 #     wait
 # done
 
@@ -161,21 +147,21 @@
 # python main_transfer.py -g 1 -ft True -lr 0.0001 -version shot -shot 20 -name HHAR --pretrained "${name}_HHAR" --store "${name}" &
 # python main_transfer.py -g 1 -ft True -lr 0.0001 -version shot -shot 50 -name HHAR --pretrained "${name}_HHAR" --store "${name}"
 
-name="Origin_w"
+# name="Origin_w"
 # name=ewc_v4
 
-for fm in 0.01
-do
-    for lam in 1000 2500 7500
-    do
-        python main_trans_ewc.py -ewc_lambda ${lam} -fishermax ${fm} -g 0 -ft True -lr 0.0001 -version "shot" -shot 10 -name HASC --pretrained "${name}_HASC" --store "ewc_v4_fm${fm}_lam${lam}" &
-        python main_trans_ewc.py -ewc_lambda ${lam} -fishermax ${fm} -g 0 -ft True -lr 0.0001 -version "shot" -shot 10 -name HHAR --pretrained "${name}_HHAR" --store "ewc_v4_fm${fm}_lam${lam}" &
-        python main_trans_ewc.py -ewc_lambda ${lam} -fishermax ${fm} -g 1 -ft True -lr 0.0001 -version "shot" -shot 10 -name Shoaib --pretrained "${name}_Shoaib" --store "ewc_v4_fm${fm}_lam${lam}" &
-        python main_trans_ewc.py -ewc_lambda ${lam} -fishermax ${fm} -g 1 -ft True -lr 0.0001 -version "shot" -shot 10 -name MotionSense  --pretrained "${name}_MotionSense" --store "ewc_v4_fm${fm}_lam${lam}"
+# for fm in 0.01
+# do
+#     for lam in 1000 2500 7500
+#     do
+#         python main_trans_ewc.py -ewc_lambda ${lam} -fishermax ${fm} -g 0 -ft True -lr 0.0001 -version "shot" -shot 10 -name HASC --pretrained "${name}_HASC" --store "ewc_v4_fm${fm}_lam${lam}" &
+#         python main_trans_ewc.py -ewc_lambda ${lam} -fishermax ${fm} -g 0 -ft True -lr 0.0001 -version "shot" -shot 10 -name HHAR --pretrained "${name}_HHAR" --store "ewc_v4_fm${fm}_lam${lam}" &
+#         python main_trans_ewc.py -ewc_lambda ${lam} -fishermax ${fm} -g 1 -ft True -lr 0.0001 -version "shot" -shot 10 -name Shoaib --pretrained "${name}_Shoaib" --store "ewc_v4_fm${fm}_lam${lam}" &
+#         python main_trans_ewc.py -ewc_lambda ${lam} -fishermax ${fm} -g 1 -ft True -lr 0.0001 -version "shot" -shot 10 -name MotionSense  --pretrained "${name}_MotionSense" --store "ewc_v4_fm${fm}_lam${lam}"
 
-        wait
-    done
-done
+#         wait
+#     done
+# done
 
 # name=Shot
 # for v in 0 1 2 3 4
@@ -209,4 +195,42 @@ done
     # wait
 # done
 
-#  
+# for lr in 0.00005 0.0001 0.0005
+# do
+#     for e in 200 300 400 500
+#     do
+#         name='Origin_w'
+        
+#         python main_transfer.py -g 0 -ft True -lr ${lr} -e ${e} -version shot -shot 10 -name HASC --pretrained "${name}_HASC" --store "lr_w_lr${lr}_e${e}" &
+#         python main_transfer.py -g 0 -ft True -lr ${lr} -e ${e} -version shot -shot 10 -name HHAR --pretrained "${name}_HHAR" --store "lr_w_lr${lr}_e${e}" &
+#         python main_transfer.py -g 1 -ft True -lr ${lr} -e ${e} -version shot -shot 10 -name Shoaib --pretrained "${name}_Shoaib" --store "lr_w_lr${lr}_e${e}" &
+#         python main_transfer.py -g 1 -ft True -lr ${lr} -e ${e} -version shot -shot 10 -name MotionSense  --pretrained "${name}_MotionSense" --store "lr_w_lr${lr}_e${e}"
+
+#         wait
+
+#         name='Origin_wo'
+
+#         python main_transfer.py -g 0 -ft True -lr ${lr} -e ${e} -version shot -shot 10 -name HASC --pretrained "${name}_HASC" --store "lr_wo_lr${lr}_e${e}" &
+#         python main_transfer.py -g 0 -ft True -lr ${lr} -e ${e} -version shot -shot 10 -name HHAR --pretrained "${name}_HHAR" --store "lr_wo_lr${lr}_e${e}" &
+#         python main_transfer.py -g 1 -ft True -lr ${lr} -e ${e} -version shot -shot 10 -name Shoaib --pretrained "${name}_Shoaib" --store "lr_wo_lr${lr}_e${e}" &
+#         python main_transfer.py -g 1 -ft True -lr ${lr} -e ${e} -version shot -shot 10 -name MotionSense  --pretrained "${name}_MotionSense" --store "lr_wo_lr${lr}_e${e}"
+
+#         wait
+#     done
+# done
+
+# name="Origin_w"
+# store='trans_SCL'
+
+# for bcl in 128 
+# do
+#     for slr in 0.7 0.8 0.9 1.0
+#     do
+#         python main_trans_SCL.py -bcl ${bcl} -cl_slr ${slr} -g 2 -ft True -lr 0.0005 -version "shot" -shot 10 -name HASC --pretrained "${name}_HASC" --store "${store}_${slr}_bcl_${bcl}" &
+#         python main_trans_SCL.py -bcl ${bcl} -cl_slr ${slr} -g 2 -ft True -lr 0.0005 -version "shot" -shot 10 -name HHAR --pretrained "${name}_HHAR" --store "${store}_${slr}_bcl_${bcl}" &
+#         python main_trans_SCL.py -bcl ${bcl} -cl_slr ${slr} -g 3 -ft True -lr 0.0005 -version "shot" -shot 10 -name Shoaib --pretrained "${name}_Shoaib" --store "${store}_${slr}_bcl_${bcl}" &
+#         python main_trans_SCL.py -bcl ${bcl} -cl_slr ${slr} -g 3 -ft True -lr 0.0005 -version "shot" -shot 10 -name MotionSense  --pretrained "${name}_MotionSense" --store "${store}_${slr}_bcl_${bcl}"
+        
+#         wait
+#     done
+# done

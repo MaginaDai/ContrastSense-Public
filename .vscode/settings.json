@@ -1,5 +1,6 @@
 {
     "python.analysis.extraPaths": [
-        "./baseline/ClusterHAR"
+        "./baseline/ClusterHAR",
+        "./baseline/GILE"
     ]
 }

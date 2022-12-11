@@ -28,7 +28,7 @@ model_names = sorted(name for name in models.__dict__
 
 parser = argparse.ArgumentParser(description='PyTorch SimCLR for Wearable Sensing')
 
-parser.add_argument('--pretrained', default='Origin_wo_HASC', type=str,
+parser.add_argument('--pretrained', default='Origin_w_HHAR', type=str,
                     help='path to SimClR pretrained checkpoint')
 parser.add_argument('-ft', '--if-fine-tune', default=True, type=bool, help='to decide whether tune all the layers')
 parser.add_argument('-if-val', default=True, type=bool, help='to decide whether use validation set')
@@ -40,7 +40,7 @@ parser.add_argument('-name', default='Shoaib',
 
 parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                     help='number of data loading workers (default: 2)')
-parser.add_argument('-e', '--epochs', default=300, type=int, metavar='N',
+parser.add_argument('-e', '--epochs', default=400, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('-b', '--batch-size', default=32, type=int,
                     metavar='N',
@@ -67,7 +67,7 @@ parser.add_argument('-t', '--temperature', default=1, type=float,
 parser.add_argument('-g', '--gpu-index', default=0, type=int, help='Gpu index.')
 parser.add_argument('--evaluate', default=False, type=bool, help='To decide whether to evaluate')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
-parser.add_argument('--store', default=None, type=str, help='define the name head for model storing')
+parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 parser.add_argument('--mol', default='MoCo', type=str, help='which model to use', choices=['SimCLR', 'LIMU', 'CPC', 'MoCo', 'DeepSense'])
 
 parser.add_argument('--timestep', default=15, type=int, help='how many time steps for CPC')
