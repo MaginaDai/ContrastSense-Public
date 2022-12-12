@@ -33,7 +33,7 @@ def train_auxi(args, tune_domain_loader, DEVICE, model, optimizer, e, false_opti
             loss_origin, class_y_loss = model.loss_function(d, x, y)
             # if torch.any(torch.isnan(loss_origin)):
             #     print('now')
-                
+            
             loss_origin = loss_origin
 
             loss_false = model.loss_function_false(args, d, x, y)

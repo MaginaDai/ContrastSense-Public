@@ -16,5 +16,5 @@ def load_model(args):
     return model
 
 def set_up_optimizers(parameters):
-    optimizer = torch.optim.Adam(parameters, lr=1e-4)
+    optimizer = torch.optim.Adam(parameters, lr=1e-2)
     return optimizer

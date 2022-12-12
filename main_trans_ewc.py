@@ -43,7 +43,7 @@ parser.add_argument('--store', default='Shot_0_w_HHAR_ewc_test', type=str, help=
 
 parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                     help='number of data loading workers (default: 2)')
-parser.add_argument('-e', '--epochs', default=300, type=int, metavar='N',
+parser.add_argument('-e', '--epochs', default=400, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('-b', '--batch-size', default=32, type=int,
                     metavar='N',

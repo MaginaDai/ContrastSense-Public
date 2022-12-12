@@ -84,7 +84,7 @@ parser.add_argument('-drop', default=0.1, type=float, help='the dropout portion'
 parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
 parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate')
-parser.add_argument('-slr', default=0.5, type=float, help='DAL learning ratio')
+parser.add_argument('-slr', default=0.9, type=float, help='DAL learning ratio')
 parser.add_argument('-ewc', default=False, type=float, help='Use EWC or not')
 
 

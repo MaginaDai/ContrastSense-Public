@@ -43,9 +43,9 @@ def load_GILE_type_data(tune_dataset, val_dataset, test_dataset, batch_size):
         weights = weights.double()
 
         sample_weights = get_sample_weights(y, weights)
-        # sampler = torch.utils.data.sampler.WeightedRandomSampler(weights=sample_weights, num_samples=len(sample_weights), replacement=True)
+        sampler = torch.utils.data.sampler.WeightedRandomSampler(weights=sample_weights, num_samples=len(sample_weights), replacement=True)
 
-        source_loader = DataLoader(domain_set, batch_size=batch_size, shuffle=True, drop_last=False)
+        source_loader = DataLoader(domain_set, batch_size=batch_size, shuffle=False, drop_last=False, sampler=sampler)
         
         tune_domain_loader.append(source_loader)
     

@@ -38,10 +38,12 @@ def avg_result(name, ft):
                 test[i, j] = test_extract[0]
     eval_mean = np.expand_dims(np.mean(eval, axis=1), 1)
     test_mean = np.expand_dims(np.mean(test, axis=1), 1)
-    print("Eval f1 is: \n {}".format(np.around(np.concatenate((eval, eval_mean), axis=1), 2)))
-    print("Test f1 is: \n {}".format(np.around(np.concatenate((test, test_mean), axis=1), 2)))
-    print("Eval mean is: {}".format(np.mean(eval_mean)))
-    print("Test mean is: {}".format(np.mean(test_mean)))
+    eval_final = np.concatenate((eval, eval_mean), axis=1)
+    test_final = np.concatenate((test, test_mean), axis=1)
+    print("Eval f1 is: \n {}".format(np.around(eval_final, 2)))
+    print("Test f1 is: \n {}".format(np.around(test_final, 2)))
+    print("Eval mean is: {}".format(np.around(np.mean(eval_final, axis=0), 2)))
+    print("Test mean is: {}".format(np.around(np.mean(test_final, axis=0), 2)))
     return
 
 def results_for_each_file(files):
