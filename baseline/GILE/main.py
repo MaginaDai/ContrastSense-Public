@@ -1,9 +1,4 @@
 # encoding=utf-8
-import matplotlib
-
-from baseline.CPCHAR.dataload import CPCHAR_Dataset
-matplotlib.use('Agg')
-
 from copy import deepcopy
 import sys
 import os
@@ -13,31 +8,37 @@ from os.path import dirname
 sys.path.append(dirname(dirname(sys.path[0])))
 sys.path.append(dirname(sys.path[0]))
 
-from GILE import train
-import network as net
+from baseline.CPCHAR.dataload import CPCHAR_Dataset
+from baseline.GILE.dataloader import load_GILE_type_data
+from baseline.GILE.GILE import train
+import baseline.GILE.network as net
+from data_aug.preprocessing import ClassesNum, UsersNum
 
-from utils import seed_torch, set_name
+from utils import seed_torch
 import torch
 import argparse
 
 parser = argparse.ArgumentParser(description='argument setting of network')
-parser.add_argument('--now_model_name', type=str, default='GILE', help='the type of model')
 
+parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
+parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
+parser.add_argument('--store', default='lr', type=str, help='define the name head for model storing')
+parser.add_argument('-name', default='HASC', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR'])
+parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
+parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
+
+parser.add_argument('--now_model_name', type=str, default='GILE', help='the type of model')
 parser.add_argument('--batch_size', type=int, default=64, help='batch size of training')
 parser.add_argument('--n_epoch', type=int, default=150, help='number of training epochs')
-parser.add_argument('--dataset', type=str, default='ucihar', help='name of dataset')
 parser.add_argument('-g', '--gpu-index', default=0, type=int, help='Gpu index.')
 
-parser.add_argument('--n_feature', type=int, default=9, help='name of feature dimension')
+parser.add_argument('--n_feature', type=int, default=6, help='name of feature dimension')
 parser.add_argument('--len_sw', type=int, default=128, help='length of sliding window')
-parser.add_argument('--n_class', type=int, default=6, help='number of class')
 parser.add_argument('--d_AE', type=int, default=50, help='dim of AE')
 parser.add_argument('--sigma', type=float, default=1, help='parameter of mmd')
 parser.add_argument('--weight_mmd', type=float, default=1.0, help='weight of mmd loss')
 
-parser.add_argument('--target_domain', type=str, default='0', help='the target domain, [0 to 4]')
 parser.add_argument('--test_every', type=int, default=1, help='do testing every n epochs')
-parser.add_argument('-n_domains', type=int, default=5, help='number of total domains actually')
 parser.add_argument('-n_target_domains', type=int, default=1, help='number of target domains')
 
 parser.add_argument('--beta', type=float, default=1., help='multiplier for KL')
@@ -53,8 +54,12 @@ parser.add_argument('--beta_y', type=float, default=1., help='multiplier for KL 
 parser.add_argument('--weight_true', type=float, default=1000.0, help='weights for classifier true')
 parser.add_argument('--weight_false', type=float, default=1000.0, help='weights for classifier false')
 
+
 if __name__ == '__main__':
     args = parser.parse_args()
+    args.n_feature = 6
+    args.n_domains = UsersNum[args.name]
+    args.n_class = ClassesNum[args.name]
     
     seed_torch(seed=args.seed)
 
@@ -64,29 +69,16 @@ if __name__ == '__main__':
     
     dataset = CPCHAR_Dataset(transfer=False, version=args.version, datasets_name=args.name)
 
-    train_dataset = dataset.get_dataset(split='train')
+    train_dataset = dataset.get_dataset('train')
     tune_dataset = dataset.get_dataset('tune', percent=args.percent, shot=args.shot)
     val_dataset = dataset.get_dataset('val')
     test_dataset = dataset.get_dataset('test')
 
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=False, drop_last=True)
+    # tune_loader, val_loader, test_loader = load_GILE_type_data(tune_dataset, val_dataset, test_dataset, args.batch_size)
 
-    tune_loader = torch.utils.data.DataLoader(
-        tune_dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=False, drop_last=False)
+    tune_loader, val_loader, test_loader = load_GILE_type_data(test_dataset, val_dataset, train_dataset, args.batch_size)
 
-    val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=False, drop_last=False)
-
-    test_loader = torch.utils.data.DataLoader(
-        test_dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=False, drop_last=False)
-
-    
     model = net.load_model(args)
     model = model.to(DEVICE)
     optimizer = net.set_up_optimizers(model.parameters())
-    train(model, DEVICE, optimizer, train_loader, tune_loader, val_loader, test_loader, args)
+    train(model, DEVICE, optimizer, tune_loader, val_loader, test_loader, args)

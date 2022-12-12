@@ -158,8 +158,6 @@ def main():
             simclr = SimCLR(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
             simclr.train(train_loader)
     
-    if args.ewc:
-        fisher = getFisherDiagonal_success(args)
     return
 
 

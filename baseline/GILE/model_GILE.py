@@ -9,7 +9,7 @@ class px(nn.Module):
 
         self.n_feature = args.n_feature
 
-        self.fc1 = nn.Sequential(nn.Linear(zd_dim + zx_dim + zy_dim, 512, bias=False), nn.BatchNorm1d(512), nn.ReLU())
+        self.fc1 = nn.Sequential(nn.Linear(zd_dim + zx_dim + zy_dim, 832, bias=False), nn.BatchNorm1d(832), nn.ReLU())
 
         self.un1 = nn.MaxUnpool2d(kernel_size=(1, 2), stride=2)
         self.deconv1 = nn.Sequential(
@@ -47,7 +47,7 @@ class px(nn.Module):
         else:
             zdzxzy = torch.cat((zd, zx, zy), dim=-1)
         h = self.fc1(zdzxzy)
-        h = h.view(-1, 64, 1, 8)
+        h = h.view(-1, 64, 1, 13)
 
         out_1 = self.un1(h, idxs[3], output_size=sizes[2])
         out_11 = self.deconv1(out_1)
@@ -61,7 +61,7 @@ class px(nn.Module):
         out_4 = self.un4(out_33, idxs[0])
         out_44 = self.deconv4(out_4)
 
-        out = out_44.permute(0, 3, 1, 2)
+        out = out_44.permute(0, 2, 3, 1)
         return out
 
 class pzd(nn.Module):
@@ -83,7 +83,7 @@ class pzd(nn.Module):
     def forward(self, d):
         a = torch.eye(self.d_dim)
         d_onehot = a[d]
-        d_onehot = d_onehot.to(self.device)
+        d_onehot = d_onehot.squeeze().to(self.device)
         hidden = self.fc1(d_onehot)
         zd_loc = self.fc21(hidden)
         zd_scale = self.fc22(hidden) + 1e-7
@@ -112,7 +112,7 @@ class pzy(nn.Module):
 
         a = torch.eye(self.y_dim)
         y_onehot = a[y]
-        y_onehot = y_onehot.to(self.device)
+        y_onehot = y_onehot.squeeze().to(self.device)
 
         hidden = self.fc1(y_onehot)
         zy_loc = self.fc21(hidden)
@@ -152,8 +152,8 @@ class qzd(nn.Module):
         )
         self.pool4 = nn.MaxPool2d(kernel_size=(1, 2), stride=2, return_indices=True, ceil_mode=True)
 
-        self.fc11 = nn.Sequential(nn.Linear(512, zd_dim))
-        self.fc12 = nn.Sequential(nn.Linear(512, zd_dim), nn.Softplus())
+        self.fc11 = nn.Sequential(nn.Linear(832, zd_dim))
+        self.fc12 = nn.Sequential(nn.Linear(832, zd_dim), nn.Softplus())
 
         torch.nn.init.xavier_uniform_(self.conv1[0].weight)
         torch.nn.init.xavier_uniform_(self.conv2[0].weight)
@@ -167,7 +167,8 @@ class qzd(nn.Module):
 
     def forward(self, x):
         x = x.float()
-        x_img = x.view(-1, x.shape[2], 1, x.shape[1])
+        x_img = x.permute(0, 3, 1, 2)
+        # x_img = x.view(x.shape[0], x.shape[3], x.shape[1], x.shape[2])
 
         out_conv1 = self.conv1(x_img)
         out1, idx1 = self.pool1(out_conv1)
@@ -238,7 +239,8 @@ class qzx(nn.Module):
 
     def forward(self, x):
         x = x.float()
-        x_img = x.view(-1, x.shape[2], 1, x.shape[1])
+        x_img = x.permute(0, 3, 1, 2)
+        # x_img = x.view(x.shape[0], x.shape[3], x.shape[1], x.shape[2])
 
         out_conv1 = self.conv1(x_img)
         out1, idx1 = self.pool1(out_conv1)
@@ -294,8 +296,8 @@ class qzy(nn.Module):
         )
         self.pool4 = nn.MaxPool2d(kernel_size=(1, 2), stride=2, return_indices=True, ceil_mode=True)
 
-        self.fc11 = nn.Sequential(nn.Linear(512, zy_dim))
-        self.fc12 = nn.Sequential(nn.Linear(512, zy_dim), nn.Softplus())
+        self.fc11 = nn.Sequential(nn.Linear(832, zy_dim))
+        self.fc12 = nn.Sequential(nn.Linear(832, zy_dim), nn.Softplus())
 
         torch.nn.init.xavier_uniform_(self.conv1[0].weight)
         torch.nn.init.xavier_uniform_(self.conv2[0].weight)
@@ -309,7 +311,8 @@ class qzy(nn.Module):
 
     def forward(self, x):
         x = x.float()
-        x_img = x.view(-1, x.shape[2], 1, x.shape[1])
+        x_img = x.permute(0, 3, 1, 2)
+        # x_img = x.view(x.shape[0], x.shape[3], x.shape[1], x.shape[2])
         out_conv1 = self.conv1(x_img)
         out1, idx1 = self.pool1(out_conv1)
 
@@ -422,7 +425,7 @@ class GILE(nn.Module):
         # Decode
         x_recon = self.px(zd_q, zx_q, zy_q, idxs_y, sizes_y)  # feature reconstruction
         
-        #### ??? whats for ? 
+        # to get the distribution of labels 
         zd_p_loc, zd_p_scale = self.pzd(d)
 
         if self.zx_dim != 0:
@@ -460,6 +463,8 @@ class GILE(nn.Module):
         x_recon, d_hat, y_hat, qzd, pzd, zd_q, qzx, pzx, zx_q, qzy, pzy, zy_q = self.forward(d, x, y)
 
         CE_x = F.mse_loss(x_recon, x.float())
+        if torch.isnan(CE_x):
+            CE_x = torch.zeros(1)[0]
 
         zd_p_minus_zd_q = torch.sum(pzd.log_prob(zd_q) - qzd.log_prob(zd_q))
         if self.zx_dim != 0:

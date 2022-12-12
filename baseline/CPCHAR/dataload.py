@@ -18,9 +18,13 @@ class CPCHAR_Dataset:
         self.version = version
 
     def get_dataset(self, split, percent=20, shot=None):
-        return CPCHARDataset4Training(self.datasets_name, self.version,
+        self.dataset = CPCHARDataset4Training(self.datasets_name, self.version,
                                       transform=transforms.Compose([ToTensor()]),  # can add more transformations
                                       split=split, transfer=self.transfer, percent=percent, shot=shot)
+        return self.dataset
+
+    def __len__(self):
+        return len(self.dataset)
 
 
 class CPCHARDataset4Training(Dataset):

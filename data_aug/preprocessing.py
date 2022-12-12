@@ -51,7 +51,7 @@ UsersNum = {
     'Shoaib': 10,
     'UCI': 30,
     'ICHAR': 10,
-    'HASC': 305,  # actually we have 288 users in total. But the largest user id is 305. 
+    'HASC': 306,  # actually we have 288 users in total. But the largest user id is 305, set it to 306. +1 since it starts from 0. 
 }
 
 LabelPosition = {
