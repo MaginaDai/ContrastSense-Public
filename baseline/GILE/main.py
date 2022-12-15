@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser(description='argument setting of network')
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
 parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
 parser.add_argument('--store', default='lr', type=str, help='define the name head for model storing')
-parser.add_argument('-name', default='HASC', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR'])
+parser.add_argument('-name', default='HHAR', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR'])
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
@@ -57,27 +57,12 @@ parser.add_argument('--weight_false', type=float, default=1000.0, help='weights 
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    args.n_feature = 6
     args.n_domains = UsersNum[args.name]
     args.n_class = ClassesNum[args.name]
-    
     seed_torch(seed=args.seed)
-
     DEVICE = torch.device(f'cuda:{args.gpu_index}' if torch.cuda.is_available() else 'cpu')
-
     args.device = DEVICE
-    
-    dataset = CPCHAR_Dataset(transfer=False, version=args.version, datasets_name=args.name)
-
-    train_dataset = dataset.get_dataset('train')
-    tune_dataset = dataset.get_dataset('tune', percent=args.percent, shot=args.shot)
-    val_dataset = dataset.get_dataset('val')
-    test_dataset = dataset.get_dataset('test')
-
-    # tune_loader, val_loader, test_loader = load_GILE_type_data(tune_dataset, val_dataset, test_dataset, args.batch_size)
-
-    tune_loader, val_loader, test_loader = load_GILE_type_data(test_dataset, val_dataset, train_dataset, args.batch_size)
-
+    tune_loader, val_loader, test_loader = load_GILE_type_data(args.name, args.version, args.shot, args.batch_size)
     model = net.load_model(args)
     model = model.to(DEVICE)
     optimizer = net.set_up_optimizers(model.parameters())

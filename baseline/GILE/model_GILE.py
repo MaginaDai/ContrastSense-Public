@@ -61,7 +61,7 @@ class px(nn.Module):
         out_4 = self.un4(out_33, idxs[0])
         out_44 = self.deconv4(out_4)
 
-        out = out_44.permute(0, 2, 3, 1)
+        out = out_44.permute(0, 3, 1, 2)
         return out
 
 class pzd(nn.Module):
@@ -167,8 +167,7 @@ class qzd(nn.Module):
 
     def forward(self, x):
         x = x.float()
-        x_img = x.permute(0, 3, 1, 2)
-        # x_img = x.view(x.shape[0], x.shape[3], x.shape[1], x.shape[2])
+        x_img = x.view(-1, x.shape[2], 1, x.shape[1])
 
         out_conv1 = self.conv1(x_img)
         out1, idx1 = self.pool1(out_conv1)
@@ -239,8 +238,7 @@ class qzx(nn.Module):
 
     def forward(self, x):
         x = x.float()
-        x_img = x.permute(0, 3, 1, 2)
-        # x_img = x.view(x.shape[0], x.shape[3], x.shape[1], x.shape[2])
+        x_img = x.view(-1, x.shape[2], 1, x.shape[1])
 
         out_conv1 = self.conv1(x_img)
         out1, idx1 = self.pool1(out_conv1)
@@ -311,8 +309,8 @@ class qzy(nn.Module):
 
     def forward(self, x):
         x = x.float()
-        x_img = x.permute(0, 3, 1, 2)
-        # x_img = x.view(x.shape[0], x.shape[3], x.shape[1], x.shape[2])
+        x_img = x.view(-1, x.shape[2], 1, x.shape[1])
+
         out_conv1 = self.conv1(x_img)
         out1, idx1 = self.pool1(out_conv1)
 

@@ -1,7 +1,6 @@
 import torch
 import sys
 import os
-import torch
 from os.path import dirname
 sys.path.append(dirname(sys.path[0]))
 sys.path.append(dirname(dirname(sys.path[0])))
@@ -16,5 +15,5 @@ def load_model(args):
     return model
 
 def set_up_optimizers(parameters):
-    optimizer = torch.optim.Adam(parameters, lr=1e-2)
+    optimizer = torch.optim.Adam(parameters, lr=1e-4)
     return optimizer

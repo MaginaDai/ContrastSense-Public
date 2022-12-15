@@ -2,32 +2,92 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
+import os
+import sys
+from os.path import dirname
+sys.path.append(dirname(dirname(sys.path[0])))
+
+from data_aug.contrastive_learning_dataset import ACT_Translated_labels, HHAR_movement, fetch_dataset_root, users, devices
+from data_aug.preprocessing import UsersPosition
+from exceptions.exceptions import InvalidDatasetSelection
 
 def get_sample_weights(y, weights):
     '''
     to assign weights to each sample
     '''
-    label_unique = torch.unique(y)
+    label_unique = np.unique(y)
     sample_weights = []
     for val in y:
-        idx = torch.where(label_unique == val)
+        idx = np.where(label_unique == val)
         sample_weights.append(weights[idx])
     return sample_weights
 
 
-def load_GILE_type_data(tune_dataset, val_dataset, test_dataset, batch_size):
+def sperate_label_data(sample, datasets_name):
+        acc, gyro, add_infor = sample['acc'], sample['gyro'], sample['add_infor']
+        if 'HHAR' in datasets_name:
+            label = np.array([HHAR_movement.index(add_infor[0, -1]), users.index(add_infor[0, -3]), devices.index(add_infor[0, -2])])
+        elif datasets_name == 'MotionSense':
+            label = np.array([ACT_Translated_labels.index(add_infor[0, -1]), int(add_infor[0, UsersPosition[datasets_name]])])
+        elif datasets_name == 'UCI':
+            label = np.array([int(add_infor[0, -2]), int(add_infor[0, UsersPosition[datasets_name]])])
+        elif datasets_name == 'Shoaib':
+            label = np.array([int(add_infor[0, -2]), int(add_infor[0, UsersPosition[datasets_name]])])
+        elif datasets_name == 'ICHAR':
+            label = np.array([int(add_infor[0, -1]), int(add_infor[0, -2]), int(add_infor[0, -3])])  # [movement, users, devices_type]
+        elif datasets_name == 'HASC':
+            label = np.array([int(add_infor[0, -1]), int(add_infor[0, 0]), int(add_infor[0, 1])])  # [movement, users, devices_type]
+        else:
+            raise InvalidDatasetSelection()
+        acc /= 9.8
+        sensor = np.concatenate((acc, gyro), axis=1)
+        return sensor, label
+
+
+def load_data(datasets_name, version, split, shot=None):
+    root_dir = fetch_dataset_root(datasets_name)
+
+    train_dir = '../../' + root_dir + '_' + version + '/train_set.npz'
+    val_dir = '../../' + root_dir + '_' + version + '/val_set.npz'
+    test_dir = '../../' + root_dir + '_' + version + '/test_set.npz'
+    tune_dir = '../../' + root_dir + '_' + version + '/tune_set_' + str(int(shot)) + '.npz'
+
+    if split == 'traint':
+        data = np.load(train_dir)
+        windows_frame = data['train_set']
+    elif split == 'val':
+        data = np.load(val_dir)
+        windows_frame = data['val_set']
+    elif split == 'tune':
+        data = np.load(tune_dir)
+        windows_frame = data['tune_set']
+    else:
+        data = np.load(test_dir)
+        windows_frame = data['test_set']
+
+    X = np.zeros([len(windows_frame), 200, 6])
+    y = np.zeros(len(windows_frame))
+    d = np.zeros(len(windows_frame))
+
+    for idx, file_name in enumerate(windows_frame):
+        loc = os.path.join('../../' + root_dir, file_name)
+
+        sample = np.load(loc, allow_pickle=True)
+
+        sensor, label = sperate_label_data(sample, datasets_name)
+        
+        X[idx] = sensor
+        y[idx] = label[0]
+        d[idx] = label[1]
+
+    return X, y, d    
+
+
+def load_GILE_type_data(datasets_name, version, shot, batch_size):
     tune_domain_loader = []
 
-    data = torch.zeros([len(tune_dataset), 200, 6])
-    domain_label = torch.zeros(len(tune_dataset))
-    motion_label = torch.zeros(len(tune_dataset))
-
-    for idx, (sensor, target) in enumerate(tune_dataset):
-        data[idx] = sensor
-        motion_label[idx] = target[0]
-        domain_label[idx] = target[1]
-        
-    domain_types = torch.unique(domain_label)
+    data, motion_label, domain_label = load_data(datasets_name, version, 'tune', shot)
+    domain_types = np.unique(domain_label)
 
     for domain_type in domain_types:
         idx = domain_label == domain_type
@@ -35,9 +95,12 @@ def load_GILE_type_data(tune_dataset, val_dataset, test_dataset, batch_size):
         y = motion_label[idx]
         d = domain_label[idx]
 
-        x = torch.permute(x.reshape((-1, 1, 200, 6)), (0, 2, 1, 3))
-        
-        domain_set = data_loader(x, y, d)
+        x = np.transpose(x.reshape((-1, 1, 200, 6)), (0, 2, 1, 3))
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0, 0, 0, 0, 0, 0], std=[1, 1, 1, 1, 1, 1])
+        ])
+        domain_set = data_loader(x, y, d, transform)
         unique_y, counts_y = np.unique(y, return_counts=True)
         weights = 100.0 / torch.Tensor(counts_y)
         weights = weights.double()
@@ -48,49 +111,37 @@ def load_GILE_type_data(tune_dataset, val_dataset, test_dataset, batch_size):
         source_loader = DataLoader(domain_set, batch_size=batch_size, shuffle=False, drop_last=False, sampler=sampler)
         
         tune_domain_loader.append(source_loader)
-    
-    val_data = torch.zeros([len(val_dataset), 200, 6])
-    val_domain_label = torch.zeros(len(val_dataset))
-    val_motion_label = torch.zeros(len(val_dataset))
-    
-    for idx, (sensor, target) in enumerate(val_dataset):
-        val_data[idx] = sensor
-        val_motion_label[idx] = target[0]
-        val_domain_label[idx] = target[1]
-        
 
-    val_data = torch.permute(val_data.reshape((-1, 1, 200, 6)), (0, 2, 1, 3))
-    val_set = data_loader(val_data, val_motion_label, val_domain_label)
+    val_data, val_motion_label, val_domain_label = load_data(datasets_name, version, 'val', shot)
+
+    val_data = np.transpose(val_data.reshape((-1, 1, 200, 6)), (0, 2, 1, 3))
+    val_set = data_loader(val_data, val_motion_label, val_domain_label, transform)
     val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
 
-    test_data = torch.zeros([len(test_dataset), 200, 6])
-    test_domain_label = torch.zeros(len(test_dataset))
-    test_motion_label = torch.zeros(len(test_dataset))
-    
-    for idx, (sensor, target) in enumerate(test_dataset):
-        test_data[idx] = sensor
-        test_motion_label[idx] = target[0]
-        test_domain_label[idx] = target[1]
-
-    test_data = torch.permute(test_data.reshape((-1, 1, 200, 6)), (0, 2, 1, 3))
-    test_set = data_loader(test_data, test_motion_label, test_domain_label)
+    test_data, test_motion_label, test_domain_label = load_data(datasets_name, version, 'test', shot)
+    test_data = np.transpose(test_data.reshape((-1, 1, 200, 6)), (0, 2, 1, 3))
+    test_set = data_loader(test_data, test_motion_label, test_domain_label, transform)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
     
     return tune_domain_loader, val_loader, test_loader
 
 
 class data_loader(Dataset):
-    def __init__(self, samples, labels, domains):
+    def __init__(self, samples, labels, domains, t):
         self.samples = samples
         self.labels = labels
         self.domains = domains
+        self.T = t
 
     def __getitem__(self, index):
         sample, target, domain = self.samples[index], self.labels[index], self.domains[index]
-        means = torch.mean(sample, dim=0)
-        stds = torch.std(sample, dim=0)
-        sample = (sample - means) / stds
-        return torch.permute(sample, [1, 0, 2]), target.long(), domain.long()
+        # means = torch.mean(sample, dim=0)
+        # stds = torch.std(sample, dim=0)
+        # sample = (sample - means) / stds
+        sample = self.T(sample)
+        return np.transpose(sample, (1, 0, 2)), target.astype(int), domain.astype(int)
 
     def __len__(self):
         return len(self.samples)
+
+
