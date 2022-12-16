@@ -232,16 +232,18 @@ class CPC(object):
         self.model = kwargs['model'].to(self.args.device)
         self.optimizer = kwargs['optimizer']
         self.scheduler = kwargs['scheduler']
-        writer_pos = './runs/' + self.args.store + '/'
+        writer_pos = './runs/' + self.args.store + '/' + self.args.name
         if self.args.transfer is True:
             if self.args.if_fine_tune:
-                writer_pos += self.args.name + '_ft'
+                writer_pos += '_ft'
             else:
-                writer_pos += self.args.name + '_le'
+                writer_pos += '_le'
             if self.args.shot:
                 writer_pos += f'_shot_{self.args.shot}'
             else:
                 writer_pos += f'_percent_{self.args.percent}'
+        else:
+            writer_pos += '/'
         self.writer = SummaryWriter(writer_pos)
         logging.basicConfig(filename=os.path.join(self.writer.log_dir, 'training.log'), level=logging.DEBUG)
         self.criterion = torch.nn.CrossEntropyLoss().to(self.args.device)

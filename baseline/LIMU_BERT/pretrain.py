@@ -38,7 +38,7 @@ def main(args):
 
     # check if gpu training is available
     if not args.disable_cuda and torch.cuda.is_available():
-        args.device = torch.device('cuda')
+        args.device = torch.device(f'cuda:{args.gpu_index}')
     else:
         args.device = torch.device('cpu')
         args.gpu_index = -1

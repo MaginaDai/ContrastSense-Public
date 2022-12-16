@@ -1,11 +1,21 @@
 #!/bin/bash
-name='CM_v2_ep'
-for e in 2000
+
+for v in 0 1 2 3 4
 do
-    python main.py -g 0 -e ${e} -m 'CM' -name HASC --store "${name}_${e}" &
-    python main.py -g 0 -e ${e} -m 'CM' -name HHAR --store "${name}_${e}" &
-    python main.py -g 0 -e ${e} -m 'CM' -name MotionSense --store "${name}_${e}" &
-    python main.py -g 0 -e ${e} -m 'CM' -name Shoaib --store "${name}_${e}" 
+    name='CM_v'
+    python main.py -g 3 -m 'CM' -name HASC --store "${name}_${v}" &
+    python main.py -g 3 -m 'CM' -name HHAR --store "${name}_${v}" &
+    python main.py -g 3 -m 'CM' -name MotionSense --store "${name}_${v}" &
+    python main.py -g 3 -m 'CM' -name Shoaib --store "${name}_${v}" 
 
     wait
+
+    name='FM_v'
+    python main.py -g 3 -m 'FM' -name HASC --store "${name}_${v}" &
+    python main.py -g 3 -m 'FM' -name HHAR --store "${name}_${v}" &
+    python main.py -g 3 -m 'FM' -name MotionSense --store "${name}_${v}" &
+    python main.py -g 3 -m 'FM' -name Shoaib --store "${name}_${v}" 
+
+    wait
+
 done

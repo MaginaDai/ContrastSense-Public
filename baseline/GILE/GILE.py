@@ -147,7 +147,7 @@ def get_accuracy(source_loaders, DEVICE, model, classifier_fn, batch_size):
 
 def train_GILE(model, DEVICE, optimizer, tune_loader, val_loader, test_loader, args):
 
-    writer_pos = './runs/' + args.store
+    writer_pos = './runs/' + args.store + '/' + args.name
     writer = SummaryWriter(writer_pos)
     logging.basicConfig(filename=os.path.join(writer.log_dir, 'training.log'), level=logging.DEBUG)
 
