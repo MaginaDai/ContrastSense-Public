@@ -169,6 +169,61 @@ def replenish_queue(model, train_loader, args):
     return model
 
 
+def getFisherDiagonal_pretrain(args, train_loader, save_dir):
+    model = MoCo_v1(device=args.device, mol=args.mol)
+    optimizer = torch.optim.Adam(model.parameters(), 1e-4, weight_decay=1e-4)
+
+    model_dir = save_dir + '/model_best.pth.tar'
+    checkpoint = torch.load(model_dir, map_location="cpu")
+    state_dict = checkpoint['state_dict']
+    model.load_state_dict(state_dict, strict=False)
+    optimizer.load_state_dict(checkpoint['optimizer'])
+
+    
+    model.to(args.device)
+
+    model = replenish_queue(model, train_loader, args)
+
+    model.train()
+
+    fisher = {
+        n[len("encoder_q."):]: torch.zeros(p.shape).to(args.device)
+        for n, p in model.named_parameters()
+            if p.requires_grad and n.startswith('encoder_q.encoder')
+    }
+
+    for sensor, labels in train_loader:
+        sensor = [t.to(args.device) for t in sensor]
+        gt_label = labels[:, 0].to(args.device) # the first dim is motion labels
+        sup_label = [labels[:, i + 1].to(args.device) for i in range(args.label_type)]  # the following dim are cheap labels
+        output, target, logits_labels, cluster_eval, cluster_loss, center_shift, feature = model(sensor[0], sensor[1], labels=sup_label, 
+                                                                                            num_clusters=args.num_clusters, 
+                                                                                            iter_tol=args.iter_tol,
+                                                                                            gt=gt_label, if_plot=False,
+                                                                                            n_iter=0)
+        sup_loss = model.supervised_CL(logits_labels=logits_labels, labels=sup_label)
+        loss = - args.slr[0] * sup_loss
+        optimizer.zero_grad()
+        loss.backward()
+
+    for n, p in model.named_parameters():
+        if p.grad is not None and n.startswith('encoder_q.encoder'):
+            fisher[n[len("encoder_q."):]] += p.grad.pow(2).clone()
+    for n, p in fisher.items():
+        fisher[n] = p / len(train_loader)
+        fisher[n] = torch.min(fisher[n], torch.tensor(args.fishermax)).to('cpu')
+    fisher_dir = save_dir + 'fisher.npz'
+    np.savez(fisher_dir, fisher=fisher)
+    return
+
+def load_fisher_matrix(pretrain_dir, device):
+    fisher_dir = './runs/' + pretrain_dir + '/fisher.npz'
+    fisher = np.load(fisher_dir, allow_pickle=True)
+    fisher = fisher['fisher'].tolist()
+    for n, _ in fisher.items():
+        fisher[n] = fisher[n].to(device)
+    return fisher
+
 if __name__ == '__main__':
     args = parser.parse_args()
     fisher = getFisherDiagonal_initial(args)

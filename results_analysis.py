@@ -23,7 +23,7 @@ def avg_result(name, ft):
             if ft:
                 dir = f'{n}/{data}_ft_shot_10/training.log'
             else:
-                dir = f'{n}/{data}_le_shot_10/training.log'
+                dir = f'{n}/{data}_shot_10/training.log'
             eval_pattern = r'best\seval\sf1\sis\s+\(*(\d+\.+\d*)'
             test_pattern = r'test\sf1\sis\s+\(*(\d+\.+\d*)'
             with open(dir, "r") as f:  # 打开文件

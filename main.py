@@ -14,6 +14,7 @@ from CPC import CPCV1, CPC
 from MoCo import MoCo_v1, MoCo
 from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 from data_aug.preprocessing import UsersNum
+from getFisherDiagonal import getFisherDiagonal_pretrain
 from simclr import SimCLR, MyNet, LIMU_encoder
 from utils import load_model_config, seed_torch
 import numpy as np
@@ -34,7 +35,7 @@ parser.add_argument('--out_dim', default=512, type=int,
                     help='feature dimension (default: 512)')
 parser.add_argument('-t', '--temperature', default=0.1, type=float,
                     help='softmax temperature (default: 1)')
-parser.add_argument('--store', default='test_HHAR', type=str, help='define the name head for model storing')
+parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 parser.add_argument('-b', '--batch-size', default=256, type=int,
                     metavar='N',
                     help='mini-batch size (default: 256), this is the total '
@@ -85,6 +86,7 @@ parser.add_argument('-version', default="shot", type=str, help='control the vers
 parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-CE', default=False, type=bool, help='Use Cross Entropy Domain Loss or not')
 parser.add_argument('-ewc', default=True, type=float, help='Use EWC or not')
+parser.add_argument('-fishermax', default=0.01, type=float, help='fishermax')
 
 
 def main():
@@ -157,7 +159,9 @@ def main():
         else:
             simclr = SimCLR(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
             simclr.train(train_loader)
-    
+
+    if args.ewc:
+        getFisherDiagonal_pretrain(args, train_loader, moco.writer.log_dir)
     return
 
 

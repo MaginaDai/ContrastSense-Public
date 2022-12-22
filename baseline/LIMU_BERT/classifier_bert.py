@@ -29,7 +29,7 @@ import torch.multiprocessing
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
-
+## frozen_bert
 def bert_classify(args, frozen_bert=False, balance=True):
     train_cfg, model_bert_cfg, model_classifier_cfg = load_bert_classifier_data_config(args)
     seed_torch(args.seed)

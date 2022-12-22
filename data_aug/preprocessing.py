@@ -137,23 +137,23 @@ def fetch_instance_number_of_dataset(dir):
     return len(file_name_list)
 
 
-def preprocessing_dataset_cross_person_val(dir, target_dir, dataset, test_portion=0.6, val_portion=0.15):
+def preprocessing_dataset_cross_person_val(dir, target_dir, dataset, test_portion=0.6, val_portion=0.15, tune_user_portion=0.4):
     print(dataset)
     
     num = fetch_instance_number_of_dataset(dir)
     u = []
-    # label_distribution = np.zeros(6)
+    label_distribution = np.zeros(6)
     for i in range(num):
         sub_dir = dir + str(i) + '.npz'
         data = np.load(sub_dir, allow_pickle=True)
         u.append(data['add_infor'][0, UsersPosition[dataset]])
-        # label_distribution[int(data['add_infor'][0, -1])] += 1
+        label_distribution[int(data['add_infor'][0, -1])] += 1
     
-    # print(label_distribution)
+    print(label_distribution)
     print(max(u))
     user_type = np.unique(u)
-    test_num = int(len(user_type) * test_portion)
-    val_num = int(len(user_type) * val_portion)
+    test_num = max(int(len(user_type) * test_portion), 1)
+    val_num = max(int(len(user_type) * val_portion), 1)
     
     print(len(user_type))
     np.random.shuffle(user_type)
@@ -173,8 +173,8 @@ def preprocessing_dataset_cross_person_val(dir, target_dir, dataset, test_portio
     train_num = [j for j in range(num) if u[j] in users_train_name]
     val_num =  [j for j in range(num) if u[j] in users_val_name]
 
-    write_dataset(target_dir, train_num, val_num, test_num)
-    write_balance_tune_set(dir, target_dir, dataset, dataset_size=num)
+    # write_dataset(target_dir, train_num, val_num, test_num)
+    # write_balance_tune_set(dir, target_dir, dataset, dataset_size=num, tune_user_portion=tune_user_portion)
     return
 
 
@@ -228,7 +228,7 @@ def write_tune_set(dir):
     return
 
 
-def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_percent=False, if_cross_user=True):
+def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_percent=False, if_cross_user=True, tune_user_portion=0.4):
     loc = target_dir + 'train_set' + '.npz'
     data = np.load(loc)
     train_set = data['train_set']
@@ -254,7 +254,7 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
 
     while True:
         user_type = np.unique(user)
-        user_selected_num = np.max([int(len(user_type) * 0.4), 1])
+        user_selected_num = np.max([int(len(user_type) * tune_user_portion), 1])
 
 
         np.random.shuffle(user_type)
@@ -323,16 +323,17 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
     return
 
 
-def datasets_shot_record(dir, datasets, set_type='tune_set'):
-
-    tune_dir = dir + set_type + '_1.npz'
+def datasets_shot_record(datasets, set_type='tune_set', version='shot0', shot=10):
+    data_dir = r'./datasets/' + datasets + '/'
+    dir = r'./datasets/' + datasets + '_' + version + '/'
+    tune_dir = dir + set_type + '_' + str(shot) + '.npz'
     data = np.load(tune_dir, allow_pickle=True)
     data = data[set_type]
     label_type = []
     label = []
     print(len(data))
     for i in data:
-        sub_dir = dir + str(i)
+        sub_dir = data_dir + str(i)
         d = np.load(sub_dir, allow_pickle=True)
         label.append(d['add_infor'][0, LabelPosition[datasets]])
 
@@ -382,7 +383,7 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
     for i in range(seg_types):
         for dataset in dataset_name:
-            preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot{i}/", dataset=dataset)
+            preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_test_shot{i}/", dataset=dataset, test_portion=0.01, tune_user_portion=1)
 
     return
 
@@ -405,7 +406,7 @@ if __name__ == '__main__':
     # preprocessing_dataset_cross_person_val(dir=r'datasets/UCI/', target_dir=r'datasets/HHAR_shot/', dataset='UCI')
     # preprocessing_dataset_cross_person_val(dir=r'datasets/ICHAR/', target_dir=r'datasets/HHAR_shot/', dataset='ICHAR')
  
-    # datasets_shot_record(dir=r'datasets/HHAR_50_200/', datasets='HHAR')
+    # datasets_shot_record(datasets='HASC', version='a_shot0', shot=10)
 
     # datasets_users_record(dir=r'datasets/HHAR_50_200/', datasets='HHAR')
     # datasets_users_record(dir=r'datasets/MotionSense_50_200/', datasets='MotionSense')
@@ -419,11 +420,11 @@ if __name__ == '__main__':
     # write_balance_tune_set(ori_dir=r'datasets/MotionSense_50_200/', target_dir=r'datasets/MotionSense_50_200_shot/', dataset='MotionSense')
     # write_balance_tune_set(ori_dir=r'datasets/Shoaib_50_200/', target_dir=r'datasets/Shoaib_50_200_shot/', dataset='Shoaib')
     # write_balance_tune_set(ori_dir=r'datasets/HASC_50_200/', target_dir=r'datasets/HASC_50_200_shot/', dataset='HASC')
-
-    # new_segmentation_for_user(seg_types=5)
     
-    dir = r'datasets/HHAR/'
-    preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion35/', dataset='HHAR', test_portion=0.5, val_portion=0.15)
-    preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion50/', dataset='HHAR', test_portion=0.35, val_portion=0.15)
-    preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion60/', dataset='HHAR', test_portion=0.25, val_portion=0.15)
-    preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion75/', dataset='HHAR', test_portion=0.10, val_portion=0.15)
+    new_segmentation_for_user(seg_types=1)
+    
+    # dir = r'datasets/HHAR/'
+    # preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion35/', dataset='HHAR', test_portion=0.5, val_portion=0.15)
+    # preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion50/', dataset='HHAR', test_portion=0.35, val_portion=0.15)
+    # preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion60/', dataset='HHAR', test_portion=0.25, val_portion=0.15)
+    # preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion75/', dataset='HHAR', test_portion=0.10, val_portion=0.15)

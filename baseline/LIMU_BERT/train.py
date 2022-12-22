@@ -129,6 +129,8 @@ class Trainer(object):
 
         global_step = 0 # global iteration steps regardless of epochs
         eval_acc_best = 0.0
+        eval_f1_best = 0.0
+        test_f1_best = 0.0
         best_epoch = 0
         best_stat = None
         model_best = model.state_dict()
@@ -171,6 +173,8 @@ class Trainer(object):
             if eval_acc > eval_acc_best:
                 best_epoch = e
                 eval_acc_best = eval_acc
+                eval_f1_best = eval_f1
+                test_f1_best = test_f1
                 best_stat = (train_acc, eval_acc, test_acc, train_f1, eval_f1, test_f1)
                 model_best = copy.deepcopy(model.state_dict())
                 self.save(0)
@@ -189,7 +193,10 @@ class Trainer(object):
 
         print(f'Best Accuracy: {best_stat[0]:0.4f} / {best_stat[1]:.4f} / {best_stat[2]:.4f}, F1: {best_stat[3]:.4f} / {best_stat[4]:.4f} / {best_stat[5]:.4f}')
         logging.info("Fine-tuning has finished.")
-        logging.info(f"best eval acc is {eval_acc_best} at {best_epoch}.")
+        logging.info(f"Best eval acc is {eval_acc_best} at {best_epoch}.")
+        logging.info(f"The test f1 is {eval_f1_best}.")
+        logging.info(f"The test f1 is {test_f1_best}.")
+        
 
 
     def load(self, model_file, load_self=False):

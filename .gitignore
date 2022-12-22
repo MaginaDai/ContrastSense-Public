@@ -1,6 +1,8 @@
 /runs
 /__pycache__
 /datasets
+/datasets_backup
+
 /original_dataset
 
 /kmeans_pytorch

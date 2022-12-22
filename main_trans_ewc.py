@@ -17,7 +17,7 @@ from DeepSense import DeepSense_encoder
 from MoCo import MoCo_model, MoCo_v1, MoCo_encoder, MoCo
 from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 from data_aug.preprocessing import ClassesNum, UsersNum
-from getFisherDiagonal import getFisherDiagonal_initial
+from getFisherDiagonal import getFisherDiagonal_initial, load_fisher_matrix
 from simclr import SimCLR, MyNet, LIMU_encoder
 from utils import MoCo_evaluate, evaluate, identify_users_number, load_model_config, CPC_evaluate, seed_torch
 import torch.multiprocessing
@@ -35,11 +35,11 @@ parser.add_argument('-if-val', default=True, type=bool, help='to decide whether 
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
-parser.add_argument('--pretrained', default='Shot_0_w_HHAR', type=str,
+parser.add_argument('--pretrained', default='test/HASC', type=str,
                     help='path to SimClR pretrained checkpoint')
 parser.add_argument('-name', default='HHAR',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'ICHAR', 'HASC'])
-parser.add_argument('--store', default='Shot_0_w_HHAR_ewc_test', type=str, help='define the name head for model storing')
+parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 
 parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                     help='number of data loading workers (default: 2)')
@@ -106,6 +106,9 @@ def main():
     args.transfer = True
     if args.store == None:
         args.store = deepcopy(args.pretrained)
+
+    # fisher = load_fisher_matrix(args.pretrained, args.device)
+
     args.pretrained = './runs/' + args.pretrained + '/model_best.pth.tar'
 
     dataset = ContrastiveLearningDataset(transfer=True, version=args.version, datasets_name=args.name)
@@ -201,7 +204,7 @@ def main():
     #  It’s a no-op if the 'gpu_index' argument is a negative integer or None.
 
     fisher = getFisherDiagonal_initial(args)
-    
+
     with torch.cuda.device(args.gpu_index):
         moco = MoCo(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
         if args.evaluate:

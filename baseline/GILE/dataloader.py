@@ -52,7 +52,7 @@ def load_data(datasets_name, version, split, shot=None):
     test_dir = '../../' + root_dir + '_' + version + '/test_set.npz'
     tune_dir = '../../' + root_dir + '_' + version + '/tune_set_' + str(int(shot)) + '.npz'
 
-    if split == 'traint':
+    if split == 'train':
         data = np.load(train_dir)
         windows_frame = data['train_set']
     elif split == 'val':
@@ -86,7 +86,10 @@ def load_data(datasets_name, version, split, shot=None):
 def load_GILE_type_data(datasets_name, version, shot, batch_size):
     tune_domain_loader = []
 
-    data, motion_label, domain_label = load_data(datasets_name, version, 'tune', shot)
+    if shot == 0:  # load fully labeled data in the training set
+        data, motion_label, domain_label = load_data(datasets_name, version, 'train', shot)
+    else:
+        data, motion_label, domain_label = load_data(datasets_name, version, 'tune', shot)
     domain_types = np.unique(domain_label)
 
     for domain_type in domain_types:
