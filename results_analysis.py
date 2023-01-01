@@ -19,7 +19,7 @@ def avg_result(name, ft):
     test = np.zeros([len(name), len(dataset)])
     for i, n in enumerate(name):
         for j, data in enumerate(dataset):
-            print(n, j)
+            # print(n, j)
             if ft:
                 dir = f'{n}/{data}_ft_shot_10/training.log'
             else:

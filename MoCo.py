@@ -806,6 +806,20 @@ class MoCo(object):
         print('test f1 is {} for {}'.format(test_f1, self.args.name))
         print('test acc is {} for {}'.format(test_acc, self.args.name))
     
+    def test_performance_cross_dataset(self, best_model_dir, test_dataloader_for_all_datasets, datasets):
+        checkpoint = torch.load(best_model_dir, map_location="cpu")
+        state_dict = checkpoint['state_dict']
+        self.model.load_state_dict(state_dict, strict=False)
+        for i, test_loader in enumerate(test_dataloader_for_all_datasets):
+            test_acc, test_f1 = MoCo_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=test_loader)
+
+            logging.info(f"test f1 is {test_f1} for {datasets[i]}.")
+            logging.info(f"test acc is {test_acc} for {datasets[i]}.")
+
+            print('test f1 is {} for {}'.format(test_f1, datasets[i]))
+            print('test acc is {} for {}'.format(test_acc, datasets[i]))
+
+    
     def transfer_train_DAL(self, tune_loader, val_loader, train_loader):
         """
         train loader is for domain adversial learning

@@ -9,7 +9,7 @@ import torch
 import yaml
 from tqdm import tqdm
 from typing import NamedTuple
-from data_aug.contrastive_learning_dataset import fetch_dataset_root
+from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset, fetch_dataset_root
 from data_aug.imu_transforms import ACT_Translated_labels, HHAR_movement
 from data_aug.preprocessing import UsersPosition
 from exceptions.exceptions import InvalidDatasetSelection
@@ -434,3 +434,16 @@ def identify_users_number(version, dataset):
     
     user_type = np.unique(user)
     return len(user_type)
+
+
+def fetch_test_loader_for_all_dataset(args, datasets):
+    test_loader_for_all_datasets = []
+    for name in datasets:
+        CL_dataset = ContrastiveLearningDataset(transfer=True, version=args.version, datasets_name=name, cross_dataset=True)
+        test_dataset = CL_dataset.get_dataset('test')
+        test_loader = torch.utils.data.DataLoader(
+            test_dataset, batch_size=args.batch_size, shuffle=True,
+            num_workers=args.workers, pin_memory=False, drop_last=False)
+        test_loader_for_all_datasets.append(test_loader)
+
+    return test_loader_for_all_datasets

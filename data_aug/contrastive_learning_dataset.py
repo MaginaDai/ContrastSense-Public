@@ -9,7 +9,7 @@ from data_aug import imu_transforms
 from torch.utils.data import Dataset
 from torchvision.transforms import transforms
 from torchvision import transforms, datasets
-from data_aug.preprocessing import UsersPosition
+from data_aug.preprocessing import UsersPosition, label_alignment
 from data_aug.view_generator import ContrastiveLearningViewGenerator
 from exceptions.exceptions import InvalidDatasetSelection
 import pandas as pd
@@ -40,14 +40,16 @@ def fetch_dataset_root(dataset_name):
     
 
 class ContrastiveLearningDataset:
-    def __init__(self, transfer, version, datasets_name=None):
+    def __init__(self, transfer, version, datasets_name=None, cross_dataset=False):
         self.transfer = transfer
         self.datasets_name = datasets_name
         self.version = version
+        self.cross_dataset = cross_dataset
 
     def get_simclr_pipeline_transform(self):
         """Return a set of data augmentation transformations as described in my presentation."""
         imu_discard = imu_transforms.IMUDiscard(self.datasets_name)
+
         imu_noise = imu_transforms.IMUNoise(var=0.05, p=0.8)
         imu_scale = imu_transforms.IMUScale(scale=[0.9, 1.1], p=0.8)
         imu_rotate = imu_transforms.IMURotate(p=0.8)
@@ -80,25 +82,23 @@ class ContrastiveLearningDataset:
             # here it is for generating positive samples and negative samples
             return Dataset4Training(self.datasets_name, self.version, n_views, 
                                     transform=ContrastiveLearningViewGenerator(
-                                        self.get_simclr_pipeline_transform(),
-                                        n_views),
-                                    split=split, transfer=self.transfer, percent=percent, shot=shot)
+                                        self.get_simclr_pipeline_transform(), n_views),
+                                    split=split, transfer=self.transfer, percent=percent, shot=shot, cross_dataset=self.cross_dataset)
         elif split == 'train' or split == 'tune':
                 # here it is for data augmentation, make it more challenging.
             return Dataset4Training(self.datasets_name, self.version, n_views,
                                     self.get_simclr_pipeline_transform(),
-                                    split=split, transfer=self.transfer, percent=percent, shot=shot)
+                                    split=split, transfer=self.transfer, percent=percent, shot=shot, cross_dataset=self.cross_dataset)
         else:  # val or test
             return Dataset4Training(self.datasets_name, self.version, n_views,
                                     transform=transforms.Compose([
-                                        imu_transforms.ToTensor()
-                                        ]),
-                                    split=split, transfer=self.transfer, percent=percent, shot=shot)
+                                        imu_transforms.ToTensor()]),
+                                    split=split, transfer=self.transfer, percent=percent, shot=shot, cross_dataset=self.cross_dataset)
 
 
 class Dataset4Training(Dataset):
 
-    def __init__(self, datasets_name, version, n_views=2, transform=None, split='train', transfer=True, percent=20, shot=None):
+    def __init__(self, datasets_name, version, n_views=2, transform=None, split='train', transfer=True, percent=20, shot=None, cross_dataset=False):
         """
         Args:
             datasets_name (string): dataset name.
@@ -139,6 +139,8 @@ class Dataset4Training(Dataset):
         self.transform = transform
         self.n_views = n_views
 
+        self.cross_dataset = cross_dataset
+
     def __len__(self):
         return len(self.windows_frame)
 
@@ -167,15 +169,21 @@ class Dataset4Training(Dataset):
         elif self.datasets_name == 'UCI':
             label = np.array([int(add_infor[0, -2]), int(add_infor[0, UsersPosition[self.datasets_name]])])
         elif self.datasets_name == 'Shoaib':
-            label = np.array([int(add_infor[0, -2]), int(add_infor[0, UsersPosition[self.datasets_name]])]) 
+            label = np.array([int(add_infor[0, -2]), int(add_infor[0, UsersPosition[self.datasets_name]]), int(add_infor[0, -3])]) # [movements, users, positions]
         elif self.datasets_name == 'ICHAR':
-            label = np.array([int(add_infor[0, -1]), int(add_infor[0, -2]), int(add_infor[0, -3])])  # [movement, users, devices_type]
+            label = np.array([int(add_infor[0, -1]), int(add_infor[0, -2]), int(add_infor[0, -3])]) # [movements, users, devices_types]
         elif self.datasets_name == 'HASC':
-            label = np.array([int(add_infor[0, -1]), int(add_infor[0, 0]), int(add_infor[0, 1])])  # [movement, users, devices_type]
+            label = np.array([int(add_infor[0, -1]), int(add_infor[0, 0]), int(add_infor[0, 1])]) # [movements, users, devices_types]
         else:
             raise InvalidDatasetSelection()
         sensor = np.concatenate((acc, gyro), axis=1)
+
+        if self.cross_dataset:
+            label = label_alignment(label, self.datasets_name)
+
+        
         return sensor, torch.from_numpy(label).long()
+
 
 
 class GenerativeDataset():

@@ -28,7 +28,7 @@ parser.add_argument('-b', '--batch-size', default=200, type=int, metavar='N',
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
 parser.add_argument('-name', default='HHAR', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR'])
-parser.add_argument('-wd', '--weight-decay', default=1e-4, type=float, metavar='W', help='weight decay (default: 1e-4)', dest='weight_decay')
+
 parser.add_argument('--log-every-n-steps', default=5, type=int, help='Log every n steps')
 parser.add_argument('-g', '--gpu-index', default=3, type=int, help='Gpu index.')
 parser.add_argument('--fp16-precision', action='store_true', help='Whether or not to use 16-bit precision GPU training.')
@@ -117,7 +117,7 @@ def main():
             if 'TPN' in name:
                 param.requires_grad = False
 
-    optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
+    optimizer = torch.optim.SGD(model.parameters(), args.lr)
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)
 

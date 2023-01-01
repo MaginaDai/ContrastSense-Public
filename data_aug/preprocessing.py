@@ -11,13 +11,14 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader, random_split
-from torchvision import transforms, utils
 from scipy.interpolate import interp1d
 from collections import Counter
 import random
 
-sys.path.append(dirname(sys.path[0]))
 sys.path.append(dirname(dirname(sys.path[0])))
+sys.path.append(dirname(sys.path[0]))
+
+from exceptions.exceptions import InvalidDatasetSelection
 from data_aug.HHAR import preprocess_hhar
 from data_aug.LPF import filter_dataset
 
@@ -73,6 +74,31 @@ ClassesNum = {
 }
 
 
+HHAR_movement = ['stand', 'sit', 'walk', 'stairsup', 'stairsdown', 'bike']
+ACT_Translated_labels = ['Downstairs', 'Upstairs', 'Walking', 'Running', 'Standing', 'Sitting']
+
+# Common sequence ['still', 'walk', 'stairsup', 'stairsdown']
+# Use -1 to mark unselected labels
+HASC_LABEL_Translate = [-1, 3, 2, 1, -1, 0] # [‘jog’, ‘stairdown’, ‘stairup’, ‘move’, ‘jump’, ‘stay’]
+HHAR_LABEL_Translate = [0, 0, 1, 2, 3, -1] # ['stand', 'sit', 'walk', 'stairsup', 'stairsdown', 'bike']
+MotionSense_LABEL_Translate = [3, 2, 1, -1, 0, 0] # ['Downstairs', 'Upstairs', 'Walking', 'Running', 'Standing', 'Sitting']
+Shoaib_LABEL_Translate = [1, 0, 0, -1, -1, 2, 3] # ["walking", "sitting", "standing", "jogging", "biking", "upstairs", "downstairs"] 
+
+
+def label_alignment(label, dataset):
+    if dataset == 'HASC':
+        label[0] = HASC_LABEL_Translate[label[0]]
+    elif dataset == 'HHAR':
+        label[0] = HHAR_LABEL_Translate[label[0]]
+    elif dataset == 'MotionSense':
+        label[0] = MotionSense_LABEL_Translate[label[0]]
+    elif dataset == 'Shoaib':
+        label[0] = Shoaib_LABEL_Translate[label[0]]
+    else:
+        InvalidDatasetSelection()
+    return label
+
+
 samplingRate = 25
 window = 100
 train_ratio = 0.8
@@ -81,9 +107,10 @@ tune_ratio = 0.2
 test_num_of_user = 3
 
 
+
 # MAX_INDEX = 9166
 percent = [0.2, 0.5, 1, 2, 5, 10]
-shot_num = [1, 5, 10, 15, 20, 50]
+shot_num = [1, 5, 10, 15, 20, 50, 100] # enlarge to 100
 
 
 def preprocessing_HHAR_cross_person(main_dir):
@@ -142,12 +169,74 @@ def preprocessing_dataset_cross_person_val(dir, target_dir, dataset, test_portio
     
     num = fetch_instance_number_of_dataset(dir)
     u = []
-    label_distribution = np.zeros(6)
+    motion_label = []
+    label_distribution = np.zeros(7)
     for i in range(num):
         sub_dir = dir + str(i) + '.npz'
         data = np.load(sub_dir, allow_pickle=True)
+        motion = turn_motion_label_to_idx(data['add_infor'][0, LabelPosition[dataset]], dataset)
         u.append(data['add_infor'][0, UsersPosition[dataset]])
-        label_distribution[int(data['add_infor'][0, -1])] += 1
+        motion_label.append(motion)
+        label_distribution[motion] += 1
+    
+    # print(label_distribution)
+    print(max(u))
+    user_type = np.unique(u)
+    test_num = max(int(len(user_type) * test_portion), 1)
+    val_num = max(int(len(user_type) * val_portion), 1)
+    
+    print(len(user_type))
+    np.random.shuffle(user_type)
+    users_test_name = np.sort(user_type[:test_num])
+    # users_test_name = np.array(['e', 'i'])
+    print(len(users_test_name))
+
+    users_train_name = np.sort(user_type[test_num+val_num:])
+    # users_train_name = np.array(['a', 'd', 'f', 'g', 'h'])
+    print(len(users_train_name))
+    
+    users_val_name = np.sort(user_type[test_num:test_num+val_num])
+    # users_val_name = np.array(['b', 'c'])
+    print(len(users_val_name))
+
+    train_num = [j for j in range(num) if u[j] in users_train_name]
+    val_num =  [j for j in range(num) if u[j] in users_val_name]
+    test_num = [j for j in range(num) if u[j] in users_test_name]
+
+    # write_dataset(target_dir, train_num, val_num, test_num)
+    # write_balance_tune_set(dir, target_dir, dataset, dataset_size=num, tune_user_portion=tune_user_portion)
+    return
+
+
+def turn_motion_label_to_idx(label, dataset):
+    if dataset == 'HHAR':
+        label = HHAR_movement.index(label)
+    elif dataset == 'MotionSense':
+        label = ACT_Translated_labels.index(label)
+    else:
+        pass
+    return int(label)
+
+
+def preprocessing_dataset_cross_dataset(dir, target_dir, dataset, test_portion=0.6, val_portion=0.15, tune_user_portion=0.4):
+    print(dataset)
+    
+    num = fetch_instance_number_of_dataset(dir)
+    u = []
+    motion_label = []
+    idx_record = []
+    label_distribution = np.zeros(4)
+    for i in range(num):
+        sub_dir = dir + str(i) + '.npz'
+        data = np.load(sub_dir, allow_pickle=True)
+        motion = turn_motion_label_to_idx(data['add_infor'][0, LabelPosition[dataset]], dataset)
+        motion = label_alignment([motion], dataset=dataset)[0]
+        if motion == -1:  # if the motion is not considered, then we don't consider this window, then the user could not be considered.
+            continue
+        idx_record.append(i)
+        u.append(data['add_infor'][0, UsersPosition[dataset]])
+        motion_label.append(motion)
+        label_distribution[motion] += 1
     
     print(label_distribution)
     print(max(u))
@@ -169,12 +258,12 @@ def preprocessing_dataset_cross_person_val(dir, target_dir, dataset, test_portio
     # users_val_name = np.array(['b', 'c'])
     print(len(users_val_name))
 
-    test_num = [j for j in range(num) if u[j] in users_test_name]
-    train_num = [j for j in range(num) if u[j] in users_train_name]
-    val_num =  [j for j in range(num) if u[j] in users_val_name]
+    train_num = [idx_record[j] for j in range(len(motion_label)) if u[j] in users_train_name]
+    val_num =  [idx_record[j] for j in range(len(motion_label)) if u[j] in users_val_name]
+    test_num = [idx_record[j] for j in range(len(motion_label)) if u[j] in users_test_name]
 
-    # write_dataset(target_dir, train_num, val_num, test_num)
-    # write_balance_tune_set(dir, target_dir, dataset, dataset_size=num, tune_user_portion=tune_user_portion)
+    write_dataset(target_dir, train_num, val_num, test_num)
+    write_balance_tune_set(dir, target_dir, dataset, dataset_size=len(motion_label), tune_user_portion=tune_user_portion, cross_dataset=True)
     return
 
 
@@ -226,9 +315,9 @@ def write_tune_set(dir):
         loc = dir + 'tune_set_' + str(per).replace('.', '_') + '.npz'
         # np.savez(loc, tune_set=tune_set)
     return
+    
 
-
-def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_percent=False, if_cross_user=True, tune_user_portion=0.4):
+def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_percent=False, if_cross_user=True, tune_user_portion=0.4, cross_dataset=False):
     loc = target_dir + 'train_set' + '.npz'
     data = np.load(loc)
     train_set = data['train_set']
@@ -240,7 +329,10 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
     for i in train_set:
         sub_dir = ori_dir + i
         data = np.load(sub_dir, allow_pickle=True)
-        label.append(data['add_infor'][0, LabelPosition[dataset]])
+        motion = turn_motion_label_to_idx(data['add_infor'][0, LabelPosition[dataset]], dataset)
+        if cross_dataset:
+            motion = label_alignment([motion], dataset=dataset)[0]
+        label.append(motion)
         if dataset == 'Shoaib':
             user.append(int(data['add_infor'][0, UsersPosition[dataset]]))
         else:
@@ -249,8 +341,11 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
     label = np.array(label)
     label_type = np.unique(label)
     label_type_num = len(label_type)
-    print(label_type) 
-    assert label_type_num == ClassesNum[dataset]
+    print(label_type)
+    if cross_dataset:
+        assert label_type_num == 4
+    else:
+        assert label_type_num == ClassesNum[dataset]
 
     while True:
         user_type = np.unique(user)
@@ -380,12 +475,26 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
-    dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
+    # dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
+    dataset_name = ["Shoaib"]
     for i in range(seg_types):
         for dataset in dataset_name:
-            preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_test_shot{i}/", dataset=dataset, test_portion=0.01, tune_user_portion=1)
+            preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_test{i}/", dataset=dataset)
 
     return
+
+def new_segmentation_for_dataset(seg_types=5, seed=940):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
+    # dataset_name = ["Shoaib"]
+    for i in range(seg_types):
+        for dataset in dataset_name:
+            preprocessing_dataset_cross_dataset(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_cross_dataset{i}/", dataset=dataset)
+
+    return
+    
 
 if __name__ == '__main__':
     # divide_fewer_labels()
@@ -421,7 +530,8 @@ if __name__ == '__main__':
     # write_balance_tune_set(ori_dir=r'datasets/Shoaib_50_200/', target_dir=r'datasets/Shoaib_50_200_shot/', dataset='Shoaib')
     # write_balance_tune_set(ori_dir=r'datasets/HASC_50_200/', target_dir=r'datasets/HASC_50_200_shot/', dataset='HASC')
     
-    new_segmentation_for_user(seg_types=1)
+    # new_segmentation_for_user(seg_types=1)
+    new_segmentation_for_dataset(seg_types=5)
     
     # dir = r'datasets/HHAR/'
     # preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion35/', dataset='HHAR', test_portion=0.5, val_portion=0.15)

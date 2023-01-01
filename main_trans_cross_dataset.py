@@ -19,7 +19,7 @@ from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 from data_aug.preprocessing import ClassesNum, UsersNum
 from getFisherDiagonal import getFisherDiagonal_initial, load_fisher_matrix
 from simclr import SimCLR, MyNet, LIMU_encoder
-from utils import MoCo_evaluate, evaluate, identify_users_number, load_model_config, CPC_evaluate, seed_torch
+from utils import MoCo_evaluate, evaluate, fetch_test_loader_for_all_dataset, identify_users_number, load_model_config, CPC_evaluate, seed_torch
 import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -86,10 +86,12 @@ parser.add_argument('-version', default="shot0", type=str, help='control the ver
 parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate')
 parser.add_argument('-slr', default=0.5, type=float, help='DAL learning ratio')
-parser.add_argument('-ewc', default=True, type=float, help='Use EWC or not')
-parser.add_argument('-ewc_lambda', default=10, type=float, help='EWC para')
+parser.add_argument('-ewc', default=False, type=float, help='Use EWC or not')
+parser.add_argument('-ewc_lambda', default=1, type=float, help='EWC para')
 parser.add_argument('-fishermax', default=0.01, type=float, help='fishermax')
 parser.add_argument('-cl_slr', default=[0.3], nargs='+', type=float, help='the ratio of sup_loss')
+
+datasets = ['HASC', 'HHAR', 'MotionSense', 'Shoaib']
 
 def main():
     args = parser.parse_args()
@@ -107,34 +109,29 @@ def main():
     if args.store == None:
         args.store = deepcopy(args.pretrained)
 
-    fisher = load_fisher_matrix(args.pretrained, args.device)
+    if args.ewc:
+        fisher = load_fisher_matrix(args.pretrained, args.device)
 
     args.pretrained = './runs/' + args.pretrained + '/model_best.pth.tar'
 
-    dataset = ContrastiveLearningDataset(transfer=True, version=args.version, datasets_name=args.name)
+    dataset = ContrastiveLearningDataset(transfer=True, version=args.version, datasets_name=args.name, cross_dataset=True)
     tune_dataset = dataset.get_dataset('tune', percent=args.percent, shot=args.shot)
     val_dataset = dataset.get_dataset('val')
-    test_dataset = dataset.get_dataset('test')
-
-    val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=False, drop_last=False)
-
-    test_loader = torch.utils.data.DataLoader(
-        test_dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=False, drop_last=False)
+    
+    test_loader_for_all_datasets = fetch_test_loader_for_all_dataset(args, datasets)
 
     user_num = UsersNum[args.name]
-    train_dataset =  dataset.get_dataset('train')
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=int(args.batch_size), shuffle=True,
-        num_workers=args.workers, pin_memory=False, drop_last=False)
 
     tune_loader = torch.utils.data.DataLoader(
         tune_dataset, batch_size=int(args.batch_size), shuffle=True,
         num_workers=args.workers, pin_memory=False, drop_last=False)
+
+    val_loader = torch.utils.data.DataLoader(
+        val_dataset, batch_size=args.batch_size, shuffle=True,
+        num_workers=args.workers, pin_memory=False, drop_last=False)
     
-    model = MoCo_model(transfer=True, out_dim=args.out_dim, classes=ClassesNum[args.name], dims=args.d, 
+    # we change the classes into the five common classes here
+    model = MoCo_model(transfer=True, out_dim=args.out_dim, classes=5, dims=args.d, 
                        classifier_dim=args.classifer_dims, final_dim=args.final_dim, momentum=args.mo, drop=args.drop, DAL=args.DAL, users_class=user_num)
 
     classifier_name = []
@@ -200,21 +197,15 @@ def main():
             assert len(parameters) == len(classifier_name)
         else:
             assert len(parameters) == 2 
-
-    #  It’s a no-op if the 'gpu_index' argument is a negative integer or None.
-
-    # fisher = getFisherDiagonal_initial(args)
-
+    
     with torch.cuda.device(args.gpu_index):
         moco = MoCo(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
-        if args.evaluate:
-            test_acc, test_f1 = MoCo_evaluate(model=moco.model, criterion=moco.criterion, args=moco.args, data_loader=test_loader)
-            print('test f1: {}'.format('%.3f' % test_f1))
-            print('test acc: {}'.format('%.3f' % test_acc))
-            return
-        moco.transfer_train_ewc(tune_loader, val_loader, fisher)
+        if args.ewc:
+            moco.transfer_train_ewc(tune_loader, val_loader, fisher)
+        else:
+            moco.transfer_train(tune_loader, val_loader)
         best_model_dir = os.path.join(moco.writer.log_dir, 'model_best.pth.tar')
-        moco.test_performance(best_model_dir=best_model_dir, test_loader=test_loader)
+        moco.test_performance_cross_dataset(best_model_dir, test_loader_for_all_datasets, datasets)
     
     return
 

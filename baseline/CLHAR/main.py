@@ -19,12 +19,11 @@ parser.add_argument('--transfer', default=False, type=str, help='to tell whether
 parser.add_argument('--pretrained', default='', type=str, help='path to pretrained checkpoint')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
-parser.add_argument('-b', '--batch-size', default=256, type=int, metavar='N',
-                    help='mini-batch size (default: 256), this is the total '
+parser.add_argument('-b', '--batch-size', default=512, type=int, metavar='N',
+                    help='mini-batch size (default: 512), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
 parser.add_argument('-name', default='HHAR', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR'])
-parser.add_argument('-wd', '--weight-decay', default=1e-4, type=float, metavar='W', help='weight decay (default: 1e-4)', dest='weight_decay')
 parser.add_argument('--log-every-n-steps', default=5, type=int, help='Log every n steps')
 parser.add_argument('-g', '--gpu-index', default=2, type=int, help='Gpu index.')
 parser.add_argument('--fp16-precision', action='store_true', help='Whether or not to use 16-bit precision GPU training.')
@@ -55,7 +54,7 @@ def main():
     
 
     model = Encoder('CL')
-    optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
+    optimizer = torch.optim.SGD(model.parameters(), args.lr)
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)
     
