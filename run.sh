@@ -211,61 +211,44 @@
 
 
 
-# name="Shot"
-# version="shot"
-# for e in 400 500 600
-# do
-#     for lr in 0.00025 0.0005 0.00075
-#     do
-#         for v in 0 1 2 3 4
-#         do
-            # python main.py -g 2 -label_type 1 -slr ${slr} -version "${version}${v}" -name HASC --store "${name}_slr${slr}_${v}" &
-            # python main.py -g 2 -label_type 1 -slr ${slr} -version "${version}${v}" -name HHAR --store "${name}_slr${slr}_${v}" &
-            # python main.py -g 3 -label_type 1 -slr ${slr} -version "${version}${v}" -name MotionSense --store "${name}_slr${slr}_${v}" &
-            # python main.py -g 3 -label_type 1 -slr ${slr} -version "${version}${v}" -name Shoaib --store "${name}_slr${slr}_${v}"
+name="Shot"
+version="shot"
+for lam in 1 25 50 100 
+do
+    for v in 0 1 2 3 4
+    do
+        python main_trans_ewc.py -g 0 -ft True -lr 0.0005 -version "shot${v}" -shot 10 -name HASC --pretrained "${name}_${v}_ewc_pretrain/HASC" --store "f1_change_lam${lam}_${v}" &
+        python main_trans_ewc.py -g 0 -ft True -lr 0.0005 -version "shot${v}" -shot 10 -name HHAR --pretrained "${name}_${v}_ewc_pretrain/HHAR" --store "f1_change_lam${lam}_${v}" &
+        python main_trans_ewc.py -g 1 -ft True -lr 0.0005 -version "shot${v}" -shot 10 -name Shoaib --pretrained "${name}_${v}_ewc_pretrain/Shoaib" --store "f1_change_lam${lam}_${v}" &
+        python main_trans_ewc.py -g 1 -ft True -lr 0.0005 -version "shot${v}" -shot 10 -name MotionSense  --pretrained "${name}_${v}_ewc_pretrain/MotionSense" --store "f1_change_lam${lam}_${v}"
 
-            # wait
-            
-            # python main_trans_ewc.py -g 2 -ft True -lr ${lr} -e ${e} -version "${version}${v}" -shot 10 -name HASC --pretrained "${name}_${v}_ewc_pretrain/HASC" --store "${name}_lr${lr}_e${e}_${v}" &
-            # python main_trans_ewc.py -g 2 -ft True -lr ${lr} -e ${e} -version "${version}${v}" -shot 10 -name HHAR --pretrained "${name}_${v}_ewc_pretrain/HHAR" --store "${name}_lr${lr}_e${e}_${v}" &
-            # python main_trans_ewc.py -g 3 -ft True -lr ${lr} -e ${e} -version "${version}${v}" -shot 10 -name Shoaib --pretrained "${name}_${v}_ewc_pretrain/Shoaib" --store "${name}_lr${lr}_e${e}_${v}" &
-            # python main_trans_ewc.py -g 3 -ft True -lr ${lr} -e ${e} -version "${version}${v}" -shot 10 -name MotionSense  --pretrained "${name}_${v}_ewc_pretrain/MotionSense" --store "${name}_lr${lr}_e${e}_${v}"
-
-            # wait
-
-            # python main_transfer.py -g 2 -ft True -lr 0.0005 -version "${version}${v}" -shot 10 -name HASC --pretrained "${name}_${v}/HASC" --store "${name}_${v}_wo_ewc" &
-            # python main_transfer.py -g 2 -ft True -lr 0.0005 -version "${version}${v}" -shot 10 -name HHAR --pretrained "${name}_${v}/HHAR" --store "${name}_${v}_wo_ewc" &
-            # python main_transfer.py -g 3 -ft True -lr 0.0005 -version "${version}${v}" -shot 10 -name Shoaib --pretrained "${name}_${v}/Shoaib" --store "${name}_${v}_wo_ewc" &
-            # python main_transfer.py -g 3 -ft True -lr 0.0005 -version "${version}${v}" -shot 10 -name MotionSense  --pretrained "${name}_${v}/MotionSense" --store "${name}_${v}_wo_ewc" & #######
-
-            # wait
-#         done
-#     done
-# done
+        wait
+    done
+done
 
 
-name="CS_wo"
-version="cross_dataset0"
+# name="CS_wo"
+# version="cross_dataset0"
 
-python main.py -g 2 -label_type 0 -version "${version}" -name HASC --store "${name}" &
-python main.py -g 2 -label_type 0 -version "${version}" -name HHAR --store "${name}" &
-python main.py -g 3 -label_type 0 -version "${version}" -name MotionSense --store "${name}" &
-python main.py -g 3 -label_type 0 -version "${version}" -name Shoaib --store "${name}"
+# python main.py -g 2 -label_type 0 -version "${version}" -name HASC --store "${name}" &
+# python main.py -g 2 -label_type 0 -version "${version}" -name HHAR --store "${name}" &
+# python main.py -g 3 -label_type 0 -version "${version}" -name MotionSense --store "${name}" &
+# python main.py -g 3 -label_type 0 -version "${version}" -name Shoaib --store "${name}"
 
-wait
+# wait
 
-python main_trans_cross_dataset.py -g 2 -ft True -version "${version}" -shot 10 -name HASC --pretrained "${name}/HASC" --store "${name}_wo_CDL" &
-python main_trans_cross_dataset.py -g 2 -ft True -version "${version}" -shot 10 -name HHAR --pretrained "${name}/HHAR" --store "${name}_wo_CDL" &
-python main_trans_cross_dataset.py -g 3 -ft True -version "${version}" -shot 10 -name Shoaib --pretrained "${name}/Shoaib" --store "${name}_wo_CDL" &
-python main_trans_cross_dataset.py -g 3 -ft True -version "${version}" -shot 10 -name MotionSense  --pretrained "${name}/MotionSense" --store "${name}_wo_CDL"
+# python main_trans_cross_dataset.py -g 2 -ft True -version "${version}" -shot 10 -name HASC --pretrained "${name}/HASC" --store "${name}_wo_CDL" &
+# python main_trans_cross_dataset.py -g 2 -ft True -version "${version}" -shot 10 -name HHAR --pretrained "${name}/HHAR" --store "${name}_wo_CDL" &
+# python main_trans_cross_dataset.py -g 3 -ft True -version "${version}" -shot 10 -name Shoaib --pretrained "${name}/Shoaib" --store "${name}_wo_CDL" &
+# python main_trans_cross_dataset.py -g 3 -ft True -version "${version}" -shot 10 -name MotionSense  --pretrained "${name}/MotionSense" --store "${name}_wo_CDL_test"
 
-wait
+# wait
 
-name="CS"
+# name="CS"
 
-python main_trans_cross_dataset.py -g 2 -ft True -version "${version}" -shot 10 -name HASC --pretrained "${name}/HASC" --store "${name}_wo_ewc" &
-python main_trans_cross_dataset.py -g 2 -ft True -version "${version}" -shot 10 -name HHAR --pretrained "${name}/HHAR" --store "${name}_wo_ewc" &
-python main_trans_cross_dataset.py -g 3 -ft True -version "${version}" -shot 10 -name Shoaib --pretrained "${name}/Shoaib" --store "${name}_wo_ewc" &
-python main_trans_cross_dataset.py -g 3 -ft True -version "${version}" -shot 10 -name MotionSense  --pretrained "${name}/MotionSense" --store "${name}_wo_ewc"
+# python main_trans_cross_dataset.py -g 2 -ft True -version "${version}" -shot 10 -name HASC --pretrained "${name}/HASC" --store "${name}_wo_ewc" &
+# python main_trans_cross_dataset.py -g 2 -ft True -version "${version}" -shot 10 -name HHAR --pretrained "${name}/HHAR" --store "${name}_wo_ewc" &
+# python main_trans_cross_dataset.py -g 3 -ft True -version "${version}" -shot 10 -name Shoaib --pretrained "${name}/Shoaib" --store "${name}_wo_ewc" &
+# python main_trans_cross_dataset.py -g 3 -ft True -version "${version}" -shot 10 -name MotionSense  --pretrained "${name}/MotionSense" --store "${name}_wo_ewc"
 
-wait
+# wait

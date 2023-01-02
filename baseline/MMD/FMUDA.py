@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+from sklearn.metrics import f1_score
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -145,7 +146,10 @@ class FMUDA(object):
 
         for epoch_counter in tqdm(range(self.args.epochs)):
             acc_batch = AverageMeter('acc_batch', ':6.2f')
-            f1_batch = AverageMeter('f1_batch', ':6.2f')
+            
+            pred_batch = torch.empty(0).to(self.args.device)
+            label_batch = torch.empty(0).to(self.args.device)
+
             loss_clf_batch = AverageMeter('loss_clf_batch', ':6.5f')
             loss_uda_batch = AverageMeter('loss_uda_batch', ':6.5f')
 
@@ -183,17 +187,21 @@ class FMUDA(object):
                 scaler.update()
 
                 acc = accuracy(logits, target, topk=(1,))
-                f1 = f1_cal(logits, target, topk=(1,))
                 acc_batch.update(acc, sensor.size(0))
-                f1_batch.update(f1, sensor.size(0))
+
+                label_batch = torch.cat((label_batch, target))
+                _, pred = logits.topk(1, 1, True, True)
+                pred_batch = torch.cat((pred_batch, pred.reshape(-1)))
+
                 loss_clf_batch.update(loss_clf, sensor.size(0))
                 loss_uda_batch.update(loss_uda, sensor.size(0))
 
             self.writer.add_scalar('loss_clf', loss_clf_batch.avg, global_step=epoch_counter)
             self.writer.add_scalar('loss_uda', loss_uda_batch.avg, global_step=epoch_counter)
             self.writer.add_scalar('acc', acc_batch.avg, global_step=epoch_counter)
-            self.writer.add_scalar('f1', f1_batch.avg, global_step=epoch_counter)
+            self.writer.add_scalar('f1', f1_batch, global_step=epoch_counter)
 
+            f1_batch = f1_score(label_batch.cpu().numpy(), pred_batch.cpu().numpy(), average='macro') * 100
             val_acc, val_f1 = evaluate(model=self.model, criterion=self.clf_loss, args=self.args, data_loader=val_loader)
 
             is_best = val_f1 > best_f1

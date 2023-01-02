@@ -35,9 +35,9 @@ parser.add_argument('-if-val', default=True, type=bool, help='to decide whether 
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
-parser.add_argument('--pretrained', default='test/HASC', type=str,
+parser.add_argument('--pretrained', default='CS_wo/MotionSense', type=str,
                     help='path to SimClR pretrained checkpoint')
-parser.add_argument('-name', default='HHAR',
+parser.add_argument('-name', default='MotionSense',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'ICHAR', 'HASC'])
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 
@@ -70,8 +70,9 @@ parser.add_argument('-t', '--temperature', default=1, type=float,
                     help='softmax temperature (default: 1)')
 
 parser.add_argument('-g', '--gpu-index', default=0, type=int, help='Gpu index.')
-parser.add_argument('--evaluate', default=False, type=bool, help='To decide whether to evaluate')
+parser.add_argument('--evaluate', default=True, type=bool, help='To decide whether to evaluate')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
+parser.add_argument('--model_dir', default='runs/CS_wo_wo_CDL/HHAR_ft_shot_10/model_best.pth.tar', type=str, help='Load a fine-tune model for testing')
 
 parser.add_argument('--mol', default='MoCo', type=str, help='which model to use', choices=['SimCLR', 'LIMU', 'CPC', 'MoCo', 'DeepSense'])
 
@@ -82,14 +83,15 @@ parser.add_argument('-final_dim', default=8, type=int, help='the output dims of 
 parser.add_argument('-mo', default=0.9, type=float, help='the momentum for Batch Normalization')
 
 parser.add_argument('-drop', default=0.1, type=float, help='the dropout portion')
-parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
+parser.add_argument('-version', default="cross_dataset0", type=str, help='control the version of the setting')
 parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate')
 parser.add_argument('-slr', default=0.5, type=float, help='DAL learning ratio')
 parser.add_argument('-ewc', default=False, type=float, help='Use EWC or not')
-parser.add_argument('-ewc_lambda', default=1, type=float, help='EWC para')
+parser.add_argument('-ewc_lambda', default=10, type=float, help='EWC para')
 parser.add_argument('-fishermax', default=0.01, type=float, help='fishermax')
 parser.add_argument('-cl_slr', default=[0.3], nargs='+', type=float, help='the ratio of sup_loss')
+
 
 datasets = ['HASC', 'HHAR', 'MotionSense', 'Shoaib']
 
@@ -200,6 +202,9 @@ def main():
     
     with torch.cuda.device(args.gpu_index):
         moco = MoCo(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
+        if args.evaluate:
+            moco.test_performance_cross_dataset(args.model_dir, test_loader_for_all_datasets, datasets)
+            return
         if args.ewc:
             moco.transfer_train_ewc(tune_loader, val_loader, fisher)
         else:

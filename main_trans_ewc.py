@@ -35,7 +35,7 @@ parser.add_argument('-if-val', default=True, type=bool, help='to decide whether 
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
-parser.add_argument('--pretrained', default='test/HASC', type=str,
+parser.add_argument('--pretrained', default='Shot_1_ewc_pretrain/HHAR', type=str,
                     help='path to SimClR pretrained checkpoint')
 parser.add_argument('-name', default='HHAR',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'ICHAR', 'HASC'])
@@ -89,7 +89,7 @@ parser.add_argument('-slr', default=0.5, type=float, help='DAL learning ratio')
 parser.add_argument('-ewc', default=True, type=float, help='Use EWC or not')
 parser.add_argument('-ewc_lambda', default=10, type=float, help='EWC para')
 parser.add_argument('-fishermax', default=0.01, type=float, help='fishermax')
-parser.add_argument('-cl_slr', default=[0.3], nargs='+', type=float, help='the ratio of sup_loss')
+# parser.add_argument('-cl_slr', default=[0.3], nargs='+', type=float, help='the ratio of sup_loss')
 
 def main():
     args = parser.parse_args()

@@ -59,8 +59,11 @@ def get_f1(source_loaders, DEVICE, model, classifier_fn, batch_size):
     compute the accuracy over the supervised training set or the testing set
     """
 
-    f1_batch = AverageMeter('f1_eval', ':6.2f')
+    # f1_batch = AverageMeter('f1_eval', ':6.2f')
     
+    pred_batch = torch.empty(0).to(DEVICE)
+    label_batch = torch.empty(0).to(DEVICE)
+
     with torch.no_grad():
         for source_loader in source_loaders:
             for (xs, ys, ds) in source_loader:
@@ -72,11 +75,12 @@ def get_f1(source_loaders, DEVICE, model, classifier_fn, batch_size):
 
                 _, pred = pred_y.topk(1, 1, True, True)
 
-                f1 = f1_score(ys.cpu().numpy(), pred.cpu().numpy(), average='macro') * 100
+                label_batch = torch.cat((label_batch, ys))
+                pred_batch = torch.cat((pred_batch, pred.reshape(-1)))
 
-                f1_batch.update(f1, xs.size(0))
-
-    return f1_batch.avg
+        f1_batch = f1_score(label_batch.cpu().numpy(), pred_batch.cpu().numpy(), average='macro') * 100
+            
+    return f1_batch
     
 
 def get_accuracy(source_loaders, DEVICE, model, classifier_fn, batch_size):

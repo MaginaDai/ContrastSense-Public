@@ -12,6 +12,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.cuda.amp import GradScaler, autocast
+from sklearn.metrics import f1_score
 from utils import accuracy, evaluate, f1_cal, save_checkpoint, save_config_file
 
 N_VIEWS = 2
@@ -150,7 +151,10 @@ class SimCLR(object):
 
         for epoch_counter in tqdm(range(self.args.epochs)):
             acc_batch = AverageMeter('acc_batch', ':6.2f')
-            f1_batch = AverageMeter('f1_batch', ':6.2f')
+
+            pred_batch = torch.empty(0).to(self.args.device)
+            label_batch = torch.empty(0).to(self.args.device)
+
             if self.args.if_fine_tune:
                 self.model.train()
             else: 
@@ -174,7 +178,11 @@ class SimCLR(object):
                 acc = accuracy(logits, target, topk=(1,))
                 f1 = f1_cal(logits, target, topk=(1,))
                 acc_batch.update(acc, sensor.size(0))
-                f1_batch.update(f1, sensor.size(0))
+
+                label_batch = torch.cat((label_batch, target))
+                _, pred = logits.topk(1, 1, True, True)
+                pred_batch = torch.cat((pred_batch, pred.reshape(-1)))
+
                 if n_iter_train % self.args.log_every_n_steps == 0:
                     self.writer.add_scalar('loss', loss, global_step=n_iter_train)
                     self.writer.add_scalar('acc', acc, global_step=n_iter_train)
@@ -183,6 +191,7 @@ class SimCLR(object):
 
                 n_iter_train += 1
 
+            f1_batch = f1_score(label_batch.cpu().numpy(), pred_batch.cpu().numpy(), average='macro') * 100
             val_acc, val_f1 = evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
 
             is_best = val_f1 > best_f1
@@ -201,7 +210,7 @@ class SimCLR(object):
             self.writer.add_scalar('eval acc', val_acc, global_step=epoch_counter)
             self.writer.add_scalar('eval f1', val_f1, global_step=epoch_counter)
             self.scheduler.step()
-            logging.debug(f"Epoch: {epoch_counter} Loss: {loss} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch.avg: .3f}/{val_f1: .3f}")
+            logging.debug(f"Epoch: {epoch_counter} Loss: {loss} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch: .3f}/{val_f1: .3f}")
         
         logging.info("Fine-tuning has finished.")
         logging.info(f"best eval f1 is {best_f1} at {best_epoch}.")

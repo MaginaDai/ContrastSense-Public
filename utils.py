@@ -91,9 +91,12 @@ def f1_cal(output, target, topk=(1, )):
 def evaluate(model, criterion, args, data_loader):
     losses = AverageMeter('Loss', ':.4e')
     acc_eval = AverageMeter('acc_eval', ':6.2f')
-    f1_eval = AverageMeter('f1_eval', ':6.2f')
+    # f1_eval = AverageMeter('f1_eval', ':6.2f')
 
     model.eval()
+
+    label_all = []
+    pred_all = []
 
     with torch.no_grad():
         for sensor, target in data_loader:
@@ -108,20 +111,26 @@ def evaluate(model, criterion, args, data_loader):
 
             losses.update(loss.item(), sensor.size(0))
             _, pred = logits.topk(1, 1, True, True)
-            acc = accuracy(logits, target, topk=(1,))
-            f1 = f1_cal(logits, target, topk=(1,))
-            acc_eval.update(acc, sensor.size(0))
-            f1_eval.update(f1, sensor.size(0))
 
-    return acc_eval.avg, f1_eval.avg
+            label_all = np.concatenate((label_all, target.cpu().numpy()))
+            pred_all = np.concatenate((pred_all, pred.cpu().numpy().reshape(-1)))
+
+            acc = accuracy(logits, target, topk=(1,))
+            acc_eval.update(acc, sensor.size(0))
+
+    f1_eval = f1_score(label_all, pred_all, average='macro') * 100
+
+    return acc_eval.avg, f1_eval
 
 
 def MoCo_evaluate(model, criterion, args, data_loader):
     losses = AverageMeter('Loss', ':.4e')
     acc_eval = AverageMeter('acc_eval', ':6.2f')
-    f1_eval = AverageMeter('f1_eval', ':6.2f')
 
     model.eval()
+    
+    label_all = []
+    pred_all = []
 
     with torch.no_grad():
         for sensor, target in data_loader:
@@ -136,12 +145,15 @@ def MoCo_evaluate(model, criterion, args, data_loader):
 
             losses.update(loss.item(), sensor.size(0))
             _, pred = logits.topk(1, 1, True, True)
-            acc = accuracy(logits, target, topk=(1,))
-            f1 = f1_cal(logits, target, topk=(1,))
-            acc_eval.update(acc, sensor.size(0))
-            f1_eval.update(f1, sensor.size(0))
+            
+            label_all = np.concatenate((label_all, target.cpu().numpy()))
+            pred_all = np.concatenate((pred_all, pred.cpu().numpy().reshape(-1)))
 
-    return acc_eval.avg, f1_eval.avg
+            acc = accuracy(logits, target, topk=(1,))
+            acc_eval.update(acc, sensor.size(0))
+
+    f1_eval = f1_score(label_all, pred_all, average='macro') * 100
+    return acc_eval.avg, f1_eval
 
 
 def CPC_evaluate(model, criterion, args, data_loader):
