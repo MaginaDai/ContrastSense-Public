@@ -113,6 +113,27 @@ percent = [0.2, 0.5, 1, 2, 5, 10]
 shot_num = [1, 5, 10, 15, 20, 50, 100] # enlarge to 100
 
 
+def preprocessing_plain_segmentation(dir, target_dir, val_portion=0.15, test_portion=0.25):
+    num = fetch_instance_number_of_dataset(dir)
+    idx = np.arange(num)
+    test_num = int(num * test_portion)
+    val_num = int(num * val_portion)
+    np.random.shuffle(idx)
+    
+    test_instance = idx[:test_num]
+    val_instance = idx[test_num: test_num + val_num]
+    train_instance = idx[test_num + val_num:]
+    
+    print("Total Num: {}".format(num))
+    print("Train num: {}".format(len(train_instance)))
+    print("Val num: {}".format(len(val_instance)))
+    print("Test num: {}".format(len(test_instance)))
+    write_dataset(target_dir, train_instance, val_instance, test_instance)
+    
+    return
+    
+    
+
 def preprocessing_HHAR_cross_person(main_dir):
     num = MAX_INDEX
     u = []
@@ -203,8 +224,8 @@ def preprocessing_dataset_cross_person_val(dir, target_dir, dataset, test_portio
     val_num =  [j for j in range(num) if u[j] in users_val_name]
     test_num = [j for j in range(num) if u[j] in users_test_name]
 
-    # write_dataset(target_dir, train_num, val_num, test_num)
-    # write_balance_tune_set(dir, target_dir, dataset, dataset_size=num, tune_user_portion=tune_user_portion)
+    write_dataset(target_dir, train_num, val_num, test_num)
+    write_balance_tune_set(dir, target_dir, dataset, dataset_size=num, tune_user_portion=tune_user_portion)
     return
 
 
@@ -496,6 +517,18 @@ def new_segmentation_for_dataset(seg_types=5, seed=940):
     return
     
 
+def new_segmentation_for_domain_shift_visual(seed=940):
+    random.seed(seed)
+    np.random.seed(seed)
+    dataset = 'HHAR'
+
+    preprocessing_plain_segmentation(f'datasets/{dataset}/', f"datasets/{dataset}_train60_supervised_plain/", val_portion=0.15, test_portion=0.25)
+    preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train60_supervised_cross/", dataset=dataset, val_portion=0.15, test_portion=0.25)
+    
+    preprocessing_plain_segmentation(f'datasets/{dataset}/', f"datasets/{dataset}_train25_supervised_plain/", val_portion=0.15, test_portion=0.60)
+    preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train25_supervised_cross/", dataset=dataset, val_portion=0.15, test_portion=0.60)
+
+
 if __name__ == '__main__':
     # divide_fewer_labels()
     # data = np.load(os.path.join(path_save, 'val_set' + '.npz'))
@@ -531,7 +564,8 @@ if __name__ == '__main__':
     # write_balance_tune_set(ori_dir=r'datasets/HASC_50_200/', target_dir=r'datasets/HASC_50_200_shot/', dataset='HASC')
     
     # new_segmentation_for_user(seg_types=1)
-    new_segmentation_for_dataset(seg_types=5)
+    # new_segmentation_for_dataset(seg_types=5)
+    new_segmentation_for_domain_shift_visual()
     
     # dir = r'datasets/HHAR/'
     # preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion35/', dataset='HHAR', test_portion=0.5, val_portion=0.15)

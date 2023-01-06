@@ -99,7 +99,7 @@ def getFisherDiagonal_initial(args):
         num_workers=10, pin_memory=False, drop_last=True)
 
     user_num = None
-    model = MoCo_v1(device=args.device, mol=args.mol)
+    model = MoCo_v1(device=args.device, mol=args.mol, K=args.moco_K)
     optimizer = torch.optim.Adam(model.parameters(), 1e-4, weight_decay=1e-4)
 
     if args.pretrained:
@@ -122,27 +122,28 @@ def getFisherDiagonal_initial(args):
         for n, p in model.named_parameters()
             if p.requires_grad and n.startswith('encoder_q.encoder')
     }
+    with torch.cuda.device(args.gpu_index):
+        for sensor, labels in train_loader:
+            sensor = [t.to(args.device) for t in sensor]
+            gt_label = labels[:, 0].to(args.device) # the first dim is motion labels
+            sup_label = [labels[:, i + 1].to(args.device) for i in range(args.label_type)]  # the following dim are cheap labels
+            _, _, logits_labels, _, _, _, _ = model(sensor[0], sensor[1], labels=sup_label, 
+                                                                                                num_clusters=args.num_clusters, 
+                                                                                                iter_tol=args.iter_tol,
+                                                                                                gt=gt_label, if_plot=False,
+                                                                                                n_iter=0)
+            sup_loss = model.supervised_CL(logits_labels=logits_labels, labels=sup_label)
+            loss = - args.cl_slr[0] * sup_loss
+            optimizer.zero_grad()
+            loss.backward() 
 
-    for sensor, labels in train_loader:
-        sensor = [t.to(args.device) for t in sensor]
-        gt_label = labels[:, 0].to(args.device) # the first dim is motion labels
-        sup_label = [labels[:, i + 1].to(args.device) for i in range(args.label_type)]  # the following dim are cheap labels
-        output, target, logits_labels, cluster_eval, cluster_loss, center_shift, feature = model(sensor[0], sensor[1], labels=sup_label, 
-                                                                                            num_clusters=args.num_clusters, 
-                                                                                            iter_tol=args.iter_tol,
-                                                                                            gt=gt_label, if_plot=False,
-                                                                                            n_iter=0)
-        sup_loss = model.supervised_CL(logits_labels=logits_labels, labels=sup_label)
-        loss = - args.cl_slr[0] * sup_loss
-        optimizer.zero_grad()
-        loss.backward()
-
-    for n, p in model.named_parameters():
-        if p.grad is not None and n.startswith('encoder_q.encoder'):
-            fisher[n[len("encoder_q."):]] += p.grad.pow(2).clone()
-    for n, p in fisher.items():
-        fisher[n] = p / len(train_loader)
-        fisher[n] = torch.min(fisher[n], torch.tensor(args.fishermax)).to(args.device)
+        for n, p in model.named_parameters():
+            if p.grad is not None and n.startswith('encoder_q.encoder'):
+                fisher[n[len("encoder_q."):]] += p.grad.pow(2).clone()
+        for n, p in fisher.items():
+            fisher[n] = p / len(train_loader)
+            fisher[n] = torch.min(fisher[n], torch.tensor(args.fishermax)).to(args.device)
+    model.to('cpu')
     return fisher
 
 def replenish_queue(model, train_loader, args):
@@ -170,7 +171,7 @@ def replenish_queue(model, train_loader, args):
 
 
 def getFisherDiagonal_pretrain(args, train_loader, save_dir):
-    model = MoCo_v1(device=args.device, mol=args.mol)
+    model = MoCo_v1(device=args.device, mol=args.mol, K=args.moco_K)
     optimizer = torch.optim.Adam(model.parameters(), 1e-4, weight_decay=1e-4)
 
     model_dir = save_dir + '/model_best.pth.tar'

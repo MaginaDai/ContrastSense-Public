@@ -9,10 +9,10 @@ do
 
     # wait
 
-    python transfer.py -g 1 -ft True -version "a_shot${v}" -shot 10 -name HASC --pretrained "${name}_${v}/HASC" --store "${name}_f1_${v}" &
-    python transfer.py -g 1 -ft True -version "a_shot${v}" -shot 10 -name HHAR --pretrained "${name}_${v}/HHAR" --store "${name}_f1_${v}" &
-    python transfer.py -g 1 -ft True -version "a_shot${v}" -shot 10 -name MotionSense --pretrained "${name}_${v}/MotionSense" --store "${name}_f1_${v}" &
-    python transfer.py -g 1 -ft True -version "a_shot${v}" -shot 10 -name Shoaib --pretrained "${name}_${v}/Shoaib" --store "${name}_f1_${v}" 
+    python transfer.py -g 2 -ft True -version "shot${v}" -shot 10 -name HASC --pretrained "${name}_${v}/HASC" --store "${name}_f1_2_${v}" &
+    python transfer.py -g 2 -ft True -version "shot${v}" -shot 10 -name HHAR --pretrained "${name}_${v}/HHAR" --store "${name}_f1_2_${v}" &
+    python transfer.py -g 2 -ft True -version "shot${v}" -shot 10 -name MotionSense --pretrained "${name}_${v}/MotionSense" --store "${name}_f1_2_${v}" &
+    python transfer.py -g 2 -ft True -version "shot${v}" -shot 10 -name Shoaib --pretrained "${name}_${v}/Shoaib" --store "${name}_f1_2_${v}" 
 
     wait
 

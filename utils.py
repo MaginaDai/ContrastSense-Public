@@ -123,7 +123,7 @@ def evaluate(model, criterion, args, data_loader):
     return acc_eval.avg, f1_eval
 
 
-def MoCo_evaluate(model, criterion, args, data_loader):
+def MoCo_evaluate(model, criterion, args, data_loader, test=False):
     losses = AverageMeter('Loss', ':.4e')
     acc_eval = AverageMeter('acc_eval', ':6.2f')
 
@@ -153,6 +153,8 @@ def MoCo_evaluate(model, criterion, args, data_loader):
             acc_eval.update(acc, sensor.size(0))
 
     f1_eval = f1_score(label_all, pred_all, average='macro') * 100
+    if test:
+        np.savez('pred_all.npz', pred_all=pred_all)
     return acc_eval.avg, f1_eval
 
 

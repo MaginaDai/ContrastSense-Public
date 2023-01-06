@@ -211,20 +211,28 @@
 
 
 
-name="Shot"
-version="shot"
-for lam in 1 25 50 100 
-do
-    for v in 0 1 2 3 4
-    do
-        python main_trans_ewc.py -g 0 -ft True -lr 0.0005 -version "shot${v}" -shot 10 -name HASC --pretrained "${name}_${v}_ewc_pretrain/HASC" --store "f1_change_lam${lam}_${v}" &
-        python main_trans_ewc.py -g 0 -ft True -lr 0.0005 -version "shot${v}" -shot 10 -name HHAR --pretrained "${name}_${v}_ewc_pretrain/HHAR" --store "f1_change_lam${lam}_${v}" &
-        python main_trans_ewc.py -g 1 -ft True -lr 0.0005 -version "shot${v}" -shot 10 -name Shoaib --pretrained "${name}_${v}_ewc_pretrain/Shoaib" --store "f1_change_lam${lam}_${v}" &
-        python main_trans_ewc.py -g 1 -ft True -lr 0.0005 -version "shot${v}" -shot 10 -name MotionSense  --pretrained "${name}_${v}_ewc_pretrain/MotionSense" --store "f1_change_lam${lam}_${v}"
+# name="MoCo_K"
+# version="shot"
+# v=1
+# for k in 1024
+# do 
+#     name="plain_v${v}"
 
-        wait
-    done
-done
+#     python main.py -g 0 -label_type 0 -version "shot${v}" -name HASC --store "${name}" &
+#     python main.py -g 0 -label_type 0 -version "shot${v}" -name HHAR --store "${name}" &
+#     python main.py -g 1 -label_type 0 -version "shot${v}" -name MotionSense --store "${name}" &
+#     python main.py -g 1 -label_type 0 -version "shot${v}" -name Shoaib --store "${name}"
+
+#     # wait
+#     store="MoCo_K${k}_v${v}"
+
+#     python main_trans_ewc.py -g 0 -ft True -lr ${lr} -version "shot${v}" -shot 10 -name HASC --pretrained "${name}/HASC" --store ${store} &
+#     python main_trans_ewc.py -g 0 -ft True -lr ${lr} -version "shot${v}" -shot 10 -name HHAR --pretrained "${name}/HHAR" --store ${store} &
+#     python main_trans_ewc.py -g 1 -ft True -lr ${lr} -version "shot${v}" -shot 10 -name Shoaib --pretrained "${name}/Shoaib" --store ${store} &
+#     python main_trans_ewc.py -g 1 -ft True -lr ${lr} -version "shot${v}" -shot 10 -name MotionSense  --pretrained "${name}/MotionSense" --store ${store} 
+
+#     wait
+# done
 
 
 # name="CS_wo"
@@ -252,3 +260,30 @@ done
 # python main_trans_cross_dataset.py -g 3 -ft True -version "${version}" -shot 10 -name MotionSense  --pretrained "${name}/MotionSense" --store "${name}_wo_ewc"
 
 # wait
+
+
+version="shot"
+v=1
+
+name="plain_v${v}"
+
+python main.py -g 0 -label_type 0 -version "shot${v}" -name HASC --store "${name}" &
+python main.py -g 0 -label_type 0 -version "shot${v}" -name HHAR --store "${name}" &
+python main.py -g 1 -label_type 0 -version "shot${v}" -name MotionSense --store "${name}" &
+python main.py -g 1 -label_type 0 -version "shot${v}" -name Shoaib --store "${name}"
+
+wait
+store="plain_v${v}"
+
+python main_trans_ewc.py -g 0 -ft True -lr ${lr} -version "shot${v}" -shot 10 -name HASC --pretrained "${name}/HASC" --store ${store} &
+python main_trans_ewc.py -g 0 -ft True -lr ${lr} -version "shot${v}" -shot 10 -name HHAR --pretrained "${name}/HHAR" --store ${store} &
+python main_trans_ewc.py -g 1 -ft True -lr ${lr} -version "shot${v}" -shot 10 -name Shoaib --pretrained "${name}/Shoaib" --store ${store} &
+python main_trans_ewc.py -g 1 -ft True -lr ${lr} -version "shot${v}" -shot 10 -name MotionSense  --pretrained "${name}/MotionSense" --store ${store} 
+
+name="no"
+store="no_v${v}"
+
+python main_trans_ewc.py -g 0 -ft True -lr ${lr} -version "shot${v}" -shot 10 -name HASC --pretrained "${name}/HASC" --store ${store} &
+python main_trans_ewc.py -g 0 -ft True -lr ${lr} -version "shot${v}" -shot 10 -name HHAR --pretrained "${name}/HHAR" --store ${store} &
+python main_trans_ewc.py -g 1 -ft True -lr ${lr} -version "shot${v}" -shot 10 -name Shoaib --pretrained "${name}/Shoaib" --store ${store} &
+python main_trans_ewc.py -g 1 -ft True -lr ${lr} -version "shot${v}" -shot 10 -name MotionSense  --pretrained "${name}/MotionSense" --store ${store} 

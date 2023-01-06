@@ -37,7 +37,7 @@ from sklearn.metrics import f1_score
 
 
 class MoCo_model(nn.Module):
-    def __init__(self, transfer=False, out_dim=512, classes=6, dims=32, classifier_dim=None, final_dim=8, momentum=0.9, drop=0.1, DAL=False, users_class=None, SCL=False):
+    def __init__(self, transfer=False, out_dim=512, classes=6, dims=32, classifier_dim=1024, final_dim=8, momentum=0.9, drop=0.1, DAL=False, users_class=None, SCL=False):
         super(MoCo_model, self).__init__()
         self.DAL = DAL
         self.encoder = MoCo_encoder(dims=dims, momentum=momentum, drop=drop)
@@ -71,7 +71,7 @@ class MoCo_model(nn.Module):
 
 
 class MoCo_classifier(nn.Module):
-    def __init__(self, classes=6, dims=32, classifier_dim=None, final_dim=8, drop=0.1):
+    def __init__(self, classes=6, dims=32, classifier_dim=1024, final_dim=8, drop=0.1):
         super(MoCo_classifier, self).__init__()
 
         self.gru = torch.nn.GRU(dims, final_dim, num_layers=1, batch_first=True, bidirectional=True) #??? why decrease it....
@@ -805,8 +805,8 @@ class MoCo(object):
     def test_performance(self, best_model_dir, test_loader):
         checkpoint = torch.load(best_model_dir, map_location="cpu")
         state_dict = checkpoint['state_dict']
-        self.model.load_state_dict(state_dict, strict=False)
-        test_acc, test_f1 = MoCo_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=test_loader)
+        self.model.load_state_dict(state_dict)
+        test_acc, test_f1 = MoCo_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=test_loader, test=True)
         logging.info(f"test f1 is {test_f1}.")
         logging.info(f"test acc is {test_acc}.")
 
@@ -1133,10 +1133,7 @@ class MoCo(object):
 
                 n_iter_train += 1
 
-            if self.args.if_val:
-                val_acc, val_f1 = MoCo_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
-            else:
-                val_acc = 0
+            val_acc, val_f1 = MoCo_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
 
             is_best = val_f1 > best_f1
 

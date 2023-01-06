@@ -187,11 +187,11 @@ def fig_cluster():
     plt.savefig('cluster.png')
 
 
-def t_SNE_view(x, label, n_step):
+def t_SNE_view(x, label, n_step, label_str, dataset):
     label_type = np.unique(label)
     df = np.concatenate((x, np.expand_dims(label, 1)), axis=1)
     df = pd.DataFrame(df, columns=['x', 'y', 'classes'])
-    plt.figure(figsize=(16,10))
+    plt.figure(figsize=(16, 10))
     sns.scatterplot(
         x="x", y="y",
         hue="classes",
@@ -200,9 +200,11 @@ def t_SNE_view(x, label, n_step):
         legend="full",
         alpha=1
     )
-    save_str = f'./figure_plot/cluster_color/label_{n_step}.png'
+    # plt.legend(["User 1", "User 2"])
+    save_str = f'./figure_plot/tSNE/{dataset}_{n_step}_test.png'
     plt.savefig(save_str)
     return
+
 
 def cmp_frequency_performance():
     limu = [97.33, 83.32, 60.41]
@@ -267,6 +269,12 @@ def figure_SCL_during_ft():
     b64_test = [60.99, 59.30, 57.15, 59.67, 57.71, 58.36, 52.62, 50.88, 58.01, 54.97, 57.33]
     b128_test = [60.84, 60.54, 60.72, 58.27, 57.84, 57.97, 58.36, 57.79, 58.85, 55.94, 55.60]
     b256_test = [61.65, 60.82, 58.09, 60.31, 61.14, 57.05, 59.01]
+
+    return
+
+
+def figure_prelim():
+    
 
     return
 

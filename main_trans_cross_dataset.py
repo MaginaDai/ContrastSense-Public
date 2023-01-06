@@ -72,7 +72,7 @@ parser.add_argument('-t', '--temperature', default=1, type=float,
 parser.add_argument('-g', '--gpu-index', default=0, type=int, help='Gpu index.')
 parser.add_argument('--evaluate', default=True, type=bool, help='To decide whether to evaluate')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
-parser.add_argument('--model_dir', default='runs/CS_wo_wo_CDL/HHAR_ft_shot_10/model_best.pth.tar', type=str, help='Load a fine-tune model for testing')
+parser.add_argument('--model_dir', default='runs/test/MotionSense_ft_shot_10/model_best.pth.tar', type=str, help='Load a fine-tune model for testing')
 
 parser.add_argument('--mol', default='MoCo', type=str, help='which model to use', choices=['SimCLR', 'LIMU', 'CPC', 'MoCo', 'DeepSense'])
 

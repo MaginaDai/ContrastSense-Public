@@ -196,13 +196,13 @@ class FMUDA(object):
                 loss_clf_batch.update(loss_clf, sensor.size(0))
                 loss_uda_batch.update(loss_uda, sensor.size(0))
 
+            f1_batch = f1_score(label_batch.cpu().numpy(), pred_batch.cpu().numpy(), average='macro') * 100
+            val_acc, val_f1 = evaluate(model=self.model, criterion=self.clf_loss, args=self.args, data_loader=val_loader)
+
             self.writer.add_scalar('loss_clf', loss_clf_batch.avg, global_step=epoch_counter)
             self.writer.add_scalar('loss_uda', loss_uda_batch.avg, global_step=epoch_counter)
             self.writer.add_scalar('acc', acc_batch.avg, global_step=epoch_counter)
             self.writer.add_scalar('f1', f1_batch, global_step=epoch_counter)
-
-            f1_batch = f1_score(label_batch.cpu().numpy(), pred_batch.cpu().numpy(), average='macro') * 100
-            val_acc, val_f1 = evaluate(model=self.model, criterion=self.clf_loss, args=self.args, data_loader=val_loader)
 
             is_best = val_f1 > best_f1
         
@@ -221,7 +221,7 @@ class FMUDA(object):
 
             self.writer.add_scalar('eval acc', val_acc, global_step=epoch_counter)
             self.writer.add_scalar('eval f1', val_f1, global_step=epoch_counter)
-            logging.debug(f"Epoch: {epoch_counter} Loss_clf: {loss_clf_batch.avg} Loss_uda: {loss_uda_batch.avg} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch.avg: .3f}/{val_f1: .3f}")
+            logging.debug(f"Epoch: {epoch_counter} Loss_clf: {loss_clf_batch.avg} Loss_uda: {loss_uda_batch.avg} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch: .3f}/{val_f1: .3f}")
             
         logging.info("Fine-tuning has finished.")
         logging.info(f"best eval f1 is {best_f1} at {best_epoch}.")

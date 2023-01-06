@@ -19,7 +19,7 @@ from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 from data_aug.preprocessing import ClassesNum, UsersNum
 from getFisherDiagonal import getFisherDiagonal_initial, load_fisher_matrix
 from simclr import SimCLR, MyNet, LIMU_encoder
-from utils import MoCo_evaluate, evaluate, identify_users_number, load_model_config, CPC_evaluate, seed_torch
+from utils import MoCo_evaluate, evaluate, identify_users_number, load_model_config, CPC_evaluate
 import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -31,18 +31,15 @@ parser = argparse.ArgumentParser(description='PyTorch SimCLR for Wearable Sensin
 
 
 parser.add_argument('-ft', '--if-fine-tune', default=True, type=bool, help='to decide whether tune all the layers')
-parser.add_argument('-if-val', default=True, type=bool, help='to decide whether use validation set')
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
-parser.add_argument('--pretrained', default='Shot_1_ewc_pretrain/HHAR', type=str,
-                    help='path to SimClR pretrained checkpoint')
+parser.add_argument('--pretrained', default='Shot_1_ewc_pretrain/MotionSense', type=str,
+                    help='path to ContrastSense pretrained checkpoint')
 parser.add_argument('-name', default='HHAR',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'ICHAR', 'HASC'])
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 
-parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
-                    help='number of data loading workers (default: 2)')
 parser.add_argument('-e', '--epochs', default=400, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('-b', '--batch-size', default=32, type=int,
@@ -50,7 +47,7 @@ parser.add_argument('-b', '--batch-size', default=32, type=int,
                     help='mini-batch size (default: 32), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('-lr', '--learning-rate', default=0.001, type=float,
+parser.add_argument('-lr', '--learning-rate', default=0.0005, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('-wd', '--weight-decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)',
@@ -69,7 +66,7 @@ parser.add_argument('--log-every-n-steps', default=4, type=int,
 parser.add_argument('-t', '--temperature', default=1, type=float,
                     help='softmax temperature (default: 1)')
 
-parser.add_argument('-g', '--gpu-index', default=0, type=int, help='Gpu index.')
+parser.add_argument('-g', '--gpu-index', default=1, type=int, help='Gpu index.')
 parser.add_argument('--evaluate', default=False, type=bool, help='To decide whether to evaluate')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
 
@@ -82,32 +79,37 @@ parser.add_argument('-final_dim', default=8, type=int, help='the output dims of 
 parser.add_argument('-mo', default=0.9, type=float, help='the momentum for Batch Normalization')
 
 parser.add_argument('-drop', default=0.1, type=float, help='the dropout portion')
-parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
+parser.add_argument('-version', default="shot2", type=str, help='control the version of the setting')
 parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate')
 parser.add_argument('-slr', default=0.5, type=float, help='DAL learning ratio')
-parser.add_argument('-ewc', default=True, type=float, help='Use EWC or not')
-parser.add_argument('-ewc_lambda', default=10, type=float, help='EWC para')
+parser.add_argument('-ewc', default=False, type=bool, help='Use EWC or not')
+parser.add_argument('-ewc_lambda', default=1, type=float, help='EWC para')
 parser.add_argument('-fishermax', default=0.01, type=float, help='fishermax')
-# parser.add_argument('-cl_slr', default=[0.3], nargs='+', type=float, help='the ratio of sup_loss')
+parser.add_argument('-cl_slr', default=[0.3], nargs='+', type=float, help='the ratio of sup_loss')
+parser.add_argument('-moco_K', default=1024, type=int, help='keys size')
 
-def main():
-    args = parser.parse_args()
 
-    seed_torch(seed=args.seed)
+def seed_torch(seed=0):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    return
 
-    # check if gpu training is available
-    if not args.disable_cuda and torch.cuda.is_available():
-        args.device = torch.device(f'cuda:{args.gpu_index}')
-    else:
-        args.device = torch.device('cpu')
-        args.gpu_index = -1
+def main(args, fisher=None):
+
 
     args.transfer = True
     if args.store == None:
         args.store = deepcopy(args.pretrained)
-
-    fisher = load_fisher_matrix(args.pretrained, args.device)
+        
+    # if args.ewc:
+    #     fisher = load_fisher_matrix(args.pretrained, args.device)
 
     args.pretrained = './runs/' + args.pretrained + '/model_best.pth.tar'
 
@@ -117,22 +119,15 @@ def main():
     test_dataset = dataset.get_dataset('test')
 
     val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=False, drop_last=False)
+        val_dataset, batch_size=args.batch_size, shuffle=True, pin_memory=False, drop_last=False)
 
     test_loader = torch.utils.data.DataLoader(
-        test_dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=False, drop_last=False)
+        test_dataset, batch_size=args.batch_size, shuffle=False, pin_memory=False, drop_last=False)
 
     user_num = UsersNum[args.name]
-    train_dataset =  dataset.get_dataset('train')
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=int(args.batch_size), shuffle=True,
-        num_workers=args.workers, pin_memory=False, drop_last=False)
 
     tune_loader = torch.utils.data.DataLoader(
-        tune_dataset, batch_size=int(args.batch_size), shuffle=True,
-        num_workers=args.workers, pin_memory=False, drop_last=False)
+        tune_dataset, batch_size=int(args.batch_size), shuffle=True, pin_memory=False, drop_last=False)
     
     model = MoCo_model(transfer=True, out_dim=args.out_dim, classes=ClassesNum[args.name], dims=args.d, 
                        classifier_dim=args.classifer_dims, final_dim=args.final_dim, momentum=args.mo, drop=args.drop, DAL=args.DAL, users_class=user_num)
@@ -178,15 +173,15 @@ def main():
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
-            print("=> loading checkpoint '{}'".format(args.resume))
+            # print("=> loading checkpoint '{}'".format(args.resume))
             checkpoint = torch.load(args.resume, map_location="cpu")
             args.start_epoch = checkpoint['epoch'] + 1
             try:
-                best_acc = checkpoint['best_acc']
+                best_f1 = checkpoint['best_f1']
             except AttributeError:
-                best_acc = checkpoint['acc']
-            best_acc = best_acc.to(args.device)  # best_acc1 may be from a checkpoint from a different GPU
-            args.best_acc = best_acc
+                best_f1 = checkpoint['acc']
+            best_f1 = torch.tensor(best_f1).to(args.device)  # best_acc1 may be from a checkpoint from a different GPU
+            args.best_f1 = best_f1
             model.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer'])
             print("=> loaded checkpoint '{}' (epoch {})".format(args.resume, checkpoint['epoch']))
@@ -202,8 +197,7 @@ def main():
             assert len(parameters) == 2 
 
     #  It’s a no-op if the 'gpu_index' argument is a negative integer or None.
-
-    # fisher = getFisherDiagonal_initial(args)
+    
 
     with torch.cuda.device(args.gpu_index):
         moco = MoCo(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
@@ -212,7 +206,10 @@ def main():
             print('test f1: {}'.format('%.3f' % test_f1))
             print('test acc: {}'.format('%.3f' % test_acc))
             return
-        moco.transfer_train_ewc(tune_loader, val_loader, fisher)
+        if args.ewc:
+            moco.transfer_train_ewc(tune_loader, val_loader, fisher)
+        else:
+            moco.transfer_train(tune_loader, val_loader)
         best_model_dir = os.path.join(moco.writer.log_dir, 'model_best.pth.tar')
         moco.test_performance(best_model_dir=best_model_dir, test_loader=test_loader)
     
@@ -221,4 +218,17 @@ def main():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    main()
+    seed_torch()
+    args = parser.parse_args()
+    # check if gpu training is available
+    if not args.disable_cuda and torch.cuda.is_available():
+        args.device = torch.device(f'cuda:{args.gpu_index}')
+    else:
+        args.device = torch.device('cpu')
+        args.gpu_index = -1
+
+    if args.ewc:
+        fisher = getFisherDiagonal_initial(args)
+    else:
+        fisher = None
+    main(args, fisher)
