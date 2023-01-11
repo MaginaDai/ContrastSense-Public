@@ -13,7 +13,7 @@ class TPN_encoder(nn.Module):
         self.convC = nn.Conv1d(64, 96, kernel_size=(8, 1), stride=1)
 
     def forward(self, x):
-        x = x.permute(0, 3, 2, 1)
+        x = x.unsqueeze(1).permute(0, 3, 2, 1)
         h = self.dropout(self.relu(self.convA(x)))
         h = self.dropout(self.relu(self.convB(h)))
         h = self.dropout(self.relu(self.convC(h)))
@@ -106,7 +106,7 @@ class Transfer_Coder(nn.Module):
     def __init__(self, classes, method):
         super(Transfer_Coder, self).__init__()
         self.TPN = TPN_encoder()
-        if method == 'CL':
+        if method == 'CL' or method == 'mixup':
             self.Classifier = CL_Classifier(classes)
         elif method == 'Cluster':
             self.Classifier = Cluster_Classifier(classes)

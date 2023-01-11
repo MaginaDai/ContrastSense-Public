@@ -83,10 +83,10 @@ def load_data(datasets_name, version, split, shot=None):
     return X, y, d    
 
 
-def load_GILE_type_data(datasets_name, version, shot, batch_size):
+def load_GILE_type_data(datasets_name, version, shot, batch_size, setting):
     tune_domain_loader = []
 
-    if shot == 0:  # load fully labeled data in the training set
+    if setting == 'full':  # load fully labeled data in the training set
         data, motion_label, domain_label = load_data(datasets_name, version, 'train', shot)
     else:
         data, motion_label, domain_label = load_data(datasets_name, version, 'tune', shot)

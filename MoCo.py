@@ -37,7 +37,7 @@ from sklearn.metrics import f1_score
 
 
 class MoCo_model(nn.Module):
-    def __init__(self, transfer=False, out_dim=512, classes=6, dims=32, classifier_dim=1024, final_dim=8, momentum=0.9, drop=0.1, DAL=False, users_class=None, SCL=False):
+    def __init__(self, transfer=False, out_dim=256, classes=6, dims=32, classifier_dim=1024, final_dim=8, momentum=0.9, drop=0.1, DAL=False, users_class=None, SCL=False):
         super(MoCo_model, self).__init__()
         self.DAL = DAL
         self.encoder = MoCo_encoder(dims=dims, momentum=momentum, drop=drop)
@@ -297,7 +297,7 @@ class MoCo_v1(nn.Module):
     Build a MoCo model with: a query encoder, a key encoder, and a queue
     https://arxiv.org/abs/1911.05722
     """
-    def __init__(self, device, transfer=False, out_dim=512, K=1024, m=0.999, T=0.1, T_labels=[0.1], classes=6, dims=32,\
+    def __init__(self, device, transfer=False, out_dim=256, K=1024, m=0.999, T=0.1, T_labels=[0.1], classes=6, dims=32,\
                  label_type=1, num_clusters=None, mol='MoCo', final_dim=8, momentum=0.9, drop=0.1, DAL=False, if_cross_entropy=False, users_class=None):
         """
         dim: feature dimension (default: 128)

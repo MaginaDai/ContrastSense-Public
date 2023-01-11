@@ -53,6 +53,7 @@ parser.add_argument('--beta_y', type=float, default=1., help='multiplier for KL 
 
 parser.add_argument('--weight_true', type=float, default=1000.0, help='weights for classifier true')
 parser.add_argument('--weight_false', type=float, default=1000.0, help='weights for classifier false')
+parser.add_argument('--setting', default='sparse', type=str, choices=['full', 'sparse'], help='decide use tune or others')
 
 
 if __name__ == '__main__':
@@ -62,8 +63,9 @@ if __name__ == '__main__':
     seed_torch(seed=args.seed)
     DEVICE = torch.device(f'cuda:{args.gpu_index}' if torch.cuda.is_available() else 'cpu')
     args.device = DEVICE
-    tune_loader, val_loader, test_loader = load_GILE_type_data(args.name, args.version, args.shot, args.batch_size)
+    tune_loader, val_loader, test_loader = load_GILE_type_data(args.name, args.version, args.shot, args.batch_size, args.setting)
     model = net.load_model(args)
     model = model.to(DEVICE)
     optimizer = net.set_up_optimizers(model.parameters())
-    train(model, DEVICE, optimizer, tune_loader, val_loader, test_loader, args)
+    with torch.cuda.device(args.gpu_index):
+        train(model, DEVICE, optimizer, tune_loader, val_loader, test_loader, args)

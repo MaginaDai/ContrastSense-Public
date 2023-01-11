@@ -41,7 +41,7 @@ def tSNE_visualization(dir, dataset_name, version):
         label_bank = label_bank[pos, :][0]
         h_trans = tsne.fit_transform(feature_bank)
         motion_type, user_type = np.unique(label_bank[:, 0]), np.unique(label_bank[:, 1])
-        plt.figure(figsize=(8, 6))
+        plt.figure()
         
         for i in range(h_trans.shape[0]):
             if label_bank[i, 0] == motion_type[0] and label_bank[i, 1] == user_type[0]:
@@ -53,13 +53,13 @@ def tSNE_visualization(dir, dataset_name, version):
             else:
                 plt.plot(h_trans[i, 0], h_trans[i, 1], 'b^')
         
-        plt.xticks(fontsize=14)
-        plt.yticks(fontsize=14)
-        plt.xlabel("Feature One", fontsize=14)
-        plt.ylabel("Feature Two", fontsize=14)
-        
+        plt.xticks(fontsize=16)
+        plt.yticks(fontsize=16)
+        plt.xlabel("Feature One", fontsize=16)
+        plt.ylabel("Feature Two", fontsize=16)
+        plt.tight_layout()
         # t_SNE_view(h_trans, label_bank, version, label_name, dataset_name)
-        save_str = f'./figure_plot/tSNE/{dataset_name}_{version}_2user2motion.png'
+        save_str = f'./figure_plot/tSNE/{dataset_name}_{version}_2user2motion.pdf'
         plt.savefig(save_str)
 
     return
@@ -67,7 +67,7 @@ def tSNE_visualization(dir, dataset_name, version):
 
 if __name__ == '__main__':
     dataset='HHAR'
-    dir = f'runs/{dataset}_supervised_plain_no_t/{dataset}_ft_shot_10'
+    dir = f'runs/{dataset}_supervised_cross_no_t/{dataset}_ft_shot_10'
     model_dir = dir + '/model_best.pth.tar'
-    version='supervised_plain'
+    version='supervised_cross'
     tSNE_visualization(model_dir, dataset, version)

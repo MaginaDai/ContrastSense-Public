@@ -255,7 +255,7 @@ def figure_supervised_learning():
     plt.plot(x, y, 'r-o')
     plt.xlabel('Shots', fontsize=14)
     plt.ylabel('F1 Score', fontsize=14)
-    plt.savefig(f'./figure_plot/DeepSense.png')
+    plt.savefig(f'./figure_plot/DeepSense.png',)
     return 
 
 
@@ -273,13 +273,53 @@ def figure_SCL_during_ft():
     return
 
 
-def figure_prelim():
-    
+def figure_domain_shift():
+    train_random = [99.25, 99.24, 98.66]
+    train_cross = [96.29, 85.79, 69.67]
+    x=np.arange(len(train_random))
+    width=0.35
+    fig, ax = plt.subplots()
+    ax.bar(x-width/2, train_random, width, color='b', label="random")
+    ax.bar(x+width/2, train_cross, width, color='r', label="cross")
+    ax.set_xticks(x)
+    ax.set_xticklabels([r'65', r'45', r'25'])
+    # ax.set_xticklabels([r'$\alpha$ = 60', r'$\alpha$ = 25'], fontsize=14)
+    ax.legend(fontsize=16, loc='lower right')
+    ax.set_ylim(50, 105)
+    plt.xlabel(r"$\alpha$ (%)", fontsize=16)
+    plt.ylabel("F1 Score (%)", fontsize=16)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.tight_layout()
+    plt.savefig('./figure_plot/preliminary.pdf')
 
+    return
+
+
+def figure_limited_labels():
+    train_25 = np.flipud([51.50, 63.56, 65.38, 62.02, 63.88])
+    train_45 = np.flipud([46.09, 56.39, 65.73, 68.85, 70.96])
+    train_65 = np.flipud([52.21, 59.00, 76.83, 83.31, 77.34])
+    x=np.arange(len(train_25))
+    
+    plt.figure()
+    plt.plot(x, train_25, 'r-o')
+    plt.plot(x, train_45, 'b-v')
+    plt.plot(x, train_65, 'g-*')
+    plt.legend([r"$\alpha$=25", r"$\alpha$=45", r"$\alpha$=65"], fontsize=14)
+    plt.xticks(x, labels=["full", 500, 200, 50, 10,])
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.xlabel("Shots", fontsize=16)
+    plt.ylabel("F1 Score (%)", fontsize=16)
+    plt.tight_layout()
+    plt.savefig('./figure_plot/limited labels.pdf')
     return
 
 if __name__ == '__main__':
     # fig_extract_phone_loss()
     # cmp_frequency_performance()
     # cmp_segmentation_performance()
-    figure_supervised_learning()
+    # figure_supervised_learning()
+    # figure_domain_shift()
+    figure_limited_labels()

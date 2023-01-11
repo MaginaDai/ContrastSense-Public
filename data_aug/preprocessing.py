@@ -110,7 +110,7 @@ test_num_of_user = 3
 
 # MAX_INDEX = 9166
 percent = [0.2, 0.5, 1, 2, 5, 10]
-shot_num = [1, 5, 10, 15, 20, 50, 100] # enlarge to 100
+shot_num = [1, 5, 10, 15, 20, 50, 100, 200, 500] # enlarge to 100
 
 
 def preprocessing_plain_segmentation(dir, target_dir, val_portion=0.15, test_portion=0.25):
@@ -517,16 +517,26 @@ def new_segmentation_for_dataset(seg_types=5, seed=940):
     return
     
 
-def new_segmentation_for_domain_shift_visual(seed=940):
+def new_segmentation_for_domain_shift_visual(seed=940, seg_types=5):
     random.seed(seed)
     np.random.seed(seed)
     dataset = 'HHAR'
-
-    preprocessing_plain_segmentation(f'datasets/{dataset}/', f"datasets/{dataset}_train60_supervised_plain/", val_portion=0.15, test_portion=0.25)
-    preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train60_supervised_cross/", dataset=dataset, val_portion=0.15, test_portion=0.25)
     
-    preprocessing_plain_segmentation(f'datasets/{dataset}/', f"datasets/{dataset}_train25_supervised_plain/", val_portion=0.15, test_portion=0.60)
-    preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train25_supervised_cross/", dataset=dataset, val_portion=0.15, test_portion=0.60)
+    for i in range(seg_types):
+        # preprocessing_plain_segmentation(f'datasets/{dataset}/', f"datasets/{dataset}_train65_alltune_plain_v{i}/", val_portion=0.15, test_portion=0.20)
+        preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train65_alltune_cross_v{i}/", dataset=dataset, val_portion=0.15, test_portion=0.20, tune_user_portion=1)
+        
+        # preprocessing_plain_segmentation(f'datasets/{dataset}/', f"datasets/{dataset}_train60_supervised_plain/", val_portion=0.15, test_portion=0.25)
+        # preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train60_supervised_cross/", dataset=dataset, val_portion=0.15, test_portion=0.25)
+        
+        # preprocessing_plain_segmentation(f'datasets/{dataset}/', f"datasets/{dataset}_train50_supervised_plain/", val_portion=0.15, test_portion=0.35)
+        # preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train50_supervised_cross/", dataset=dataset, val_portion=0.15, test_portion=0.35)
+        
+        # preprocessing_plain_segmentation(f'datasets/{dataset}/', f"datasets/{dataset}_train45_alltune_plain_v{i}/", val_portion=0.15, test_portion=0.40)
+        preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train45_alltune_cross_v{i}/", dataset=dataset, val_portion=0.15, test_portion=0.40, tune_user_portion=1)
+
+        # preprocessing_plain_segmentation(f'datasets/{dataset}/', f"datasets/{dataset}_train25_alltune_plain_v{i}/", val_portion=0.15, test_portion=0.60)
+        preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train25_alltune_cross_v{i}/", dataset=dataset, val_portion=0.15, test_portion=0.60, tune_user_portion=1)
 
 
 if __name__ == '__main__':

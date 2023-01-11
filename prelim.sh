@@ -4,8 +4,10 @@
 
 # wait
 
-python main_supervised.py -g 2 -name "HHAR" -version "train60_supervised_cross" --setting 'full' --store "train60_HHAR_supervised_cross_full" &
-python main_supervised.py -g 2 -name "HHAR" -version "train60_supervised_cross" --setting 'sparse' --store "train60_HHAR_supervised_cross_sparse"
+python main_supervised.py -g 2 -name "HHAR" -version "train70_supervised_plain" --setting 'full' --store "train70_HHAR_supervised_plain" &
+python main_supervised.py -g 2 -name "HHAR" -version "train70_supervised_cross" --setting 'full' --store "train70_HHAR_supervised_cross_full" &
+python main_supervised.py -g 2 -name "HHAR" -version "train45_supervised_plain" --setting 'full' --store "train45_HHAR_supervised_plain" &
+python main_supervised.py -g 2 -name "HHAR" -version "train45_supervised_cross" --setting 'full' --store "train45_HHAR_supervised_cross_full"
 
 # for e in 50 100 200
 # do

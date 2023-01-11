@@ -31,6 +31,9 @@
 /baseline/GILE/runs
 /baseline/GILE/__pycache__
 
+/baseline/Mixup/runs
+/baseline/Mixup/__pycache__
+
 /data_aug/__pycache__
 
 

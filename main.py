@@ -31,8 +31,8 @@ parser.add_argument('--transfer', default=False, type=str, help='to tell whether
 parser.add_argument('--pretrained', default='', type=str, help='path to pretrained checkpoint')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
 
-parser.add_argument('--out_dim', default=512, type=int,
-                    help='feature dimension (default: 512)')
+parser.add_argument('--out_dim', default=256, type=int,
+                    help='feature dimension (default: 256)')
 parser.add_argument('-t', '--temperature', default=0.1, type=float,
                     help='softmax temperature (default: 1)')
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
@@ -87,6 +87,7 @@ parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversar
 parser.add_argument('-CE', default=False, type=bool, help='Use Cross Entropy Domain Loss or not')
 parser.add_argument('-ewc', default=True, type=float, help='Use EWC or not')
 parser.add_argument('-fishermax', default=0.01, type=float, help='fishermax')
+parser.add_argument('-p', default=0.1, type=float, help='possibility for one aug')
 
 
 def main():
@@ -104,7 +105,7 @@ def main():
     if args.mol == 'CPC':  # set transfer = True to avoid n_views = 2. Just to make the dataset normal
         dataset = ContrastiveLearningDataset(transfer=True, version=args.version, datasets_name=args.name)
     else:
-        dataset = ContrastiveLearningDataset(transfer=False, version=args.version, datasets_name=args.name)
+        dataset = ContrastiveLearningDataset(transfer=False, version=args.version, datasets_name=args.name, p=args.p)
 
     train_dataset = dataset.get_dataset(split='train')
 

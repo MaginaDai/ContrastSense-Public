@@ -40,11 +40,12 @@ def fetch_dataset_root(dataset_name):
     
 
 class ContrastiveLearningDataset:
-    def __init__(self, transfer, version, datasets_name=None, cross_dataset=False):
+    def __init__(self, transfer, version, datasets_name=None, cross_dataset=False, p=0.1):
         self.transfer = transfer
         self.datasets_name = datasets_name
         self.version = version
         self.cross_dataset = cross_dataset
+        self.p = p
 
     def get_simclr_pipeline_transform(self):
         """Return a set of data augmentation transformations as described in my presentation."""
@@ -53,8 +54,8 @@ class ContrastiveLearningDataset:
         imu_noise = imu_transforms.IMUNoise(var=0.05, p=0.8)
         imu_scale = imu_transforms.IMUScale(scale=[0.9, 1.1], p=0.8)
         imu_rotate = imu_transforms.IMURotate(p=0.8)
-        imu_negate = imu_transforms.IMUNegated(p=0.4)
-        imu_flip = imu_transforms.IMUHorizontalFlip(p=0.1)
+        imu_negate = imu_transforms.IMUNegated(p=self.p)
+        imu_flip = imu_transforms.IMUHorizontalFlip(p=0.2)
         imu_warp = imu_transforms.IMUTimeWarp(p=0.4)
 
         imu_error_model = imu_transforms.IMUErrorModel(p=0.8, scale=[0.9, 1.1], error_magn=0.02, bias_magn=0.05)

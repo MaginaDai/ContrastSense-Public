@@ -15,11 +15,14 @@ from torchvision import models
 from CPC import CPCV1, CPC
 from DeepSense import DeepSense_encoder
 from MoCo import MoCo_model, MoCo_v1, MoCo_encoder, MoCo
-from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
+from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset, Dataset4Training
 from data_aug.preprocessing import ClassesNum, UsersNum
 from getFisherDiagonal import getFisherDiagonal_initial, load_fisher_matrix
 from simclr import SimCLR, MyNet, LIMU_encoder
 from utils import MoCo_evaluate, evaluate, identify_users_number, load_model_config, CPC_evaluate
+from torchvision.transforms import transforms
+from data_aug import imu_transforms
+
 import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -59,8 +62,8 @@ parser.add_argument('--disable-cuda', action='store_true',
                     help='Disable CUDA')
 parser.add_argument('--fp16-precision', action='store_true',
                     help='Whether or not to use 16-bit precision GPU training.')
-parser.add_argument('--out_dim', default=512, type=int,
-                    help='feature dimension (default: 512)')
+parser.add_argument('--out_dim', default=256, type=int,
+                    help='feature dimension (default: 256)')
 parser.add_argument('--log-every-n-steps', default=4, type=int,
                     help='Log every n steps')
 parser.add_argument('-t', '--temperature', default=1, type=float,
@@ -88,6 +91,7 @@ parser.add_argument('-ewc_lambda', default=1, type=float, help='EWC para')
 parser.add_argument('-fishermax', default=0.01, type=float, help='fishermax')
 parser.add_argument('-cl_slr', default=[0.3], nargs='+', type=float, help='the ratio of sup_loss')
 parser.add_argument('-moco_K', default=1024, type=int, help='keys size')
+parser.add_argument('-aug', default=False, type=bool, help='decide use data augmentation or not')
 
 
 def seed_torch(seed=0):
@@ -102,8 +106,6 @@ def seed_torch(seed=0):
     return
 
 def main(args, fisher=None):
-
-
     args.transfer = True
     if args.store == None:
         args.store = deepcopy(args.pretrained)
@@ -114,7 +116,10 @@ def main(args, fisher=None):
     args.pretrained = './runs/' + args.pretrained + '/model_best.pth.tar'
 
     dataset = ContrastiveLearningDataset(transfer=True, version=args.version, datasets_name=args.name)
-    tune_dataset = dataset.get_dataset('tune', percent=args.percent, shot=args.shot)
+    if args.aug:
+        tune_dataset = dataset.get_dataset('tune', percent=args.percent, shot=args.shot)
+    else:
+        tune_dataset = Dataset4Training(args.name, args.version, transform=transforms.Compose([imu_transforms.ToTensor()]), split='tune', transfer=True, shot=args.shot)
     val_dataset = dataset.get_dataset('val')
     test_dataset = dataset.get_dataset('test')
 

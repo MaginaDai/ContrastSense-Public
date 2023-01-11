@@ -19,9 +19,9 @@ def avg_result(name, ft):
     test = np.zeros([len(name), len(dataset)])
     for i, n in enumerate(name):
         for j, data in enumerate(dataset):
-            # print(n, j)
+            print(n, j)
             if ft:
-                dir = f'{n}/{data}_ft_shot_10/training.log'
+                dir = f'{n}/{data}_shot_10/training.log'
             else:
                 dir = f'{n}/{data}_shot_10/training.log'
             eval_pattern = r'best\seval\sf1\sis\s+\(*(\d+\.+\d*)'
@@ -118,9 +118,43 @@ def transfer_ability_access(name, ft):
     return 
 
 
+shots=[10, 50, 200, 500, 'full']
+def avg_result_for_limited_labels(name):
+    eval = np.zeros([len(name), len(shots)])
+    test = np.zeros([len(name), len(shots)])
+    prefix = "GILE"
+    lafix = "version"
+    for i, n in enumerate(name):
+        for j, data in enumerate(shots):
+            print(n, data)
+            if data=='full':
+                dir = f'baseline/GILE/runs/{prefix}_{data}_{lafix}_{n}/HHAR/training.log'
+            else:
+                dir = f'baseline/GILE/runs/{prefix}_shot{data}_{lafix}_{n}/HHAR/training.log'
+            eval_pattern = r'best\seval\sf1\sis\s+\(*(\d+\.+\d*)'
+            test_pattern = r'test\sf1\sis\s+\(*(\d+\.+\d*)'
+            with open(dir, "r") as f:  # 打开文件
+                content = f.read()
+                # pdb.set_trace()
+                eval_extract = np.float64(re.findall(eval_pattern, content))
+                test_extract = np.float64(re.findall(test_pattern, content))
+                if len(eval_extract) > 1 or len(test_extract) > 1:
+                    # pdb.set_trace()
+                    raise ReadError
+                eval[i, j] = eval_extract[0]
+                test[i, j] = test_extract[0]
+    print("Eval f1 is: \n {}".format(np.around(eval, 2)))
+    print("Test f1 is: \n {}".format(np.around(test, 2)))
+    print("Eval mean is: {}".format(np.around(np.mean(eval, axis=0), 2)))
+    print("Test mean is: {}".format(np.around(np.mean(test, axis=0), 2)))
+    return
+    
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
     avg_result(args.name, ft=True)
+    # avg_result_for_limited_labels(args.name)
     # results_for_each_file(args.name)
     # avg_result(name=args.name, ft=args.ft)
     # transfer_ability_access(args.name, ft=True)

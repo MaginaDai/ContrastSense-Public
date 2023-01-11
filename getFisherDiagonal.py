@@ -171,7 +171,9 @@ def replenish_queue(model, train_loader, args):
 
 
 def getFisherDiagonal_pretrain(args, train_loader, save_dir):
-    model = MoCo_v1(device=args.device, mol=args.mol, K=args.moco_K)
+    model = MoCo_v1(device=args.device, out_dim=args.out_dim, K=args.moco_K, m=args.moco_m, T=args.temperature, 
+                    T_labels=args.tem_labels, dims=args.d, label_type=args.label_type, num_clusters=args.num_clusters, mol=args.mol, 
+                    final_dim=args.final_dim, momentum=args.mo, drop=args.drop, DAL=args.DAL, if_cross_entropy=args.CE)
     optimizer = torch.optim.Adam(model.parameters(), 1e-4, weight_decay=1e-4)
 
     model_dir = save_dir + '/model_best.pth.tar'
