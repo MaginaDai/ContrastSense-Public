@@ -281,20 +281,7 @@ class Preprocess4Normalization(Pipeline):
 
     def __call__(self, sample):
         acc, gyro, add_infor = sample['acc'], sample['gyro'], sample['add_infor']
-        if 'HHAR' in self.dataset_name:
-            label = np.array([HHAR_movement.index(add_infor[0, -1])])
-        elif self.dataset_name == 'MotionSense':
-            label = np.array([ACT_Translated_labels.index(add_infor[0, -1])])
-        elif self.dataset_name == 'UCI':
-            label = np.array([int(add_infor[0, -2])])
-        elif self.dataset_name == 'Shoaib':
-            label = np.array([int(add_infor[0, -2])])
-        elif self.dataset_name == 'HASC':
-            label = np.array([int(add_infor[0, -1])])
-        elif self.dataset_name == 'ICHAR':
-            label = np.array([int(add_infor[0, -1])])
-        else:
-            raise InvalidDatasetSelection()
+        label = add_infor[0]
         instance = np.concatenate([acc, gyro], axis=1)
         instance_new = instance.copy()[:, :self.feature_len]
         if instance_new.shape[1] >= 6 and self.norm_acc:

@@ -134,13 +134,12 @@ def read_acc_and_gyro(root, file, period, infor, seq_len, target_freq, num, path
         if exp_data.shape[0] > seq_len:
             exp_data = exp_data[:exp_data.shape[0] // seq_len * seq_len, :]
             exp_data = exp_data.reshape(exp_data.shape[0] // seq_len, seq_len, exp_data.shape[1])
-            exp_label = np.ones((exp_data.shape[0], exp_data.shape[1], 1))
-            exp_label = np.concatenate([exp_label * add_infor[0], exp_label * add_infor[1], exp_label * add_infor[2], exp_label * add_infor[3]], 2)
+            exp_label = np.array([add_infor[-1], add_infor[0], add_infor[1]]) # [motions, user_id, device_id]
             for m in range(exp_data.shape[0]):
                 acc_new = exp_data[m][:, 0:3]
                 gyro_new = exp_data[m][:, 3:6]
                 loc = path_save + str(num) + '.npz'
-                np.savez(loc, acc=acc_new, gyro=gyro_new, add_infor=exp_label[m])
+                np.savez(loc, acc=acc_new, gyro=gyro_new, add_infor=exp_label)
                 num += 1
         
     return num
@@ -205,8 +204,6 @@ def main(seq_len, target_freq, path_save):
     print(num)
 
     return
-
-
 
 if __name__ == '__main__':
     path_save = f'./datasets/HASC_50_200/'

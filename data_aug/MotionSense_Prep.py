@@ -116,15 +116,7 @@ def creat_time_series(dt_list, act_labels, trial_codes, mode="mag", labeled=True
                     acc = acc.reshape(-1, SEQ_LEN, acc.shape[1])
                     gyro = gyro[:gyro.shape[0] // SEQ_LEN * SEQ_LEN, :]
                     gyro = gyro.reshape(-1, SEQ_LEN, gyro.shape[1])
-                    add_info = np.array([[sub_id - 1,
-                                          ds_list["weight"][sub_id - 1],
-                                          ds_list["height"][sub_id - 1],
-                                          ds_list["age"][sub_id - 1],
-                                          ds_list["gender"][sub_id - 1],
-                                          trial,
-                                          ACT_Translated_labels[act_id]
-                                          # the label we want to use (aligned with UoT dataset naming way)
-                                          ]] * SEQ_LEN)
+                    add_info = np.array([act_id, sub_id - 1]) # motion, user_id
                     for i in range(acc.shape[0]):
                         acc_new = acc[i]
                         gyro_new = gyro[i]
@@ -220,6 +212,10 @@ if __name__ == '__main__':
     # split_dataset(num=4531)
     # Here we set parameter to build labeld time-series from dataset of "(A)DeviceMotion_data"
     # attitude(roll, pitch, yaw); gravity(x, y, z); rotationRate(x, y, z); userAcceleration(x,y,z)
+
+    if not os.path.exists(PATH_SAVE):
+        os.makedirs(PATH_SAVE)
+
     sdt = ["userAcceleration", "rotationRate"]
     print("[INFO] -- Selected sensor data types: " + str(sdt))
     act_labels = ACT_LABELS[:]

@@ -4,6 +4,11 @@ from scipy.interpolate import interp1d
 from collections import Counter
 from torch.utils.data import random_split
 import os
+from os.path import dirname
+import sys
+
+sys.path.append(dirname(dirname(sys.path[0])))
+sys.path.append(dirname(sys.path[0]))
 
 movement = ['stand', 'sit', 'walk', 'stairsup', 'stairsdown', 'bike']
 devices = ['nexus4_1', 'nexus4_2', 's3_1', 's3_2', 's3mini_1', 's3mini_2', 'samsungold_1', 'samsungold_2']
@@ -351,10 +356,12 @@ def preprocess_hhar(path, path_save, version, window_time=50, seq_len=40, jump=0
             data_temp.append(np.concatenate([acc[:-3], gyro[:-3], acc[-3:]]))
             if window_num == seq_len:
                 data_raw = np.array(data_temp)
+                add_infor=data_raw[0, 6:] # [users, devices, motion]
+                add_infor=np.array([movement.index(add_infor[-1]), users.index(add_infor[-3]), models.index(add_infor[-2])]) # [motion, users, devices]
                 if num % 100 == 0:
                     print(num)
                 # if num > 23980:
-                np.savez(os.path.join(path_save, str(num) + '.npz'), acc=data_raw[:, 0:3], gyro=data_raw[:, 3:6], add_infor=data_raw[6:])
+                np.savez(os.path.join(path_save, str(num) + '.npz'), acc=data_raw[:, 0:3], gyro=data_raw[:, 3:6], add_infor=add_infor)
                 num += 1
                 if jump == 0:
                     data_temp.clear()
@@ -376,10 +383,25 @@ def preprocess_hhar(path, path_save, version, window_time=50, seq_len=40, jump=0
     return num
 
 
+def label_translate(source_dir, target_dir):
+    file_name_list = [file for file in os.listdir(source_dir) if 'set' not in file]
+    num = len(file_name_list)
+    print(num)
+    for idx in np.arange(num):
+        loc = os.path.join(source_dir, f'{idx}.npz')
+        sample = np.load(loc, allow_pickle=True)
+        acc, gyro, add_infor = sample['acc'], sample['gyro'], sample['add_infor']
+        add_infor = np.array([movement.index(add_infor[0, -1]), users.index(add_infor[0, -3]), models.index(add_infor[0, -2])]) # [motion, users, devices]
+        np.savez(os.path.join(target_dir, str(idx) + '.npz'), acc=acc, gyro=gyro, add_infor=add_infor)
+    return
+
 DATASET_PATH = r'./original_dataset/hhar/'
-
-
 if __name__ == '__main__':
     # 50 refer to 20 Hz. 20 refer to 50 Hz
-    path_save = r'./datasets/HHAR_50_200/'
-    num = preprocess_hhar(DATASET_PATH, path_save, version='50_200', window_time=20, seq_len=200)  # use jump to control overlap.
+    # path_save = r'./datasets/HHAR_50_200/'
+    # if not os.path.exists(path_save):
+    #     os.makedirs(path_save)
+    # num = preprocess_hhar(DATASET_PATH, path_save, version='50_200', window_time=20, seq_len=200)  # use jump to control overlap.
+
+    label_translate(r'./datasets/HHAR/', r'./datasets/HHAR_50_200/')
+

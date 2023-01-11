@@ -24,21 +24,7 @@ def get_sample_weights(y, weights):
 
 
 def sperate_label_data(sample, datasets_name):
-        acc, gyro, add_infor = sample['acc'], sample['gyro'], sample['add_infor']
-        if 'HHAR' in datasets_name:
-            label = np.array([HHAR_movement.index(add_infor[0, -1]), users.index(add_infor[0, -3]), devices.index(add_infor[0, -2])])
-        elif datasets_name == 'MotionSense':
-            label = np.array([ACT_Translated_labels.index(add_infor[0, -1]), int(add_infor[0, UsersPosition[datasets_name]])])
-        elif datasets_name == 'UCI':
-            label = np.array([int(add_infor[0, -2]), int(add_infor[0, UsersPosition[datasets_name]])])
-        elif datasets_name == 'Shoaib':
-            label = np.array([int(add_infor[0, -2]), int(add_infor[0, UsersPosition[datasets_name]])])
-        elif datasets_name == 'ICHAR':
-            label = np.array([int(add_infor[0, -1]), int(add_infor[0, -2]), int(add_infor[0, -3])])  # [movement, users, devices_type]
-        elif datasets_name == 'HASC':
-            label = np.array([int(add_infor[0, -1]), int(add_infor[0, 0]), int(add_infor[0, 1])])  # [movement, users, devices_type]
-        else:
-            raise InvalidDatasetSelection()
+        acc, gyro, label = sample['acc'], sample['gyro'], sample['add_infor']
         acc /= 9.8
         sensor = np.concatenate((acc, gyro), axis=1)
         return sensor, label

@@ -162,27 +162,12 @@ class Dataset4Training(Dataset):
 
 
     def sperate_label_data(self, sample):
-        acc, gyro, add_infor = sample['acc'], sample['gyro'], sample['add_infor']
-        if 'HHAR' in self.datasets_name:
-            label = np.array([HHAR_movement.index(add_infor[0, -1]), users.index(add_infor[0, -3]), devices.index(add_infor[0, -2])])
-        elif self.datasets_name == 'MotionSense':
-            label = np.array([ACT_Translated_labels.index(add_infor[0, -1]), int(add_infor[0, UsersPosition[self.datasets_name]])])
-        elif self.datasets_name == 'UCI':
-            label = np.array([int(add_infor[0, -2]), int(add_infor[0, UsersPosition[self.datasets_name]])])
-        elif self.datasets_name == 'Shoaib':
-            label = np.array([int(add_infor[0, -2]), int(add_infor[0, UsersPosition[self.datasets_name]]), int(add_infor[0, -3])]) # [movements, users, positions]
-        elif self.datasets_name == 'ICHAR':
-            label = np.array([int(add_infor[0, -1]), int(add_infor[0, -2]), int(add_infor[0, -3])]) # [movements, users, devices_types]
-        elif self.datasets_name == 'HASC':
-            label = np.array([int(add_infor[0, -1]), int(add_infor[0, 0]), int(add_infor[0, 1])]) # [movements, users, devices_types]
-        else:
-            raise InvalidDatasetSelection()
+        acc, gyro, label = sample['acc'], sample['gyro'], sample['add_infor']
         sensor = np.concatenate((acc, gyro), axis=1)
 
         if self.cross_dataset:
             label = label_alignment(label, self.datasets_name)
 
-        
         return sensor, torch.from_numpy(label).long()
 
 
@@ -237,8 +222,6 @@ class LIMUDataset4Training(Dataset):
             data = np.load(test_dir)
             self.windows_frame = data['test_set']
         
-
-
         self.split = split
         self.root_dir = root_dir
         self.transform = transform

@@ -72,21 +72,23 @@ def preprocess(path, path_save, target_window=20, seq_len=20, position_num=5):
                     for i in range(position_num):
                         index = np.array([1, 2, 3, 7, 8, 9, 10, 11, 12]) + i * 14
                         exp_pos = exp_act.iloc[:, index].to_numpy(dtype=np.float32)
-                        print("User-%s, activity-%s, position-%d: num-%d" % (files[f], ACT_LABELS[a], i, exp_pos.shape[0]))
+                        print("User-%s, activity-%s, position-%d: num-%d" % (files[f][-5], ACT_LABELS[a], i, exp_pos.shape[0]))
                         if exp_pos.shape[0] > 0:
                             exp_pos_down = down_sample(exp_pos, target_window)
                             if exp_pos_down.shape[0] < seq_len:
                                 continue
                             else:
+                                # [int(add_infor[0, -2]), int(add_infor[0, UsersPosition[self.datasets_name]]), int(add_infor[0, -3])]
                                 sensor_down = exp_pos_down[:exp_pos_down.shape[0] // seq_len * seq_len, :]
                                 sensor_down = sensor_down.reshape(sensor_down.shape[0] // seq_len, seq_len, sensor_down.shape[1])
-                                sensor_label = np.multiply(np.ones((sensor_down.shape[0], sensor_down.shape[1], 1)),
-                                                           np.array([f, i, a, files[f][-5]]).reshape(1, 4).astype(np.float64))
+                                sensor_label = np.array([a, int(files[f][-5]), i]) # [motion, user, position]
+                                if sensor_label[1] == 0:
+                                    print("now")
                                 for m in range(sensor_down.shape[0]):
                                     acc_new = sensor_down[m][:, 0:3]
                                     gyro_new = sensor_down[m][:, 3:6]
                                     loc = path_save + str(num) + '.npz'
-                                    np.savez(loc, acc=acc_new, gyro=gyro_new, add_infor=sensor_label[m])
+                                    np.savez(loc, acc=acc_new, gyro=gyro_new, add_infor=sensor_label)
                                     num += 1
     # split_dataset(num=num - 1)  # num-1 for the last void one.
     # preprocessing_dataset_cross_person(dir=path_save, dataset='Shoaib')
@@ -146,4 +148,6 @@ def split_dataset(num):
 
 if __name__ == '__main__':
     path_save = r'./datasets/Shoaib_50_200/'
+    if not os.path.exists(path_save):
+        os.makedirs(path_save)
     preprocess(DATASET_PATH, path_save, seq_len=200)
