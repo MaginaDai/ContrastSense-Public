@@ -13,7 +13,10 @@ class TPN_encoder(nn.Module):
         self.convC = nn.Conv1d(64, 96, kernel_size=(8, 1), stride=1)
 
     def forward(self, x):
-        x = x.unsqueeze(1).permute(0, 3, 2, 1)
+        if len(x.shape) == 4:
+            x = x.permute(0, 3, 2, 1)
+        else:
+            x = x.unsqueeze(1).permute(0, 3, 2, 1)
         h = self.dropout(self.relu(self.convA(x)))
         h = self.dropout(self.relu(self.convB(h)))
         h = self.dropout(self.relu(self.convC(h)))

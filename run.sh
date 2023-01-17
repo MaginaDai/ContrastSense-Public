@@ -262,32 +262,29 @@
 # wait
 
 
-version="shot"
-v=1
+# version="shot"
 
-for p in 0 0.2 0.8 1.0
-do
-    # for v in 0 1 2 3 4
-    # do
-    name="plain_Negate_aug${p}_v${v}"
-    store="plain_Negate_aug${p}_v${v}"
+# for v in 0 1 2 3 4
+# do
+#     name="CL_v${v}"
+    
 
-    python main.py -g 0 -p ${p} -label_type 0 -version "shot${v}" -name HASC --store "${name}" &
-    python main.py -g 0 -p ${p} -label_type 0 -version "shot${v}" -name HHAR --store "${name}" &
-    python main.py -g 1 -p ${p} -label_type 0 -version "shot${v}" -name MotionSense --store "${name}" &
-    python main.py -g 1 -p ${p} -label_type 0 -version "shot${v}" -name Shoaib --store "${name}"
+#     python main.py -g 0 -label_type 0 -version "${version}${v}" -name HASC --store "${name}" &
+#     python main.py -g 0 -label_type 0 -version "${version}${v}" -name HHAR --store "${name}" &
+#     python main.py -g 1 -label_type 0 -version "${version}${v}" -name MotionSense --store "${name}" &
+#     python main.py -g 1 -label_type 0 -version "${version}${v}" -name Shoaib --store "${name}"
 
-    wait
-        
-    python main_trans_ewc.py -g 0 -ft True -version "shot${v}" -shot 10 -name HASC --pretrained "${name}/HASC" --store ${store} &
-    python main_trans_ewc.py -g 0 -ft True -version "shot${v}" -shot 10 -name HHAR --pretrained "${name}/HHAR" --store ${store} &
-    python main_trans_ewc.py -g 1 -ft True -version "shot${v}" -shot 10 -name Shoaib --pretrained "${name}/Shoaib" --store ${store} &
-    python main_trans_ewc.py -g 1 -ft True -version "shot${v}" -shot 10 -name MotionSense  --pretrained "${name}/MotionSense" --store ${store} 
+#     wait
+#     store="CL_no_ft_design_v${v}"
 
-    wait
-    # done
-done
+#     python main_trans_ewc.py -g 0 -ft True -version "${version}${v}" -shot 10 -name HASC --pretrained "${name}/HASC" --store ${store} &
+#     python main_trans_ewc.py -g 0 -ft True -version "${version}${v}" -shot 10 -name HHAR --pretrained "${name}/HHAR" --store ${store} &
+#     python main_trans_ewc.py -g 1 -ft True -version "${version}${v}" -shot 10 -name Shoaib --pretrained "${name}/Shoaib" --store ${store} &
+#     python main_trans_ewc.py -g 1 -ft True -version "${version}${v}" -shot 10 -name MotionSense  --pretrained "${name}/MotionSense" --store ${store} 
 
+#     wait
+
+# done
 
 
 # for v in 0 1 2 3 4
@@ -302,3 +299,18 @@ done
 
 #     wait
 # done
+
+version="shot"
+# 1 2 3 4
+for v in 0 1 2 3 4
+do
+    name="CDL_v${v}"
+    store="CDL_ewc_aug_no_negate_v${v}"
+
+    python main_trans_ewc.py -g 2 -aug True -ewc True -ft True -version "${version}${v}" -shot 10 -name HASC --pretrained "${name}/HASC" --store ${store} &
+    python main_trans_ewc.py -g 2 -aug True -ewc True -ft True -version "${version}${v}" -shot 10 -name HHAR --pretrained "${name}/HHAR" --store ${store} &
+    python main_trans_ewc.py -g 3 -aug True -ewc True -ft True -version "${version}${v}" -shot 10 -name Shoaib --pretrained "${name}/Shoaib" --store ${store} &
+    python main_trans_ewc.py -g 3 -aug True -ewc True -ft True -version "${version}${v}" -shot 10 -name MotionSense  --pretrained "${name}/MotionSense" --store ${store} 
+
+    wait
+done

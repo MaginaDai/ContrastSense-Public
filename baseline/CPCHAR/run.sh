@@ -1,18 +1,18 @@
-name='CPC_v'
+name='CPC_s'
 
 for v in 0 1 2 3 4
 do
-    # python main.py -g 1 --store "${name}_${v}" -version "a_shot${v}" -name HASC &
-    # python main.py -g 1 --store "${name}_${v}" -version "a_shot${v}" -name HHAR &
-    # python main.py -g 1 --store "${name}_${v}" -version "a_shot${v}" -name MotionSense &
-    # python main.py -g 1 --store "${name}_${v}" -version "a_shot${v}" -name Shoaib 
+    python main.py -g 1 --store "${name}${v}" -version "s${v}" -name HASC &
+    python main.py -g 1 --store "${name}${v}" -version "s${v}" -name HHAR &
+    python main.py -g 1 --store "${name}${v}" -version "s${v}" -name MotionSense &
+    python main.py -g 1 --store "${name}${v}" -version "s${v}" -name Shoaib 
 
-    # wait
+    wait
 
-    python transfer.py -g 2 -ft True -version "shot${v}" -shot 10 -name HASC --pretrained "${name}_${v}/HASC" --store "${name}_f1_2_${v}" &
-    python transfer.py -g 2 -ft True -version "shot${v}" -shot 10 -name HHAR --pretrained "${name}_${v}/HHAR" --store "${name}_f1_2_${v}" &
-    python transfer.py -g 2 -ft True -version "shot${v}" -shot 10 -name MotionSense --pretrained "${name}_${v}/MotionSense" --store "${name}_f1_2_${v}" &
-    python transfer.py -g 2 -ft True -version "shot${v}" -shot 10 -name Shoaib --pretrained "${name}_${v}/Shoaib" --store "${name}_f1_2_${v}" 
+    python transfer.py -g 1 -ft True -version "s${v}" -shot 60 -name HASC --pretrained "${name}${v}/HASC" --store "${name}${v}" &
+    python transfer.py -g 1 -ft True -version "s${v}" -shot 60 -name HHAR --pretrained "${name}${v}/HHAR" --store "${name}${v}" &
+    python transfer.py -g 1 -ft True -version "s${v}" -shot 60 -name MotionSense --pretrained "${name}${v}/MotionSense" --store "${name}${v}" &
+    python transfer.py -g 1 -ft True -version "s${v}" -shot 60 -name Shoaib --pretrained "${name}${v}/Shoaib" --store "${name}${v}" 
 
     wait
 

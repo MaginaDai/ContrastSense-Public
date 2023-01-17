@@ -53,7 +53,7 @@ def main():
                     num_workers=args.workers, pin_memory=False, drop_last=True)
     
 
-    model = Encoder('mixup')
+    model = Encoder('CL')
     optimizer = torch.optim.SGD(model.parameters(), args.lr)
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)

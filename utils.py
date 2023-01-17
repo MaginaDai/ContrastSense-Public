@@ -281,7 +281,7 @@ class Preprocess4Normalization(Pipeline):
 
     def __call__(self, sample):
         acc, gyro, add_infor = sample['acc'], sample['gyro'], sample['add_infor']
-        label = add_infor[0]
+        label = np.array([add_infor[0]])
         instance = np.concatenate([acc, gyro], axis=1)
         instance_new = instance.copy()[:, :self.feature_len]
         if instance_new.shape[1] >= 6 and self.norm_acc:

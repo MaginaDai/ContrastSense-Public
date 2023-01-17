@@ -37,7 +37,7 @@ parser.add_argument('-ft', '--if-fine-tune', default=True, type=bool, help='to d
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
-parser.add_argument('--pretrained', default='Shot_1_ewc_pretrain/MotionSense', type=str,
+parser.add_argument('--pretrained', default='CDL_v0/MotionSense', type=str,
                     help='path to ContrastSense pretrained checkpoint')
 parser.add_argument('-name', default='HHAR',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'ICHAR', 'HASC'])
@@ -87,11 +87,14 @@ parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversar
 parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate')
 parser.add_argument('-slr', default=0.5, type=float, help='DAL learning ratio')
 parser.add_argument('-ewc', default=False, type=bool, help='Use EWC or not')
-parser.add_argument('-ewc_lambda', default=1, type=float, help='EWC para')
+parser.add_argument('-ewc_lambda', default=5, type=float, help='EWC para')
 parser.add_argument('-fishermax', default=0.01, type=float, help='fishermax')
 parser.add_argument('-cl_slr', default=[0.3], nargs='+', type=float, help='the ratio of sup_loss')
 parser.add_argument('-moco_K', default=1024, type=int, help='keys size')
 parser.add_argument('-aug', default=False, type=bool, help='decide use data augmentation or not')
+parser.add_argument('-mixup', default=False, type=bool, help='decide use mixup or not')
+parser.add_argument('-p', default=0.2, type=float, help='possibility for one aug')
+
 
 
 def seed_torch(seed=0):
@@ -212,7 +215,10 @@ def main(args, fisher=None):
             print('test acc: {}'.format('%.3f' % test_acc))
             return
         if args.ewc:
-            moco.transfer_train_ewc(tune_loader, val_loader, fisher)
+            if args.mixup:
+                moco.transfer_train_ewc_mixup(tune_loader, val_loader, fisher)
+            else:
+                moco.transfer_train_ewc(tune_loader, val_loader, fisher)
         else:
             moco.transfer_train(tune_loader, val_loader)
         best_model_dir = os.path.join(moco.writer.log_dir, 'model_best.pth.tar')

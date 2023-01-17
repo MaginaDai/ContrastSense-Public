@@ -14,6 +14,7 @@ from tkinter.messagebox import NO
 from unicodedata import bidirectional
 import torch
 import torch.nn as nn
+import numpy as np
 import torch.nn.functional as F
 from torch.autograd import Function
 from torch.cuda.amp import GradScaler, autocast
@@ -1285,3 +1286,142 @@ class MoCo(object):
 
         print('best eval f1 is {} for {}'.format(best_f1, self.args.name))
         return
+
+    def transfer_train_ewc_mixup(self, tune_loader, val_loader, fisher):
+        assert self.args.if_fine_tune is True
+
+        self.fisher = fisher
+        self.mean = {
+            n: p.clone().detach()
+            for n, p in self.model.named_parameters()
+            if p.requires_grad
+        }
+        
+        scaler = GradScaler(enabled=self.args.fp16_precision)
+
+        # save config file
+        save_config_file(self.writer.log_dir, self.args)
+
+        n_iter_train = 0
+        logging.info(f"Start MoCo fine-tuning head for {self.args.epochs} epochs.")
+        logging.info(f"Training with gpu: {not self.args.disable_cuda}.")
+
+        acc = 0
+        f1 = 0
+        best_epoch = 0
+
+        if self.args.resume:
+            best_f1 = self.args.best_f1
+            best_acc = self.args.best_acc
+        else:
+            best_f1 = 0
+            best_acc = 0
+
+        for epoch_counter in tqdm(range(self.args.epochs)):
+            # acc_batch = AverageMeter('acc_batch', ':6.2f')
+
+            pred_batch = torch.empty(0).to(self.args.device)
+            # label_batch = torch.empty(0).to(self.args.device)
+            label_a_batch = torch.empty(0).to(self.args.device)
+            label_b_batch = torch.empty(0).to(self.args.device)
+
+            # f1_batch = AverageMeter('f1_batch', ':6.2f')
+            if self.args.if_fine_tune:
+                self.model.train()
+            else:  
+                self.model.eval()
+                self.model.classifier.train()
+            
+            lam = np.random.beta(1.0, 1.0)
+                
+            for sensor, target in tune_loader:
+                sensor, targets_a, targets_b = self.mixup_data(sensor, target[:, 0], lam)
+
+                sensor = sensor.to(self.args.device)
+                targets_a, targets_b = targets_a.to(self.args.device), targets_b.to(self.args.device)
+
+                label_a_batch, label_b_batch = torch.cat((label_a_batch, targets_a)), torch.cat((label_b_batch, targets_b))
+
+                with autocast(enabled=self.args.fp16_precision):
+                    logits, _ = self.model(sensor)
+                    loss_clf = self.mixup_criterion(logits, targets_a, targets_b, lam)
+                    loss_ewc = self.compute_ewc()
+
+                    loss = loss_clf + self.args.ewc_lambda * loss_ewc
+
+                self.optimizer.zero_grad()
+                scaler.scale(loss).backward()
+                scaler.step(self.optimizer)
+                scaler.update()
+
+                _, pred = logits.topk(1, 1, True, True)
+                pred_batch = torch.cat((pred_batch, pred.reshape(-1)))
+                
+                acc = mixup_accuracy(pred, targets_a, targets_b, lam)
+                f1 = mixup_f1(pred, targets_a, targets_b, lam)
+
+                if n_iter_train % self.args.log_every_n_steps == 0:
+                    self.writer.add_scalar('loss', loss, global_step=n_iter_train)
+                    self.writer.add_scalar('loss_clf', loss_clf, global_step=n_iter_train)
+                    self.writer.add_scalar('loss_ewc', loss_ewc, global_step=n_iter_train)
+                    self.writer.add_scalar('acc', acc, global_step=n_iter_train)
+                    self.writer.add_scalar('f1', f1, global_step=n_iter_train)
+                    self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter_train)
+
+                n_iter_train += 1
+
+            f1_batch = mixup_f1(pred_batch, label_a_batch, label_b_batch, lam)
+            acc_batch = mixup_accuracy(pred_batch, label_a_batch, label_b_batch, lam)
+
+            val_acc, val_f1 = MoCo_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
+
+            is_best = val_f1 > best_f1
+
+            if epoch_counter >= 10:  # only after the first 10 epochs, the best_f1/acc is updated.
+                best_f1 = max(val_f1, best_f1)
+                best_acc = max(val_acc, best_acc)
+            if is_best:
+                best_epoch = epoch_counter
+                checkpoint_name = 'model_best.pth.tar'
+                save_checkpoint({
+                    'epoch': epoch_counter,
+                    'state_dict': self.model.state_dict(),
+                    'best_f1': best_f1, 
+                    'optimizer': self.optimizer.state_dict(),
+                }, is_best, filename=os.path.join(self.writer.log_dir, checkpoint_name), path_dir=self.writer.log_dir)
+
+            self.writer.add_scalar('eval acc', val_acc, global_step=epoch_counter)
+            self.writer.add_scalar('eval f1', val_f1, global_step=epoch_counter)
+            self.scheduler.step()
+
+            logging.debug(f"Epoch: {epoch_counter} Loss: {loss} acc: {acc_batch: .3f}/{val_acc: .3f} f1: {f1_batch: .3f}/{val_f1: .3f}")
+
+        logging.info("Fine-tuning has finished.")
+        logging.info(f"best eval f1 is {best_f1} at {best_epoch}.")
+
+        print('best eval f1 is {} for {}'.format(best_f1, self.args.name))
+
+    def mixup_data(self, x, y, lam):
+        batch_size = x.size()[0]
+        index = torch.randperm(batch_size).to(self.args.device)
+
+        mixed_x = lam * x + (1 - lam) * x[index, :]
+        y_a, y_b = y, y[index]
+        return mixed_x, y_a, y_b
+
+    def mixup_criterion(self, pred, y_a, y_b, lam):
+        return lam * self.criterion(pred, y_a) + (1 - lam) * self.criterion(pred, y_b)
+
+    
+def mixup_accuracy(predicted, y_a, y_b, lam):
+    with torch.no_grad():
+        predicted = predicted.reshape(-1)
+        correct = (lam * predicted.eq(y_a).cpu().sum().float()
+                        + (1 - lam) * predicted.eq(y_b).cpu().sum().float())
+    return 100 * correct / y_a.shape[0]
+
+def mixup_f1(pred, y_a, y_b, lam):
+    with torch.no_grad():
+        f1_a = f1_score(y_a.cpu().numpy(), pred.cpu().numpy(), average='macro') * 100
+        f1_b = f1_score(y_b.cpu().numpy(), pred.cpu().numpy(), average='macro') * 100
+    return lam * f1_a + (1 - lam) * f1_b

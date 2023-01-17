@@ -72,8 +72,7 @@
 #     python classifier_bert.py v1_v2 ${name} -p ${dataset} -f "${dataset}_${name}" -name ${dataset} -s "${dataset}_${name}"
 # done
 
-name=a_shot
-
+name="s"
 for v in 0 1 2 3 4
 do
 
@@ -84,10 +83,10 @@ do
 
     wait
 
-    python classifier_bert.py v1_v2 "${name}${v}" -g 0 -shot 10 -p MotionSense -f "MotionSense" -name 'MotionSense' -s "limu_gru_MotionSense_shot${v}" &
-    python classifier_bert.py v1_v2 "${name}${v}" -g 0 -shot 10 -p HHAR -f "HHAR" -name 'HHAR' -s "limu_gru_HHAR_shot${v}" &
-    python classifier_bert.py v1_v2 "${name}${v}" -g 1 -shot 10 -p HASC -f "HASC" -name 'HASC' -s "limu_gru_HASC_shot${v}" &
-    python classifier_bert.py v1_v2 "${name}${v}" -g 1 -shot 10 -p Shoaib -f "Shoaib" -name 'Shoaib' -s "limu_gru_Shoaib_shot${v}"
+    python classifier_bert.py v1_v2 "${name}${v}" -g 0 -shot 60 -p MotionSense -f "MotionSense" -name 'MotionSense' -s "limu_gru_MotionSense_shot${v}" &
+    python classifier_bert.py v1_v2 "${name}${v}" -g 0 -shot 60 -p HHAR -f "HHAR" -name 'HHAR' -s "limu_gru_HHAR_shot${v}" &
+    python classifier_bert.py v1_v2 "${name}${v}" -g 1 -shot 60 -p HASC -f "HASC" -name 'HASC' -s "limu_gru_HASC_shot${v}" &
+    python classifier_bert.py v1_v2 "${name}${v}" -g 1 -shot 60 -p Shoaib -f "Shoaib" -name 'Shoaib' -s "limu_gru_Shoaib_shot${v}"
 
     wait
 

@@ -87,7 +87,7 @@ parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversar
 parser.add_argument('-CE', default=False, type=bool, help='Use Cross Entropy Domain Loss or not')
 parser.add_argument('-ewc', default=True, type=float, help='Use EWC or not')
 parser.add_argument('-fishermax', default=0.01, type=float, help='fishermax')
-parser.add_argument('-p', default=0.1, type=float, help='possibility for one aug')
+parser.add_argument('-p', default=0.2, type=float, help='possibility for one aug')
 
 
 def main():
@@ -102,10 +102,7 @@ def main():
         args.device = torch.device('cpu')
         args.gpu_index = -1
 
-    if args.mol == 'CPC':  # set transfer = True to avoid n_views = 2. Just to make the dataset normal
-        dataset = ContrastiveLearningDataset(transfer=True, version=args.version, datasets_name=args.name)
-    else:
-        dataset = ContrastiveLearningDataset(transfer=False, version=args.version, datasets_name=args.name, p=args.p)
+    dataset = ContrastiveLearningDataset(transfer=False, version=args.version, datasets_name=args.name, p=args.p)
 
     train_dataset = dataset.get_dataset(split='train')
 
@@ -113,25 +110,17 @@ def main():
         train_dataset, batch_size=args.batch_size, shuffle=True,
         num_workers=args.workers, pin_memory=False, drop_last=True)
 
-    if args.mol == 'LIMU':
-        model_cfg = load_model_config(target='pretrain_base', prefix='base', version='v1')
-        model = LIMU_encoder(model_cfg)
-    elif args.mol == 'CPC':
-        model = CPCV1(timestep=args.timestep, batch_size=args.batch_size, seq_len=96, transfer=False, classes=6, dims=args.d, temperature=args.temperature)
-    elif args.mol == 'MoCo' or args.mol == 'DeepSense':
-        if args.CE:
-            user_num = UsersNum[args.name]
-        else:
-            user_num = None
-        model = MoCo_v1(device=args.device, out_dim=args.out_dim, K=args.moco_K, m=args.moco_m, T=args.temperature, 
-                        T_labels=args.tem_labels, dims=args.d, label_type=args.label_type, num_clusters=args.num_clusters, mol=args.mol, 
-                        final_dim=args.final_dim, momentum=args.mo, drop=args.drop, DAL=args.DAL, if_cross_entropy=args.CE, users_class=user_num)
+    if args.CE:
+        user_num = UsersNum[args.name]
     else:
-        model = MyNet(transfer=False, out_dim=args.out_dim, if_bn=args.if_bn, if_g=args.if_g, if_lstm=args.if_lstm)
-
+        user_num = None
+    
+    model = MoCo_v1(device=args.device, out_dim=args.out_dim, K=args.moco_K, m=args.moco_m, T=args.temperature, 
+                    T_labels=args.tem_labels, dims=args.d, label_type=args.label_type, num_clusters=args.num_clusters, mol=args.mol, 
+                    final_dim=args.final_dim, momentum=args.mo, drop=args.drop, DAL=args.DAL, if_cross_entropy=args.CE, users_class=user_num)
+    
     optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[int(args.epochs/2)], gamma=args.s_gamma, last_epoch=-1)
 
     # optionally resume from a checkpoint
     if args.resume:
@@ -151,17 +140,10 @@ def main():
 
     #  It’s a no-op if the 'gpu_index' argument is a negative integer or None.
     with torch.cuda.device(args.gpu_index):
-        if args.mol == 'CPC':
-            cpc = CPC(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
-            cpc.train(train_loader)
-        elif args.mol == 'MoCo' or args.mol == 'DeepSense':
-            moco = MoCo(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
-            moco.train(train_loader)
-        else:
-            simclr = SimCLR(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
-            simclr.train(train_loader)
+        moco = MoCo(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
+        moco.train(train_loader)
 
-    if args.ewc:
+    if args.ewc and args.label_type != 0:
         getFisherDiagonal_pretrain(args, train_loader, moco.writer.log_dir)
     return
 

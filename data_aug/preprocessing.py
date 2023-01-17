@@ -496,11 +496,11 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
-    # dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
-    dataset_name = ["Shoaib"]
+    dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
+    # dataset_name = ["Shoaib"]
     for i in range(seg_types):
         for dataset in dataset_name:
-            preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_test{i}/", dataset=dataset)
+            preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}_50_200/', target_dir=f"datasets/{dataset}_test{i}/", dataset=dataset)
 
     return
 
@@ -558,7 +558,7 @@ if __name__ == '__main__':
     # preprocessing_dataset_cross_person_val(dir=r'datasets/UCI/', target_dir=r'datasets/HHAR_shot/', dataset='UCI')
     # preprocessing_dataset_cross_person_val(dir=r'datasets/ICHAR/', target_dir=r'datasets/HHAR_shot/', dataset='ICHAR')
  
-    # datasets_shot_record(datasets='HASC', version='a_shot0', shot=10)
+    datasets_shot_record(datasets='HASC', version='s1', shot=100)
 
     # datasets_users_record(dir=r'datasets/HHAR_50_200/', datasets='HHAR')
     # datasets_users_record(dir=r'datasets/MotionSense_50_200/', datasets='MotionSense')
@@ -575,7 +575,7 @@ if __name__ == '__main__':
     
     # new_segmentation_for_user(seg_types=1)
     # new_segmentation_for_dataset(seg_types=5)
-    new_segmentation_for_domain_shift_visual()
+    # new_segmentation_for_domain_shift_visual()
     
     # dir = r'datasets/HHAR/'
     # preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion35/', dataset='HHAR', test_portion=0.5, val_portion=0.15)

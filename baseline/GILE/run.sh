@@ -1,28 +1,28 @@
-name='GILE_f1_v'
+name='GILE_s'
+g=2
+for v in 0 1 2 3 4
+do
+    name="GILE_s"
 
-# for v in 0 1 2 3 4
-# do
-#     # name="GILE_a${p}_shot${s}_v_0"
+    python main.py -g ${g} -version "s${v}" -shot 60 --store "${name}${v}" -name HASC &
+    python main.py -g ${g} -version "s${v}" -shot 60 --store "${name}${v}" -name HHAR &
+    python main.py -g ${g} -version "s${v}" -shot 60 --store "${name}${v}" -name MotionSense &
+    python main.py -g ${g} -version "s${v}" -shot 60 --store "${name}${v}" -name Shoaib 
 
-#     python main.py -g 3 -name HASC -version "shot${v}" -shot 10 --store "${name}_${v}" &
-#     python main.py -g 3 -name HHAR -version "shot${v}" -shot 10 --store "${name}_${v}" &
-#     python main.py -g 3 -name MotionSense -version "shot${v}" -shot 10 --store "${name}_${v}" &
-#     python main.py -g 3 -name Shoaib -version "shot${v}" -shot 10 --store "${name}_${v}"
+    wait
 
-#     wait
-
-# done
+done
 
 # 25 45 65
 # 10 50 100 200 500
 
-v=0
-store="GILE_full_version_v${v}"
+# v=0
+# store="GILE_full_version_v${v}"
 
-python main.py -g 1 -name HHAR -version "train25_alltune_cross_v${v}" --setting full --store "${store}_25" &
-python main.py -g 1 -name HHAR -version "train65_alltune_cross_v${v}" --setting full --store "${store}_65"
+# python main.py -g 1 -name HHAR -version "train25_alltune_cross_v${v}" --setting full --store "${store}_25" &
+# python main.py -g 1 -name HHAR -version "train65_alltune_cross_v${v}" --setting full --store "${store}_65"
 
-wait
+# wait
 
 # for v in 2 3 4
 # do

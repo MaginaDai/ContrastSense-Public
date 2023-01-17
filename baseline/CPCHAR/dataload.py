@@ -7,7 +7,7 @@ sys.path.append(dirname(dirname(sys.path[0])))
 
 from torchvision.transforms import transforms
 from torch.utils.data import Dataset
-from data_aug.contrastive_learning_dataset import ACT_Translated_labels, HHAR_movement, fetch_dataset_root, users, devices
+from data_aug.contrastive_learning_dataset import fetch_dataset_root
 from data_aug.preprocessing import UsersPosition
 from exceptions.exceptions import InvalidDatasetSelection
 

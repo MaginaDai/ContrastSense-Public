@@ -13,14 +13,27 @@ CONV_MERGE_LEN = 8
 CONV_MERGE_LEN2 = 6
 CONV_MERGE_LEN3 = 4
 CONV_NUM2 = 64
+INTER_DIM = 120
+
+class DeepSense_model(nn.Module):
+    def __init__(self, classes=6, dims=64):
+        super(DeepSense_model, self).__init__()
+
+        self.encoder = DeepSense_encoder(dims=dims)
+        self.classifier = nn.Linear(in_features=120, out_features=classes)
+
+    def forward(self, x):
+        h = self.encoder(x)
+        h = torch.mean(h, dim=1)
+        h = self.classifier(h)
+
 
 class DeepSense_encoder(nn.Module):
 
-    def __init__(self, transfer=False, out_dim=512, classes=6, dims=64):
+    def __init__(self, dims=64):
         super(DeepSense_encoder, self).__init__()
-        self.transfer = transfer
 
-        self.dropout = torch.nn.Dropout(p=0.1)
+        self.dropout = torch.nn.Dropout(p=0.2)
         self.relu = torch.nn.ReLU()
 
         # (N, Channel=1, H, W)
@@ -51,24 +64,13 @@ class DeepSense_encoder(nn.Module):
         self.conv3_sensor = torch.nn.Conv2d(dims, dims, kernel_size=(CONV_MERGE_LEN3, 1), stride=[1, 1])
         self.conv3_sensor_BN =torch.nn.BatchNorm2d(num_features=dims, momentum=0.1, affine=False)
         
-        self.gru1 = torch.nn.GRU(dims, int(dims/2), num_layers=1, batch_first=True, bidirectional=True)
-        self.gru2 = torch.nn.GRU(dims, int(dims/2), num_layers=1, batch_first=True, bidirectional=True)
-        if transfer:
-            self.gru3 = torch.nn.GRU(dims, int(dims/8), num_layers=1, batch_first=True, bidirectional=True)
-            self.classifier = nn.Sequential(nn.Linear(in_features=1344, out_features=128),
-                                            nn.ReLU(),
-                                            nn.Linear(in_features=128, out_features=classes))
-        else:
-            self.projector = nn.Sequential(nn.Linear(in_features=5376, out_features=1024),
-                                            nn.ReLU(),
-                                            nn.Linear(in_features=1024, out_features=out_dim))
+        self.gru1 = torch.nn.GRU(dims, INTER_DIM, num_layers=1, batch_first=True, bidirectional=False)
+        self.gru2 = torch.nn.GRU(INTER_DIM, INTER_DIM, num_layers=1, batch_first=True, bidirectional=False)
         
     
     def forward(self, x):
         self.gru1.flatten_parameters()
         self.gru2.flatten_parameters()
-        if self.transfer:
-            self.gru3.flatten_parameters()
 
         # data shape: (BATCH_SIZE, CHANNEL=1, Timestamps, FEATURE_DIM)
         h_acc = self.conv1_acc_BN(self.conv1_acc(x[:, :, :, 0:3]))
@@ -82,13 +84,13 @@ class DeepSense_encoder(nn.Module):
         h_acc_shape = h_acc.shape
         h_acc_out = h_acc.reshape(h_acc_shape[0], h_acc_shape[1], -1, 1)
         
-        h_gyro = self.conv1_acc_BN(self.conv1_acc(x[:, :, :, 3:]))
+        h_gyro = self.conv1_gyro_BN(self.conv1_gyro(x[:, :, :, 3:]))
         h_gyro = self.dropout(self.relu(h_gyro))
 
-        h_gyro = self.conv2_acc_BN(self.conv2_acc(h_gyro))
+        h_gyro = self.conv2_gyro_BN(self.conv2_gyro(h_gyro))
         h_gyro = self.dropout(self.relu(h_gyro))
 
-        h_gyro = self.conv3_acc_BN(self.conv3_acc(h_gyro))
+        h_gyro = self.conv3_gyro_BN(self.conv3_gyro(h_gyro))
         h_gyro = self.relu(h_gyro)
         h_gyro_shape = h_gyro.shape
         h_gyro_out = h_gyro.reshape(h_gyro_shape[0], h_gyro_shape[1], -1, 1)
@@ -115,15 +117,6 @@ class DeepSense_encoder(nn.Module):
         h = self.dropout(h)
         h, _ = self.gru2(h)
         h = self.dropout(h)
-
-        if self.transfer:
-            h, _ = self.gru3(h)
-            h = self.dropout(h)
-            h = h.flatten(start_dim=1)
-            h = self.classifier(h)
-        else:
-            h = h.flatten(start_dim=1)
-            h = self.projector(h)
         return h
         
 

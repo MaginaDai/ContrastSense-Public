@@ -18,10 +18,10 @@ import numpy as np
 from figure_plot.figure_plot import figure_cmp_transformation
 
 
-HHAR_movement = ['stand', 'sit', 'walk', 'stairsup', 'stairsdown', 'bike']
-ACT_Translated_labels = ['Downstairs', 'Upstairs', 'Walking', 'Running', 'Standing', 'Sitting']
-users = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
-devices = ['s3', 'nexus4', 's3mini', 'samsungold']
+# HHAR_movement = ['stand', 'sit', 'walk', 'stairsup', 'stairsdown', 'bike']
+# ACT_Translated_labels = ['Downstairs', 'Upstairs', 'Walking', 'Running', 'Standing', 'Sitting']
+# users = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
+# devices = ['s3', 'nexus4', 's3mini', 'samsungold']
 
 
 def fetch_dataset_root(dataset_name):
@@ -54,14 +54,14 @@ class ContrastiveLearningDataset:
         imu_noise = imu_transforms.IMUNoise(var=0.05, p=0.8)
         imu_scale = imu_transforms.IMUScale(scale=[0.9, 1.1], p=0.8)
         imu_rotate = imu_transforms.IMURotate(p=0.8)
-        imu_negate = imu_transforms.IMUNegated(p=self.p)
+        imu_negate = imu_transforms.IMUNegated(p=0.4)
         imu_flip = imu_transforms.IMUHorizontalFlip(p=0.2)
         imu_warp = imu_transforms.IMUTimeWarp(p=0.4)
 
         imu_error_model = imu_transforms.IMUErrorModel(p=0.8, scale=[0.9, 1.1], error_magn=0.02, bias_magn=0.05)
         imu_filter = imu_transforms.IMUFilter(p=0.8, cut_off_frequency=6, sampling_frequency=25)
         imu_multi_person = imu_transforms.IMUMultiPerson(p=0.4, scale=[0.8, 1.2])
-        imu_malfunction = imu_transforms.IMUMalFunction(p=0.1, mal_length=25)
+        imu_malfunction = imu_transforms.IMUMalFunction(p=self.p, mal_length=10)
 
         imu_toTensor = imu_transforms.ToTensor()
 
@@ -72,8 +72,27 @@ class ContrastiveLearningDataset:
                                               imu_flip,
                                               imu_warp,
                                               # imu_multi_person,    # mine
-                                              # imu_malfunction,  # mine
+                                            #   imu_malfunction,  # mine
                                               # imu_filter,    # mine
+                                              imu_noise,
+                                              imu_toTensor])
+        return data_transforms
+    
+    def get_ft_pipeline_transform(self):
+        imu_noise = imu_transforms.IMUNoise(var=0.05, p=0.8)
+        imu_scale = imu_transforms.IMUScale(scale=[0.9, 1.1], p=0.8)
+        imu_rotate = imu_transforms.IMURotate(p=0.8)
+        imu_negate = imu_transforms.IMUNegated(p=0.4)
+        imu_flip = imu_transforms.IMUHorizontalFlip(p=0.2)
+        imu_warp = imu_transforms.IMUTimeWarp(p=0.4)
+        imu_toTensor = imu_transforms.ToTensor()
+
+        data_transforms = transforms.Compose([
+                                              imu_scale,
+                                              imu_rotate,
+                                              imu_negate,
+                                              imu_flip,
+                                              imu_warp,
                                               imu_noise,
                                               imu_toTensor])
         return data_transforms
@@ -88,7 +107,8 @@ class ContrastiveLearningDataset:
         elif split == 'train' or split == 'tune':
                 # here it is for data augmentation, make it more challenging.
             return Dataset4Training(self.datasets_name, self.version, n_views,
-                                    self.get_simclr_pipeline_transform(),
+                                    # self.get_simclr_pipeline_transform(),
+                                    self.get_ft_pipeline_transform(),
                                     split=split, transfer=self.transfer, percent=percent, shot=shot, cross_dataset=self.cross_dataset)
         else:  # val or test
             return Dataset4Training(self.datasets_name, self.version, n_views,

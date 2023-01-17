@@ -120,14 +120,14 @@ class DatasetConfig(NamedTuple):
 
 
 def create_io_config(args, dataset_name, version, pretrain_model=None, target='pretrain', model_file='MotionSense'):
-    save_path = os.path.join('saved', target + "_" + dataset_name + "_" + version)  # + "_temp"
+    save_path = os.path.join('saved', target + "_" + version)  # + "_temp"
     if not os.path.exists(save_path):
         os.mkdir(save_path)
     args.save_path = os.path.join(save_path, args.save_model)
 
     if pretrain_model is not None:
         if target.count('_') > 2: # bert_classifier
-            model_path = os.path.join('saved', 'pretrain_' + target.split('_')[2] + "_" + model_file + "_" + version, pretrain_model)
+            model_path = os.path.join('saved', 'pretrain_' + target.split('_')[2] + "_" + version, pretrain_model)
         else:
             model_path = os.path.join(save_path, pretrain_model)
         args.pretrain_model = model_path
