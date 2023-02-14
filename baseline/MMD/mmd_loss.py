@@ -24,7 +24,6 @@ class MMD_loss(nn.Module):
         Ey = torch.sum(neg_mask * k) / torch.sum(neg_mask)
 
         loss = Ex - Ey
-        
         return loss
 
 

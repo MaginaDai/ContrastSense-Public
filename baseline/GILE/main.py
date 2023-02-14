@@ -12,7 +12,7 @@ from baseline.CPCHAR.dataload import CPCHAR_Dataset
 from baseline.GILE.dataloader import load_GILE_type_data
 from baseline.GILE.GILE import train
 import baseline.GILE.network as net
-from data_aug.preprocessing import ClassesNum, UsersNum
+from data_aug.preprocessing import ClassesNum, UsersNum, PositionNum, DevicesNum
 
 from utils import seed_torch
 import torch
@@ -54,16 +54,22 @@ parser.add_argument('--beta_y', type=float, default=1., help='multiplier for KL 
 parser.add_argument('--weight_true', type=float, default=1000.0, help='weights for classifier true')
 parser.add_argument('--weight_false', type=float, default=1000.0, help='weights for classifier false')
 parser.add_argument('--setting', default='sparse', type=str, choices=['full', 'sparse'], help='decide use tune or others')
-
+parser.add_argument('-cross', default='positions', type=str, help='decide to use which kind of labels')
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    args.n_domains = UsersNum[args.name]
+    if args.cross == 'users':
+        args.n_domains = UsersNum[args.name]
+    elif args.cross == 'positions':
+        args.n_domains = PositionNum[args.name]
+    elif args.cross == 'devices':
+        args.n_domains = DevicesNum[args.name]
+
     args.n_class = ClassesNum[args.name]
     seed_torch(seed=args.seed)
     DEVICE = torch.device(f'cuda:{args.gpu_index}' if torch.cuda.is_available() else 'cpu')
     args.device = DEVICE
-    tune_loader, val_loader, test_loader = load_GILE_type_data(args.name, args.version, args.shot, args.batch_size, args.setting)
+    tune_loader, val_loader, test_loader = load_GILE_type_data(args.name, args.version, args.shot, args.batch_size, args.setting, args.cross)
     model = net.load_model(args)
     model = model.to(DEVICE)
     optimizer = net.set_up_optimizers(model.parameters())

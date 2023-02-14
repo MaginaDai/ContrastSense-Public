@@ -40,23 +40,28 @@ def fetch_dataset_root(dataset_name):
     
 
 class ContrastiveLearningDataset:
-    def __init__(self, transfer, version, datasets_name=None, cross_dataset=False, p=0.1):
+    def __init__(self, transfer, version, datasets_name=None, cross_dataset=False, p=0.8, p2=0.4, p3=0.2, p4=0.4, p5=0.8, p6=0.8):
         self.transfer = transfer
         self.datasets_name = datasets_name
         self.version = version
         self.cross_dataset = cross_dataset
         self.p = p
+        self.p2=p2
+        self.p3=p3
+        self.p4=p4
+        self.p5=p5
+        self.p6=p6
 
     def get_simclr_pipeline_transform(self):
         """Return a set of data augmentation transformations as described in my presentation."""
         imu_discard = imu_transforms.IMUDiscard(self.datasets_name)
 
-        imu_noise = imu_transforms.IMUNoise(var=0.05, p=0.8)
-        imu_scale = imu_transforms.IMUScale(scale=[0.9, 1.1], p=0.8)
-        imu_rotate = imu_transforms.IMURotate(p=0.8)
-        imu_negate = imu_transforms.IMUNegated(p=0.4)
-        imu_flip = imu_transforms.IMUHorizontalFlip(p=0.2)
-        imu_warp = imu_transforms.IMUTimeWarp(p=0.4)
+        imu_noise = imu_transforms.IMUNoise(var=0.05, p=self.p5)
+        imu_scale = imu_transforms.IMUScale(scale=[0.9, 1.1], p=self.p6)
+        imu_rotate = imu_transforms.IMURotate(p=self.p)
+        imu_negate = imu_transforms.IMUNegated(p=self.p2)
+        imu_flip = imu_transforms.IMUHorizontalFlip(p=self.p3)
+        imu_warp = imu_transforms.IMUTimeWarp(p=self.p4)
 
         imu_error_model = imu_transforms.IMUErrorModel(p=0.8, scale=[0.9, 1.1], error_magn=0.02, bias_magn=0.05)
         imu_filter = imu_transforms.IMUFilter(p=0.8, cut_off_frequency=6, sampling_frequency=25)
@@ -81,14 +86,13 @@ class ContrastiveLearningDataset:
     def get_ft_pipeline_transform(self):
         imu_noise = imu_transforms.IMUNoise(var=0.05, p=0.8)
         imu_scale = imu_transforms.IMUScale(scale=[0.9, 1.1], p=0.8)
-        imu_rotate = imu_transforms.IMURotate(p=0.8)
+        imu_rotate = imu_transforms.IMURotate(p=0.8)  # change to 0.4
         imu_negate = imu_transforms.IMUNegated(p=0.4)
         imu_flip = imu_transforms.IMUHorizontalFlip(p=0.2)
         imu_warp = imu_transforms.IMUTimeWarp(p=0.4)
         imu_toTensor = imu_transforms.ToTensor()
 
-        data_transforms = transforms.Compose([
-                                              imu_scale,
+        data_transforms = transforms.Compose([imu_scale,
                                               imu_rotate,
                                               imu_negate,
                                               imu_flip,

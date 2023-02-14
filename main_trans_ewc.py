@@ -37,7 +37,7 @@ parser.add_argument('-ft', '--if-fine-tune', default=True, type=bool, help='to d
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
-parser.add_argument('--pretrained', default='CDL_v0/MotionSense', type=str,
+parser.add_argument('--pretrained', default='CDL_slr0.7_ewc_v0/HHAR', type=str,
                     help='path to ContrastSense pretrained checkpoint')
 parser.add_argument('-name', default='HHAR',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'ICHAR', 'HASC'])
@@ -87,13 +87,14 @@ parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversar
 parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate')
 parser.add_argument('-slr', default=0.5, type=float, help='DAL learning ratio')
 parser.add_argument('-ewc', default=False, type=bool, help='Use EWC or not')
-parser.add_argument('-ewc_lambda', default=5, type=float, help='EWC para')
+parser.add_argument('-ewc_lambda', default=50, type=float, help='EWC para')
 parser.add_argument('-fishermax', default=0.01, type=float, help='fishermax')
-parser.add_argument('-cl_slr', default=[0.3], nargs='+', type=float, help='the ratio of sup_loss')
+parser.add_argument('-cl_slr', default=[0.7], nargs='+', type=float, help='the ratio of sup_loss')
 parser.add_argument('-moco_K', default=1024, type=int, help='keys size')
 parser.add_argument('-aug', default=False, type=bool, help='decide use data augmentation or not')
 parser.add_argument('-mixup', default=False, type=bool, help='decide use mixup or not')
 parser.add_argument('-p', default=0.2, type=float, help='possibility for one aug')
+parser.add_argument('-cross', default='users', type=str, help='decide to use which kind of labels')
 
 
 
@@ -113,8 +114,8 @@ def main(args, fisher=None):
     if args.store == None:
         args.store = deepcopy(args.pretrained)
         
-    # if args.ewc:
-    #     fisher = load_fisher_matrix(args.pretrained, args.device)
+    if args.ewc:
+        fisher = load_fisher_matrix(args.pretrained, args.device)
 
     args.pretrained = './runs/' + args.pretrained + '/model_best.pth.tar'
 
@@ -237,9 +238,10 @@ if __name__ == '__main__':
     else:
         args.device = torch.device('cpu')
         args.gpu_index = -1
-
-    if args.ewc:
-        fisher = getFisherDiagonal_initial(args)
-    else:
-        fisher = None
-    main(args, fisher)
+    
+    # if args.ewc:
+    #     fisher = getFisherDiagonal_initial(args)
+    # else:
+    #     fisher = None
+    # main(args, fisher)
+    main(args)

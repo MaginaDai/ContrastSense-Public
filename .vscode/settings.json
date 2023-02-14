@@ -2,5 +2,6 @@
     "python.analysis.extraPaths": [
         "./baseline/ClusterHAR",
         "./baseline/GILE"
-    ]
+    ],
+    "python.analysis.typeCheckingMode": "off"
 }

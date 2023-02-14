@@ -50,7 +50,10 @@ def bert_classify(args, frozen_bert=False, balance=True):
     test_dataset = dataset.get_dataset(split='test')
     
     tune_loader = DataLoader(tune_dataset, batch_size=train_cfg.batch_size, shuffle=True, pin_memory=False, drop_last=False, num_workers=5)  # make it consistant to Ours
-    val_loader = DataLoader(val_dataset, batch_size=train_cfg.batch_size, shuffle=True, pin_memory=False, drop_last=True, num_workers=5)  # make it consistant to Ours
+    if len(val_dataset) < train_cfg.batch_size:
+        val_loader = DataLoader(val_dataset, batch_size=train_cfg.batch_size, shuffle=True, pin_memory=False, drop_last=False, num_workers=5)  # make it consistant to Ours
+    else:
+        val_loader = DataLoader(val_dataset, batch_size=train_cfg.batch_size, shuffle=True, pin_memory=False, drop_last=True, num_workers=5)  # make it consistant to Ours
     test_loader = DataLoader(test_dataset, batch_size=train_cfg.batch_size, shuffle=True, pin_memory=False, drop_last=False, num_workers=5)
     
     criterion = nn.CrossEntropyLoss()
@@ -73,10 +76,10 @@ def bert_classify(args, frozen_bert=False, balance=True):
     def func_evaluate(label, predicts):
         stat = stat_acc_f1(label.cpu().numpy(), predicts.cpu().numpy())
         return stat
-
-    trainer.train(func_loss, func_forward, func_evaluate, tune_loader, test_loader, val_loader
-                        , model_file=args.pretrain_model, load_self=True)
-    trainer.run(func_forward, None, test_loader)
+    with torch.cuda.device(args.gpu_index):
+        trainer.train(func_loss, func_forward, func_evaluate, tune_loader, test_loader, val_loader
+                            , model_file=args.pretrain_model, load_self=True)
+        trainer.run(func_forward, None, test_loader)
     return
 
 
@@ -84,6 +87,7 @@ if __name__ == "__main__":
     balance = True
     method = "base_gru"
     args = handle_argv('bert_classifier_' + method, 'bert_classifier_train.json', method)
-    bert_classify(args, frozen_bert=args.frozen_bert, balance=balance)
+    with torch.cuda.device(args.gpu_index):
+        bert_classify(args, frozen_bert=args.frozen_bert, balance=balance)
 
 

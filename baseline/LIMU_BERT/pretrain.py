@@ -50,7 +50,10 @@ def main(args):
     val_dataset = dataset.get_dataset(split='val')
     
     train_loader = DataLoader(train_dataset, batch_size=train_cfg.batch_size, shuffle=True, pin_memory=False, drop_last=True, num_workers=5)  # make it consistant to Ours
-    val_loader = DataLoader(val_dataset, batch_size=train_cfg.batch_size, shuffle=True, pin_memory=False, drop_last=True, num_workers=5)  # make it consistant to Ours
+    if len(val_dataset) < train_cfg.batch_size:
+        val_loader = DataLoader(val_dataset, batch_size=train_cfg.batch_size, shuffle=True, pin_memory=False, drop_last=False, num_workers=5)
+    else:
+        val_loader = DataLoader(val_dataset, batch_size=train_cfg.batch_size, shuffle=True, pin_memory=False, drop_last=True, num_workers=5)  # make it consistant to Ours
 
     model = LIMUBertModel4Pretrain(model_cfg)
     model = model.float()

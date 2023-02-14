@@ -607,7 +607,15 @@ class MoCo(object):
                     see_cluster_effect = False
                 sensor = [t.to(self.args.device) for t in sensor]
                 gt_label = labels[:, 0].to(self.args.device) # the first dim is motion labels
-                sup_label = [labels[:, i + 1].to(self.args.device) for i in range(self.args.label_type)]  # the following dim are cheap labels
+                if self.args.label_type:
+                    if self.args.cross == 'users': # use domain labels
+                        sup_label = [labels[:, 1].to(self.args.device)] 
+                    elif self.args.cross == 'positions' or self.args.cross == 'devices' :
+                        sup_label = [labels[:, 2].to(self.args.device)] 
+                    else:
+                        NotADirectoryError
+                else:
+                    sup_label = None
                 with autocast(enabled=self.args.fp16_precision):
                     output, target, logits_labels, cluster_eval, cluster_loss, center_shift, feature = self.model(sensor[0], sensor[1], labels=sup_label, 
                                                                                                         num_clusters=self.args.num_clusters, 

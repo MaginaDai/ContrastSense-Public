@@ -196,7 +196,7 @@ class Trainer(object):
         print(f'Best Accuracy: {best_stat[0]:0.4f} / {best_stat[1]:.4f} / {best_stat[2]:.4f}, F1: {best_stat[3]:.4f} / {best_stat[4]:.4f} / {best_stat[5]:.4f}')
         logging.info("Fine-tuning has finished.")
         logging.info(f"Best eval acc is {eval_acc_best} at {best_epoch}.")
-        logging.info(f"eval f1 is {eval_f1_best}.")
+        logging.info(f"best eval f1 is {eval_f1_best}.")
         logging.info(f"test f1 is {test_f1_best}.")
         logging.info(f"test acc is {test_acc_best}.")
         

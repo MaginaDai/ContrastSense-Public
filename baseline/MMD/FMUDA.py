@@ -155,13 +155,21 @@ class FMUDA(object):
 
             data_loader = zip(tune_loader, train_loader)
 
+            if epoch_counter == 24:
+                print('now')
+
             for (sensor, target), (sensor_domain, target_domain) in data_loader:
                 sensor = sensor.to(self.args.device)
                 target = target[:, 0].to(self.args.device)
                 
                 sensor_domain = sensor_domain.to(self.args.device)
-                target_domain = target_domain[:, 1].to(self.args.device)
-                
+                if self.args.cross == 'users': # use domain labels
+                    target_domain = target_domain[:, 1].to(self.args.device)
+                elif self.args.cross == 'positions' or self.args.cross == 'devices' :
+                    target_domain = target_domain[:, 2].to(self.args.device)
+                else:
+                    NotADirectoryError
+
                 with autocast(enabled=self.args.fp16_precision):
                     logits = self.model(sensor)
                     loss_clf = self.clf_loss(logits, target)
@@ -170,21 +178,25 @@ class FMUDA(object):
                 scaler.scale(loss_clf).backward()
                 scaler.step(self.optimizer)
                 scaler.update()
-
                 
                 if self.args.method == 'FM':
                     with autocast(enabled=self.args.fp16_precision):
                         feature = self.model.encoder(sensor_domain)
                         loss_uda = self.mmd_loss(feature, target_domain)
+                    if len(torch.unique(target_domain)) != 1:
+                        self.optimizer.zero_grad()
+                        scaler.scale(loss_uda).backward()
+                        scaler.step(self.optimizer)
+                        scaler.update()
                 else:
                     with autocast(enabled=self.args.fp16_precision):
                         logits_domain = self.model.predict_domain(sensor_domain)
                         loss_uda = self.domain_loss(logits_domain, target_domain)
-
-                self.optimizer.zero_grad()
-                scaler.scale(loss_uda).backward()
-                scaler.step(self.optimizer)
-                scaler.update()
+                
+                    self.optimizer.zero_grad()
+                    scaler.scale(loss_uda).backward()
+                    scaler.step(self.optimizer)
+                    scaler.update()
 
                 acc = accuracy(logits, target, topk=(1,))
                 acc_batch.update(acc, sensor.size(0))

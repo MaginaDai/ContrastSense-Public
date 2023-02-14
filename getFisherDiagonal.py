@@ -102,14 +102,11 @@ def getFisherDiagonal_initial(args):
     model = MoCo_v1(device=args.device, mol=args.mol, K=args.moco_K)
     optimizer = torch.optim.Adam(model.parameters(), 1e-4, weight_decay=1e-4)
 
-    if args.pretrained:
-        if os.path.isfile(args.pretrained):
-            checkpoint = torch.load(args.pretrained, map_location="cpu")
-            state_dict = checkpoint['state_dict']
-            model.load_state_dict(state_dict, strict=False)
-            optimizer.load_state_dict(checkpoint['optimizer'])
-    else:
-        raise NotADirectoryError
+    model_dir = 'runs/'+ args.pretrained + '/model_best.pth.tar'
+    checkpoint = torch.load(model_dir, map_location="cpu")
+    state_dict = checkpoint['state_dict']
+    model.load_state_dict(state_dict, strict=False)
+    optimizer.load_state_dict(checkpoint['optimizer'])
     
     model.to(args.device)
 
@@ -126,12 +123,18 @@ def getFisherDiagonal_initial(args):
         for sensor, labels in train_loader:
             sensor = [t.to(args.device) for t in sensor]
             gt_label = labels[:, 0].to(args.device) # the first dim is motion labels
-            sup_label = [labels[:, i + 1].to(args.device) for i in range(args.label_type)]  # the following dim are cheap labels
+            if args.label_type:
+                if args.cross == 'users': # use domain labels
+                    sup_label = [labels[:, 1].to(args.device)] 
+                elif args.cross == 'positions' or args.cross == 'devices' :
+                    sup_label = [labels[:, 2].to(args.device)] 
+                else:
+                    NotADirectoryError
             _, _, logits_labels, _, _, _, _ = model(sensor[0], sensor[1], labels=sup_label, 
-                                                                                                num_clusters=args.num_clusters, 
-                                                                                                iter_tol=args.iter_tol,
-                                                                                                gt=gt_label, if_plot=False,
-                                                                                                n_iter=0)
+                                                                                            num_clusters=args.num_clusters, 
+                                                                                            iter_tol=args.iter_tol,
+                                                                                            gt=gt_label, if_plot=False,
+                                                                                            n_iter=0)
             sup_loss = model.supervised_CL(logits_labels=logits_labels, labels=sup_label)
             loss = - args.cl_slr[0] * sup_loss
             optimizer.zero_grad()
@@ -154,7 +157,13 @@ def replenish_queue(model, train_loader, args):
     with torch.no_grad():
         for sensor, labels in train_loader:
             sensor = [t.to(args.device) for t in sensor]
-            sup_label = [labels[:, i + 1].to(args.device) for i in range(args.label_type)]  # the following dim are cheap labels
+            if args.label_type:
+                if args.cross == 'users': # use domain labels
+                    sup_label = [labels[:, 1].to(args.device)] 
+                elif args.cross == 'positions' or args.cross == 'devices' :
+                    sup_label = [labels[:, 2].to(args.device)] 
+                else:
+                    NotADirectoryError
             
             sen_q = sensor[0]
             sen_k = sensor[1]
@@ -198,7 +207,13 @@ def getFisherDiagonal_pretrain(args, train_loader, save_dir):
     for sensor, labels in train_loader:
         sensor = [t.to(args.device) for t in sensor]
         gt_label = labels[:, 0].to(args.device) # the first dim is motion labels
-        sup_label = [labels[:, i + 1].to(args.device) for i in range(args.label_type)]  # the following dim are cheap labels
+        if args.label_type:
+            if args.cross == 'users': # use domain labels
+                sup_label = [labels[:, 1].to(args.device)] 
+            elif args.cross == 'positions' or args.cross == 'devices' :
+                sup_label = [labels[:, 2].to(args.device)] 
+            else:
+                NotADirectoryError
         output, target, logits_labels, cluster_eval, cluster_loss, center_shift, feature = model(sensor[0], sensor[1], labels=sup_label, 
                                                                                             num_clusters=args.num_clusters, 
                                                                                             iter_tol=args.iter_tol,

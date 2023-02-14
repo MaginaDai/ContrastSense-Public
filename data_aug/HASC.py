@@ -12,7 +12,7 @@ from collections import Counter
 def read_meta(root, file):
 
     file_prefix = file.split('.')
-    user = file_prefix[0]
+    user_exp_id = file_prefix[0]
 
     file_name = os.path.join(root, file)
     f = open(file_name, 'r')
@@ -27,8 +27,11 @@ def read_meta(root, file):
             device_infor = data[1].split(';')
             if len(device_infor) == 1:
                 device = device_infor[0]
+            elif 'SDK' in device_infor[1] or 'iOS' in device_infor[1] or 'iPhone OS' in device_infor[1]:
+                device = device_infor[0]
             else:
                 device = device_infor[1]
+            device = device.replace(' ', '')
         elif data[0] == 'Frequency(Hz)':
             freq = int(data[1])
         elif data[0] == 'Place':
@@ -39,7 +42,9 @@ def read_meta(root, file):
             else:
                 raise InvalidContext
     f.close()
-    return user, device, freq, InOut
+    if 'WAA' in device:
+        print("now")
+    return user_exp_id, device, freq, InOut
 
 
 def read_movement_period(root, file):
@@ -80,12 +85,14 @@ def translate_label(label):
         return 1
     elif 'stup' in label or 'stairup' in label:
         return 2
-    elif 'walk' in label or 'move' in label:
+    elif 'walk' in label:
         return 3
     elif 'skip' in label or 'jump' in label:
         return 4
     elif 'stay' in label:
         return 5
+    elif 'move' in label:
+        return -1
     elif 'elevatordown' in label or 'escalatordown' in label:
         return -1
     elif 'elevatorup' in label or 'escalatorup' in label:
@@ -93,6 +100,7 @@ def translate_label(label):
     elif 'terminalpositionchange' in label or 'stey' in label or 'turn' in label or 'door.maleual.close' in label:  # ignore
         return -1
 
+# def translate_device(device):
 
 def read_acc_and_gyro(root, file, period, infor, seq_len, target_freq, num, path_save):
     try:
@@ -158,7 +166,8 @@ def main(seq_len, target_freq, path_save):
     for root, dirs, files in os.walk(path_original):
         for f in range(len(files)):
             if 'meta' in files[f]:
-                user, device, freq, InOut = read_meta(root, files[f])
+                user = root.split('/')[-1]
+                user_exp_id, device, freq, InOut = read_meta(root, files[f])
                 
                 InOut_list.append(InOut)
                 if InOut != -1:
@@ -176,8 +185,7 @@ def main(seq_len, target_freq, path_save):
                 
                 add_infor = [user_id, device_id, InOut, freq]
                 freq_list.append(freq)
-                period = read_movement_period(root, user + '.label')
-                
+                period = read_movement_period(root, user_exp_id + '.label')
                 
                 if period is None:
                     continue
@@ -186,7 +194,7 @@ def main(seq_len, target_freq, path_save):
                     label_list.append(period[i][2])
                     if period[i][2] == 'movingWalkway;stay' or period[i][2] is None:
                         print('now')
-                num = read_acc_and_gyro(root, user, period, add_infor, seq_len, target_freq, num, path_save)
+                num = read_acc_and_gyro(root, user_exp_id, period, add_infor, seq_len, target_freq, num, path_save)
 
 
         users_count += 1
@@ -201,8 +209,8 @@ def main(seq_len, target_freq, path_save):
     print(freq_list)
     print(len(user_name))
     print(InOut_count)
+    print(device_name)
     print(num)
-
     return
 
 if __name__ == '__main__':

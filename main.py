@@ -35,19 +35,19 @@ parser.add_argument('--out_dim', default=256, type=int,
                     help='feature dimension (default: 256)')
 parser.add_argument('-t', '--temperature', default=0.1, type=float,
                     help='softmax temperature (default: 1)')
-parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
+parser.add_argument('--store', default='CDL_moco_K1536_v1', type=str, help='define the name head for model storing')
 parser.add_argument('-b', '--batch-size', default=256, type=int,
                     metavar='N',
                     help='mini-batch size (default: 256), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('-name', default='HASC',
+parser.add_argument('-name', default='HHAR',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'ICHAR', 'HASC'])
 parser.add_argument('-wd', '--weight-decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)',
                     dest='weight_decay')
 parser.add_argument('-j', '--workers', default=10, type=int, metavar='N',
-                    help='number of data loading workers (default: 5)')
+                    help='number of data loading workers (default: 10)')
 parser.add_argument('-e', '--epochs', default=2000, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--seed', default=0, type=int,
@@ -72,7 +72,7 @@ parser.add_argument('-s_step', default=500, type=int, help='the step size of Ste
 parser.add_argument('-s_gamma', default=0.5, type=float, help='the gamma of StepLR')
 
 parser.add_argument('-label_type', default=1, type=int, help='How many different kinds of labels for pretraining')
-parser.add_argument('-slr', default=[0.3], nargs='+', type=float, help='the ratio of sup_loss')
+parser.add_argument('-slr', default=[0.7], nargs='+', type=float, help='the ratio of sup_loss')
 parser.add_argument('-tem_labels', default=[0.1], nargs='+', type=float, help='the temperature for supervised CL')
 
 parser.add_argument('-num_clusters', default=None, type=int, help='number of clusters for K-means')
@@ -82,12 +82,18 @@ parser.add_argument('-final_dim', default=8, type=int, help='the output dims of 
 parser.add_argument('-mo', default=0.9, type=float, help='the momentum for Batch Normalization')
 parser.add_argument('-drop', default=0.1, type=float, help='the dropout portion')
 
-parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
+parser.add_argument('-version', default="shot1", type=str, help='control the version of the setting')
 parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-CE', default=False, type=bool, help='Use Cross Entropy Domain Loss or not')
 parser.add_argument('-ewc', default=True, type=float, help='Use EWC or not')
 parser.add_argument('-fishermax', default=0.01, type=float, help='fishermax')
-parser.add_argument('-p', default=0.2, type=float, help='possibility for one aug')
+parser.add_argument('-p', default=0.8, type=float, help='possibility for one aug')
+parser.add_argument('-p2', default=0.4, type=float, help='possibility for one aug')
+parser.add_argument('-p3', default=0.2, type=float, help='possibility for one aug')
+parser.add_argument('-p4', default=0.4, type=float, help='possibility for one aug')
+parser.add_argument('-p5', default=0.8, type=float, help='possibility for one aug')
+parser.add_argument('-p6', default=0.8, type=float, help='possibility for one aug')
+parser.add_argument('-cross', default='users', type=str, help='decide to use which kind of labels')
 
 
 def main():
@@ -102,7 +108,7 @@ def main():
         args.device = torch.device('cpu')
         args.gpu_index = -1
 
-    dataset = ContrastiveLearningDataset(transfer=False, version=args.version, datasets_name=args.name, p=args.p)
+    dataset = ContrastiveLearningDataset(transfer=False, version=args.version, datasets_name=args.name, p=args.p, p2=args.p2, p3=args.p3, p4=args.p4, p5=args.p5, p6=args.p6)
 
     train_dataset = dataset.get_dataset(split='train')
 

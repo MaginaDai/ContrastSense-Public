@@ -30,7 +30,7 @@ def sperate_label_data(sample, datasets_name):
         return sensor, label
 
 
-def load_data(datasets_name, version, split, shot=None):
+def load_data(datasets_name, version, split, cross, shot=None):
     root_dir = fetch_dataset_root(datasets_name)
 
     train_dir = '../../' + root_dir + '_' + version + '/train_set.npz'
@@ -64,18 +64,23 @@ def load_data(datasets_name, version, split, shot=None):
         
         X[idx] = sensor
         y[idx] = label[0]
-        d[idx] = label[1]
+        if cross == 'users':
+            d[idx] = label[1]
+        elif cross == 'positions' or cross == 'devices':
+            d[idx] = label[2]
+        else:
+            NotADirectoryError
 
     return X, y, d    
 
 
-def load_GILE_type_data(datasets_name, version, shot, batch_size, setting):
+def load_GILE_type_data(datasets_name, version, shot, batch_size, setting, cross):
     tune_domain_loader = []
 
     if setting == 'full':  # load fully labeled data in the training set
-        data, motion_label, domain_label = load_data(datasets_name, version, 'train', shot)
+        data, motion_label, domain_label = load_data(datasets_name, version, 'train', cross, shot)
     else:
-        data, motion_label, domain_label = load_data(datasets_name, version, 'tune', shot)
+        data, motion_label, domain_label = load_data(datasets_name, version, 'tune', cross, shot)
     domain_types = np.unique(domain_label)
 
     for domain_type in domain_types:
@@ -101,13 +106,13 @@ def load_GILE_type_data(datasets_name, version, shot, batch_size, setting):
         
         tune_domain_loader.append(source_loader)
 
-    val_data, val_motion_label, val_domain_label = load_data(datasets_name, version, 'val', shot)
+    val_data, val_motion_label, val_domain_label = load_data(datasets_name, version, 'val', cross, shot)
 
     val_data = np.transpose(val_data.reshape((-1, 1, 200, 6)), (0, 2, 1, 3))
     val_set = data_loader(val_data, val_motion_label, val_domain_label, transform)
     val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
 
-    test_data, test_motion_label, test_domain_label = load_data(datasets_name, version, 'test', shot)
+    test_data, test_motion_label, test_domain_label = load_data(datasets_name, version, 'test', cross, shot)
     test_data = np.transpose(test_data.reshape((-1, 1, 200, 6)), (0, 2, 1, 3))
     test_set = data_loader(test_data, test_motion_label, test_domain_label, transform)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)

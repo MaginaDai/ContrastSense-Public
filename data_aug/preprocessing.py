@@ -31,7 +31,7 @@ uot_movement = ['Standing', 'Sitting', 'Walking', 'Upstairs', 'Downstairs',  'Ru
 MAX_INDEX = {
     'HHAR': 9166,
     'MotionSense': 4530,
-    'Shoaib': 10334,
+    'Shoaib': 10220,
     'UCI': 2087,
     'ICHAR': 9152,
     'HASC': 10291,
@@ -52,7 +52,7 @@ UsersNum = {
     'Shoaib': 10,
     'UCI': 30,
     'ICHAR': 10,
-    'HASC': 306,  # actually we have 288 users in total. But the largest user id is 305, set it to 306. +1 since it starts from 0. 
+    'HASC': 80,  # actually we have 64 users in total. But the largest user id is 79, set it to 80. +1 since it starts from 0. 
 }
 
 LabelPosition = {
@@ -73,6 +73,14 @@ ClassesNum = {
     'HASC': 6
 }
 
+DevicesNum = {
+    'HHAR': 6,
+    'HASC': 24, # actually we have 18 devices in total. But the largest user id is 23, set it to 24. +1 since it starts from 0. 
+}
+
+PositionNum = {
+    'Shoaib': 5,
+}
 
 HHAR_movement = ['stand', 'sit', 'walk', 'stairsup', 'stairsdown', 'bike']
 ACT_Translated_labels = ['Downstairs', 'Upstairs', 'Walking', 'Running', 'Standing', 'Sitting']
@@ -110,7 +118,7 @@ test_num_of_user = 3
 
 # MAX_INDEX = 9166
 percent = [0.2, 0.5, 1, 2, 5, 10]
-shot_num = [1, 5, 10, 15, 20, 50, 100, 200, 500] # enlarge to 100
+shot_num = [1, 5, 10, 15, 20, 50, 100, 200, 500] # enlarge to 500
 
 
 def preprocessing_plain_segmentation(dir, target_dir, val_portion=0.15, test_portion=0.25):
@@ -185,47 +193,54 @@ def fetch_instance_number_of_dataset(dir):
     return len(file_name_list)
 
 
-def preprocessing_dataset_cross_person_val(dir, target_dir, dataset, test_portion=0.6, val_portion=0.15, tune_user_portion=0.4):
+def preprocessing_dataset_cross_domain_val(dir, target_dir, dataset, test_portion=0.6, val_portion=0.15, tune_domain_portion=0.4, cross='users'):
     print(dataset)
     
     num = fetch_instance_number_of_dataset(dir)
-    u = []
+    domain = []
     motion_label = []
     label_distribution = np.zeros(7)
     for i in range(num):
         sub_dir = dir + str(i) + '.npz'
         data = np.load(sub_dir, allow_pickle=True)
-        motion = turn_motion_label_to_idx(data['add_infor'][0, LabelPosition[dataset]], dataset)
-        u.append(data['add_infor'][0, UsersPosition[dataset]])
+        motion = data['add_infor'][0]
+        if cross == 'users':
+            domain.append(data['add_infor'][1])
+        elif cross == 'devices':
+            domain.append(data['add_infor'][2])
+        elif cross == 'positions':
+            domain.append(data['add_infor'][2])
+        else:
+            NotADirectoryError()
         motion_label.append(motion)
         label_distribution[motion] += 1
     
-    # print(label_distribution)
-    print(max(u))
-    user_type = np.unique(u)
-    test_num = max(int(len(user_type) * test_portion), 1)
-    val_num = max(int(len(user_type) * val_portion), 1)
+    print(label_distribution)
+    # print(f"maximum of domains id {max(domain)}")
+    domain_type = np.unique(domain)
+    test_num = max(int(len(domain_type) * test_portion), 1)
+    val_num = max(int(len(domain_type) * val_portion), 1)
     
-    print(len(user_type))
-    np.random.shuffle(user_type)
-    users_test_name = np.sort(user_type[:test_num])
+    print(f"number of domains {domain_type}")
+    np.random.shuffle(domain_type)
+    domains_test_name = np.sort(domain_type[:test_num])
     # users_test_name = np.array(['e', 'i'])
-    print(len(users_test_name))
+    print(f"number of test domains {len(domains_test_name)}")
 
-    users_train_name = np.sort(user_type[test_num+val_num:])
+    domains_train_name = np.sort(domain_type[test_num+val_num:])
     # users_train_name = np.array(['a', 'd', 'f', 'g', 'h'])
-    print(len(users_train_name))
+    print(f"number of training domains {len(domains_train_name)}")
     
-    users_val_name = np.sort(user_type[test_num:test_num+val_num])
+    domains_val_name = np.sort(domain_type[test_num:test_num+val_num])
     # users_val_name = np.array(['b', 'c'])
-    print(len(users_val_name))
+    print(f"number of validation domains {len(domains_val_name)}")
 
-    train_num = [j for j in range(num) if u[j] in users_train_name]
-    val_num =  [j for j in range(num) if u[j] in users_val_name]
-    test_num = [j for j in range(num) if u[j] in users_test_name]
+    train_num = [j for j in range(num) if domain[j] in domains_train_name]
+    val_num =  [j for j in range(num) if domain[j] in domains_val_name]
+    test_num = [j for j in range(num) if domain[j] in domains_test_name]
 
     write_dataset(target_dir, train_num, val_num, test_num)
-    write_balance_tune_set(dir, target_dir, dataset, dataset_size=num, tune_user_portion=tune_user_portion)
+    write_balance_tune_set(dir, target_dir, dataset, dataset_size=num, tune_domain_portion=tune_domain_portion, cross=cross)
     return
 
 
@@ -284,7 +299,7 @@ def preprocessing_dataset_cross_dataset(dir, target_dir, dataset, test_portion=0
     test_num = [idx_record[j] for j in range(len(motion_label)) if u[j] in users_test_name]
 
     write_dataset(target_dir, train_num, val_num, test_num)
-    write_balance_tune_set(dir, target_dir, dataset, dataset_size=len(motion_label), tune_user_portion=tune_user_portion, cross_dataset=True)
+    write_balance_tune_set(dir, target_dir, dataset, dataset_size=len(motion_label), tune_domain_portion=tune_user_portion, cross_dataset=True)
     return
 
 
@@ -338,43 +353,51 @@ def write_tune_set(dir):
     return
     
 
-def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_percent=False, if_cross_user=True, tune_user_portion=0.4, cross_dataset=False):
-    loc = target_dir + 'train_set' + '.npz'
+def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_percent=False, if_cross_user=True, tune_domain_portion=0.4, train_dir=None, cross='users'):
+    if train_dir is None:
+        loc = target_dir + 'train_set' + '.npz'
+    else:
+        loc = train_dir + 'train_set' + '.npz'
     data = np.load(loc)
     train_set = data['train_set']
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
     label = []
-    user = []
+    domain = []
 
     for i in train_set:
         sub_dir = ori_dir + i
         data = np.load(sub_dir, allow_pickle=True)
-        motion = turn_motion_label_to_idx(data['add_infor'][0, LabelPosition[dataset]], dataset)
-        if cross_dataset:
+        motion = data['add_infor'][0]
+        if cross == 'dataset':
             motion = label_alignment([motion], dataset=dataset)[0]
         label.append(motion)
-        if dataset == 'Shoaib':
-            user.append(int(data['add_infor'][0, UsersPosition[dataset]]))
+
+        if cross == 'users':
+            domain.append(data['add_infor'][1])
+        elif cross == 'devices':
+            domain.append(data['add_infor'][2])
+        elif cross == 'positions':
+            domain.append(data['add_infor'][2])
         else:
-            user.append(data['add_infor'][0, UsersPosition[dataset]])
+            NotADirectoryError()
 
     label = np.array(label)
     label_type = np.unique(label)
     label_type_num = len(label_type)
-    print(label_type)
-    if cross_dataset:
+    print(f"type of labels {label_type}")
+    if cross == 'dataset':
         assert label_type_num == 4
     else:
         assert label_type_num == ClassesNum[dataset]
 
     while True:
-        user_type = np.unique(user)
-        user_selected_num = np.max([int(len(user_type) * tune_user_portion), 1])
+        domain_type = np.unique(domain)
+        domain_selected_num = np.max([int(len(domain_type) * tune_domain_portion), 1])
 
 
-        np.random.shuffle(user_type)
-        user_selected = user_type[:user_selected_num]
+        np.random.shuffle(domain_type)
+        domain_selected = domain_type[:domain_selected_num]
 
         if dataset_size is None:
             set_size = fetch_instance_number_of_dataset(ori_dir)
@@ -411,12 +434,12 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
                 
                 for i in label_type:
                     idx = np.argwhere((label == i)).squeeze()
-                    if if_cross_user:
-                        idx_user_selected = []
+                    if cross:
+                        idx_domain_selected = []
                         for j in idx:
-                            if user[j] in user_selected:
-                                idx_user_selected.append(j)
-                        idx = np.array(idx_user_selected)
+                            if domain[j] in domain_selected:
+                                idx_domain_selected.append(j)
+                        idx = np.array(idx_domain_selected)
                     np.random.shuffle(idx)
                     if len(idx) == 0:
                         irreasonable_segmentation = 1
@@ -434,8 +457,8 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
             if irreasonable_segmentation == 0:
                 break
 
-    print(user_type)
-    print(f"motion classes {label_type_num}, total train num {len(label)}, total user num {len(user_type)}, user {user_selected} provides label")
+    print(f"type of domains {domain_type}")
+    print(f"motion classes {label_type_num}, total train num {len(label)}, total domain num {len(domain_type)}, domain {domain_selected} provides label")
     return
 
 
@@ -481,13 +504,13 @@ def seg_different_test_num():
     path = r'./datasets/HHAR_50_200'
     for t in range(2, 7):
         path_save = path + r'_test_{}/'.format(t)
-        preprocessing_dataset_cross_person_val(dir=path_save, dataset='HHAR', dataset_size=13047, test_num=t)
+        preprocessing_dataset_cross_domain_val(dir=path_save, dataset='HHAR', dataset_size=13047, test_num=t, cross='users')
     return
 
 
 def extract_and_seg_hhar(path_save, dataset, window_time, seq_len, version, test_num):
     num = preprocess_hhar(DATASET_PATH, path_save, version=version, window_time=window_time, seq_len=seq_len)  # use jump to control overlap.
-    preprocessing_dataset_cross_person_val(dir=path_save, dataset=dataset, dataset_size=num, test_num=test_num)
+    preprocessing_dataset_cross_domain_val(dir=path_save, dataset=dataset, dataset_size=num, test_num=test_num, cross='users')
     return
 
 DATASET_PATH = r'./original_dataset/hhar/'
@@ -496,11 +519,11 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
-    dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
+    dataset_name = ["HASC"]
     # dataset_name = ["Shoaib"]
     for i in range(seg_types):
         for dataset in dataset_name:
-            preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}_50_200/', target_dir=f"datasets/{dataset}_test{i}/", dataset=dataset)
+            preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot{i}/", dataset=dataset, cross='users')
 
     return
 
@@ -515,8 +538,29 @@ def new_segmentation_for_dataset(seg_types=5, seed=940):
             preprocessing_dataset_cross_dataset(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_cross_dataset{i}/", dataset=dataset)
 
     return
-    
 
+def new_segmentation_for_positions(seg_types=5, seed=940):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    
+    dataset = "Shoaib"
+    for i in range(seg_types):
+        preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_cp{i}/", test_portion=0.4, val_portion=0.2, tune_domain_portion=0.5, dataset=dataset, cross='positions')
+    return
+
+
+def new_segmentation_for_devices(seg_types=1, seed=0):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    
+    dataset = "HASC"
+    for i in range(seg_types):
+        preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_cd_test{i}/", test_portion=0.6, val_portion=0.15, tune_domain_portion=0.4, dataset=dataset, cross='devices')
+    return
+
+    
 def new_segmentation_for_domain_shift_visual(seed=940, seg_types=5):
     random.seed(seed)
     np.random.seed(seed)
@@ -524,61 +568,37 @@ def new_segmentation_for_domain_shift_visual(seed=940, seg_types=5):
     
     for i in range(seg_types):
         # preprocessing_plain_segmentation(f'datasets/{dataset}/', f"datasets/{dataset}_train65_alltune_plain_v{i}/", val_portion=0.15, test_portion=0.20)
-        preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train65_alltune_cross_v{i}/", dataset=dataset, val_portion=0.15, test_portion=0.20, tune_user_portion=1)
+        preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train65_alltune_cross_v{i}/", dataset=dataset, val_portion=0.15, test_portion=0.20, tune_user_portion=1, cross='users')
         
         # preprocessing_plain_segmentation(f'datasets/{dataset}/', f"datasets/{dataset}_train60_supervised_plain/", val_portion=0.15, test_portion=0.25)
-        # preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train60_supervised_cross/", dataset=dataset, val_portion=0.15, test_portion=0.25)
+        # preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train60_supervised_cross/", dataset=dataset, val_portion=0.15, test_portion=0.25)
         
         # preprocessing_plain_segmentation(f'datasets/{dataset}/', f"datasets/{dataset}_train50_supervised_plain/", val_portion=0.15, test_portion=0.35)
-        # preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train50_supervised_cross/", dataset=dataset, val_portion=0.15, test_portion=0.35)
+        # preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train50_supervised_cross/", dataset=dataset, val_portion=0.15, test_portion=0.35)
         
         # preprocessing_plain_segmentation(f'datasets/{dataset}/', f"datasets/{dataset}_train45_alltune_plain_v{i}/", val_portion=0.15, test_portion=0.40)
-        preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train45_alltune_cross_v{i}/", dataset=dataset, val_portion=0.15, test_portion=0.40, tune_user_portion=1)
+        preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train45_alltune_cross_v{i}/", dataset=dataset, val_portion=0.15, test_portion=0.40, tune_user_portion=1, cross='users')
 
         # preprocessing_plain_segmentation(f'datasets/{dataset}/', f"datasets/{dataset}_train25_alltune_plain_v{i}/", val_portion=0.15, test_portion=0.60)
-        preprocessing_dataset_cross_person_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train25_alltune_cross_v{i}/", dataset=dataset, val_portion=0.15, test_portion=0.60, tune_user_portion=1)
+        preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_train25_alltune_cross_v{i}/", dataset=dataset, val_portion=0.15, test_portion=0.60, tune_user_portion=1, cross='users')
 
+
+def new_tune_segmentation_with_different_portion(seed=940, seg_type=1):
+    random.seed(seed)
+    np.random.seed(seed)
+    dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
+    # dataset_name = ["HHAR"]
+    tune_portion = [0.6, 0.8, 1.0]
+    for i in range(seg_type):
+        for portion in tune_portion:
+            for dataset in dataset_name:
+                write_balance_tune_set(ori_dir=f'datasets/{dataset}/', train_dir=f'datasets/{dataset}_shot{i}/', target_dir=f'datasets/{dataset}_tune_portion_{int(portion*100)}_shot{i}/', dataset=dataset, tune_domain_portion=portion, cross='users')
+    return
+    
 
 if __name__ == '__main__':
-    # divide_fewer_labels()
-    # data = np.load(os.path.join(path_save, 'val_set' + '.npz'))
-    # val_set = data['train_set']
-    # np.savez(os.path.join(path_save, 'val_set' + '.npz'), val_set=val_set)
-    #
-    # data = np.load(os.path.join(path_save, 'test_set' + '.npz'))
-    # test_set = data['train_set']
-    # np.savez(os.path.join(path_save, 'test_set' + '.npz'), test_set=test_set)
-
-    # preprocessing_HHAR_cross_person(main_dir=r'../datasets/HHAR person/')
-
-    # preprocessing_dataset_cross_person_val(dir=r'datasets/HHAR/', target_dir=r'datasets/HHAR_shot/', dataset='HHAR')
-    # preprocessing_dataset_cross_person_val(dir=r'datasets/MotionSense/', target_dir=r'datasets/MotionSense_shot/', dataset='MotionSense')
-    # preprocessing_dataset_cross_person_val(dir=r'datasets/Shoaib/', target_dir=r'datasets/Shoaib_shot/', dataset='Shoaib')
-    # preprocessing_dataset_cross_person_val(dir=r'datasets/HASC/', target_dir=r'datasets/HASC_shot/', dataset='HASC')
-    # preprocessing_dataset_cross_person_val(dir=r'datasets/UCI/', target_dir=r'datasets/HHAR_shot/', dataset='UCI')
-    # preprocessing_dataset_cross_person_val(dir=r'datasets/ICHAR/', target_dir=r'datasets/HHAR_shot/', dataset='ICHAR')
- 
-    datasets_shot_record(datasets='HASC', version='s1', shot=100)
-
-    # datasets_users_record(dir=r'datasets/HHAR_50_200/', datasets='HHAR')
-    # datasets_users_record(dir=r'datasets/MotionSense_50_200/', datasets='MotionSense')
-    # datasets_users_record(dir=r'datasets/Shoaib_50_200/', datasets='Shoaib')
-    # datasets_users_record(dir=r'datasets/UCI_50_200/', datasets='UCI')
-    # datasets_users_record(dir=r'datasets/ICHAR_50_200/', datasets='ICHAR')
-    # datasets_users_record(dir=r'datasets/HASC_50_200/', datasets='HASC')
-
-
-    # write_balance_tune_set(ori_dir=r'datasets/HHAR/', target_dir=r'datasets/HHAR_shot/', dataset='HHAR')
-    # write_balance_tune_set(ori_dir=r'datasets/MotionSense_50_200/', target_dir=r'datasets/MotionSense_50_200_shot/', dataset='MotionSense')
-    # write_balance_tune_set(ori_dir=r'datasets/Shoaib_50_200/', target_dir=r'datasets/Shoaib_50_200_shot/', dataset='Shoaib')
-    # write_balance_tune_set(ori_dir=r'datasets/HASC_50_200/', target_dir=r'datasets/HASC_50_200_shot/', dataset='HASC')
-    
-    # new_segmentation_for_user(seg_types=1)
-    # new_segmentation_for_dataset(seg_types=5)
-    # new_segmentation_for_domain_shift_visual()
-    
-    # dir = r'datasets/HHAR/'
-    # preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion35/', dataset='HHAR', test_portion=0.5, val_portion=0.15)
-    # preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion50/', dataset='HHAR', test_portion=0.35, val_portion=0.15)
-    # preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion60/', dataset='HHAR', test_portion=0.25, val_portion=0.15)
-    # preprocessing_dataset_cross_person_val(dir, target_dir=r'datasets/HHAR_shot_portion75/', dataset='HHAR', test_portion=0.10, val_portion=0.15)
+    # datasets_shot_record(datasets='HASC', version='s1', shot=100)
+    # new_segmentation_for_positions(seg_types=5)
+    # new_segmentation_for_devices(seg_types=1)
+    # new_segmentation_for_user(seg_types=5)
+    new_tune_segmentation_with_different_portion(seed=940, seg_type=5)

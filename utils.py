@@ -386,7 +386,7 @@ def handle_argv(target, config_train, prefix):
                         help='Label Index')
     parser.add_argument('-s', '--save_model', type=str, default='model',
                         help='The saved model name')
-    parser.add_argument('-name', default='HHAR', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR'])
+    parser.add_argument('-name', default='HASC', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR'])
 
     parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
     parser.add_argument('--disable-cuda', action='store_true', help='Disable CUDA')
@@ -394,7 +394,8 @@ def handle_argv(target, config_train, prefix):
     parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
     parser.add_argument('-shot', default=None, type=int, help='how many shots of labels to use')
     parser.add_argument('-frozen_bert', default=False, type=int, help='how many shots of labels to use')
-
+    parser.add_argument('-cross', default='devices', type=str, help='cross domain setting')
+    parser.add_argument('-pv', '--pretrain_version',  type=str, help='Pretrained Dataset version')
     try:
         args = parser.parse_args()
     except:
@@ -405,7 +406,8 @@ def handle_argv(target, config_train, prefix):
         print("Unable to find corresponding model config!")
         sys.exit()
     args.model_cfg = model_cfg
-    args = create_io_config(args, args.name, args.dataset_version, pretrain_model=args.model_file, target=target, model_file=args.pretrain_dataset)
+    args = create_io_config(args, args.name, args.dataset_version, pretrain_model=args.pretrain_dataset,
+                         target=target, model_file=args.model_file, pretrain_version=args.pretrain_version)
     return args
 
 

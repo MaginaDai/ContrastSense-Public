@@ -151,7 +151,7 @@ def get_accuracy(source_loaders, DEVICE, model, classifier_fn, batch_size):
 
 def train_GILE(model, DEVICE, optimizer, tune_loader, val_loader, test_loader, args):
 
-    writer_pos = './runs/' + args.store + '/' + args.name
+    writer_pos = './runs/' + args.store + '/' + args.name + '_shot_' + str(args.shot)
     writer = SummaryWriter(writer_pos)
     logging.basicConfig(filename=os.path.join(writer.log_dir, 'training.log'), level=logging.DEBUG)
 
@@ -177,16 +177,19 @@ def train_GILE(model, DEVICE, optimizer, tune_loader, val_loader, test_loader, a
         val_f1 = get_f1([val_loader], DEVICE, model, model.classifier, args.batch_size)
         test_f1 = get_f1([test_loader], DEVICE, model, model.classifier, args.batch_size)
 
+        _, val_acc, _, _ = get_accuracy([val_loader], DEVICE, model, model.classifier, args.batch_size)
+        _, test_acc, _, _ = get_accuracy([test_loader], DEVICE, model, model.classifier, args.batch_size)
+
         writer.add_scalar('loss', avg_epoch_loss, global_step=e)
         writer.add_scalar('loss_y', avg_epoch_class_y_loss, global_step=e)
         writer.add_scalar('train_f1', train_f1, global_step=e)
         writer.add_scalar('val_f1', val_f1, global_step=e)
+        writer.add_scalar('val_acc', val_acc, global_step=e)
+        writer.add_scalar('test_acc', test_acc, global_step=e)
 
         logging.debug('Epoch: [{}/{}], Avg loss: {:.2f}, y loss: {:.2f}%'.format(e + 1, args.n_epoch, avg_epoch_loss, avg_epoch_class_y_loss))
-        # logging.debug('Epoch:[{}/{}], train f1 d:{:.2f} y:{:.2f} | d_false:{:.2f} y_false:{:.2f}'.format(e+1, args.n_epoch, train_f1_d, train_f1_y, train_f1_d_false, train_f1_y_false))
-        # logging.debug('Epoch:[{}/{}], val f1 d:{:.2f} y:{:.2f} | d_false:{:.2f} y_false:{:.2f}'.format(e+1, args.n_epoch, val_f1_d, val_f1_y, val_f1_d_false, val_f1_y_false))
-        # logging.debug('Epoch:[{}/{}], TEST f1 d:{:.2f} y:{:.2f} | d_false:{:.2f} y_false:{:.2f}'.format(e+1, args.n_epoch, test_f1_d, test_f1_y, test_f1_d_false, test_f1_y_false))
         logging.debug('Epoch:[{}/{}], train f1:{:.2f} | val f1: {:.2f} | test f1: {:.2f}'.format(e+1, args.n_epoch, train_f1, val_f1, test_f1))
+        logging.debug('Epoch:[{}/{}], val acc: {:.2f} | test acc: {:.2f}'.format(e+1, args.n_epoch, val_acc, test_acc))
         
         # save the best model
         is_best = val_f1 > best_f1
@@ -194,6 +197,7 @@ def train_GILE(model, DEVICE, optimizer, tune_loader, val_loader, test_loader, a
         if is_best:
             best_epoch = e
             best_test_f1 = test_f1
+            best_acc = test_acc
             checkpoint_name = 'model_best.pth.tar'
             save_checkpoint({
                 'epoch': e,
@@ -205,9 +209,11 @@ def train_GILE(model, DEVICE, optimizer, tune_loader, val_loader, test_loader, a
     logging.info("GILE training has finished.")
     logging.info(f"best eval f1 is {best_f1} at {best_epoch}.")
     logging.info(f"best test f1 is {best_test_f1} at {best_epoch}.")
+    logging.info(f"best test acc is {best_acc} at {best_epoch}.")
 
     print('best eval f1 is {} for {}'.format(best_f1, args.name))
     print('best test f1 is {} for {}'.format(best_test_f1, args.name))
+    print('best test acc is {} for {}'.format(best_acc, args.name))
 
 
 def train(model, DEVICE, optimizer, tune_loader, val_loader, test_loader, args):
