@@ -50,7 +50,7 @@ parser.add_argument('-b', '--batch-size', default=32, type=int,
                     help='mini-batch size (default: 32), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('-lr', '--learning-rate', default=0.001, type=float,
+parser.add_argument('-lr', '--learning-rate', default=0.0005, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('-wd', '--weight-decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)',
@@ -62,8 +62,8 @@ parser.add_argument('--disable-cuda', action='store_true',
                     help='Disable CUDA')
 parser.add_argument('--fp16-precision', action='store_true',
                     help='Whether or not to use 16-bit precision GPU training.')
-parser.add_argument('--out_dim', default=512, type=int,
-                    help='feature dimension (default: 512)')
+parser.add_argument('--out_dim', default=256, type=int,
+                    help='feature dimension (default: 256)')
 parser.add_argument('--log-every-n-steps', default=4, type=int,
                     help='Log every n steps')
 parser.add_argument('-t', '--temperature', default=1, type=float,
@@ -87,7 +87,7 @@ parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversar
 parser.add_argument('-fishermax', default=0.01, type=float, help='fishermax')
 
 parser.add_argument('-SCL', default=True, type=bool, help='Use Supervised Contrastive Learning or not')
-parser.add_argument('-cl_slr', default=0.3, type=float, help='the ratio of sup_loss')
+parser.add_argument('-cl_slr', default=0.7, type=float, help='the ratio of sup_loss')
 parser.add_argument('-tem_labels', default=0.1, nargs='+', type=float, help='the temperature for supervised CL')
 parser.add_argument('-bcl', default=256, type=int, help='SCL batch for training loader')
 

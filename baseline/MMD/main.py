@@ -35,7 +35,6 @@ parser.add_argument('-j', '--workers', default=0, type=int, metavar='N', help='n
 parser.add_argument('--fp16-precision', action='store_true', help='Whether or not to use 16-bit precision GPU training.')
 parser.add_argument('-cross', default='devices', type=str, help='decide to use which kind of labels')
 
-
 def main():
     args = parser.parse_args()
 

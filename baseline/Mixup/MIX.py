@@ -28,7 +28,7 @@ class  MIX(object):
         self.optimizer = kwargs['optimizer']
 
         writer_pos = './runs/' + self.args.store + '/' + self.args.name
-        if self.args.shot:
+        if self.args.shot >=0:
             writer_pos += f'_shot_{self.args.shot}'
         else:
             writer_pos += f'_percent_{self.args.percent}'

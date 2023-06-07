@@ -6,9 +6,9 @@ import sys
 sys.path.append(dirname(dirname(sys.path[0])))
 sys.path.append(dirname(sys.path[0]))
 from data_aug.preprocessing import ClassesNum, fetch_instance_number_of_dataset, label_alignment, percent
-shot_num = [100] # enlarge to 500
+shot_num = [5, 10, 50, 100, 200] # enlarge to 500
 
-def append_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_percent=False, if_cross_user=True, tune_domain_portion=0.4, train_dir=None, cross='users'):
+def append_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_percent=False, if_cross_user=True, tune_domain_portion=0.5, train_dir=None, cross='users'):
     if train_dir is None:
         loc = target_dir + 'train_set' + '.npz'
     else:
@@ -48,7 +48,7 @@ def append_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_
 
     while True:
         domain_type = np.unique(domain)
-        ft_shot_dir = train_dir + 'tune_set_50.npz'
+        ft_shot_dir = train_dir + 'tune_set_0.npz'
         data = np.load(ft_shot_dir)
         tune_set = data['tune_set']
         labeled_domain = []
@@ -96,9 +96,6 @@ def append_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_
             for label_per_class in shot_num:
                 tune_set = []
                 counter = []
-                if label_per_class < 1:
-                    label_per_class = 1  # at least one label for each class
-                    print("at least one sample per class")
                 
                 for i in label_type:
                     idx = np.argwhere((label == i)).squeeze()
@@ -112,8 +109,12 @@ def append_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_
                     if len(idx) == 0:
                         irreasonable_segmentation = 1
                         break
-                    tune_set.extend(train_set[idx[:label_per_class]])
-                    counter.append(len(list(idx[:label_per_class])))
+                    if label_per_class == 0:
+                        tune_set.extend(train_set[idx])
+                        counter.append(len(list(idx)))
+                    else:
+                        tune_set.extend(train_set[idx[:label_per_class]])
+                        counter.append(len(list(idx[:label_per_class])))
                 
                 if irreasonable_segmentation:
                     break
@@ -132,7 +133,7 @@ def append_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_
 def append_shot(seed=940, seg_type=5):
     random.seed(seed)
     np.random.seed(seed)
-    dataset_name = ["HHAR", "Shoaib", "MotionSense"]
+    dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
     # dataset_name = ["HHAR"]
     for i in range(seg_type):
         for dataset in dataset_name:
@@ -140,5 +141,10 @@ def append_shot(seed=940, seg_type=5):
     return
 
 
+def append_preliminary(seed=940, seg_type=1):
+    dataset="HHAR"
+    append_balance_tune_set(ori_dir=f'datasets/{dataset}/', train_dir=f'datasets/HHAR_train65_supervised_label/', target_dir=f'datasets/HHAR_train65_supervised_label/', dataset=dataset, cross='users', tune_domain_portion=0.5)
+
 if __name__ == '__main__':
-    append_shot()
+    # append_shot()
+    append_preliminary()

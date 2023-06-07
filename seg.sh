@@ -56,67 +56,29 @@
 # done
 
 
-# version="cd"
-# name="cd_slr"
-# store="cd_slr"
-
-# python main.py -g 0 -label_type 1 -slr 0.6 -version "${version}0" -name HHAR --store "${name}0.6" -cross "devices" &
-# python main.py -g 0 -label_type 1 -slr 0.7 -version "${version}0" -name HHAR --store "${name}0.7" -cross "devices" &
-# python main.py -g 1 -label_type 1 -slr 0.8 -version "${version}0" -name HHAR --store "${name}0.8" -cross "devices" &
-# python main.py -g 1 -label_type 1 -slr 0.9 -version "${version}0" -name HHAR --store "${name}0.9" -cross "devices" &
-# python main.py -g 1 -label_type 1 -slr 1.0 -version "${version}0" -name HHAR --store "${name}1.0" -cross "devices" 
-
-# wait
-
-# python main_trans_ewc.py -g 0 -cl_slr 0.6 -aug True -ewc True -ft True -version "${version}0" -shot 10 --pretrained "${name}0.6/HHAR" -name HHAR --store "${store}0.6" -cross "devices" &
-# python main_trans_ewc.py -g 0 -cl_slr 0.7 -aug True -ewc True -ft True -version "${version}0" -shot 10 --pretrained "${name}0.7/HHAR" -name HHAR --store "${store}0.7" -cross "devices" &
-# python main_trans_ewc.py -g 1 -cl_slr 0.8 -aug True -ewc True -ft True -version "${version}0" -shot 10 --pretrained "${name}0.8/HHAR" -name HHAR --store "${store}0.8" -cross "devices" &
-# python main_trans_ewc.py -g 1 -cl_slr 0.9 -aug True -ewc True -ft True -version "${version}0" -shot 10 --pretrained "${name}0.9/HHAR" -name HHAR --store "${store}0.9" -cross "devices" &
-# python main_trans_ewc.py -g 1 -cl_slr 1.0 -aug True -ewc True -ft True -version "${version}0" -shot 10 --pretrained "${name}1.0/HHAR" -name HHAR --store "${store}1.0" -cross "devices" 
-
-# wait
-
-# version="shot"
-# shot=10
-# lam=1
-
-# for v in 3 4
+##########
+# for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
 # do
-#     name="CDL_v${v}"
-#     store="CDL_ewc_pretrain_v${v}"
-
-#     python main_trans_ewc.py -g 1 -ewc_lambda 1 -ewc True -ft True -version "${version}${v}" -shot ${shot} -name HASC --pretrained "${name}/HASC" --store ${store} &
-#     python main_trans_ewc.py -g 1 -ewc_lambda 1 -ewc True -ft True -version "${version}${v}" -shot ${shot} -name HHAR --pretrained "${name}/HHAR" --store ${store} &
-#     python main_trans_ewc.py -g 2 -ewc_lambda 1 -ewc True -ft True -version "${version}${v}" -shot ${shot} -name Shoaib --pretrained "${name}/Shoaib" --store ${store} &
-#     python main_trans_ewc.py -g 2 -ewc_lambda 1 -ewc True -ft True -version "${version}${v}" -shot ${shot} -name MotionSense  --pretrained "${name}/MotionSense" --store ${store} 
+#     name="CDL_wo_negate"
+#     python main.py -g 2 -label_type 1 -p2 0 -version "${version}0" -name ${dataset} --store "${name}0" &
+#     python main.py -g 2 -label_type 1 -p2 0 -version "${version}1" -name ${dataset} --store "${name}1" &
+#     python main.py -g 2 -label_type 1 -p2 0 -version "${version}2" -name ${dataset} --store "${name}2" &
+#     python main.py -g 3 -label_type 1 -p2 0 -version "${version}3" -name ${dataset} --store "${name}3" &
+#     python main.py -g 3 -label_type 1 -p2 0 -version "${version}4" -name ${dataset} --store "${name}4"
 
 #     wait
 # done
-
 shot=10
 version="shot"
-##########
 for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
 do
-    name="CDL_wo_scale"
-    python main.py -g 2 -label_type 1 -p6 0 -version "${version}0" -name ${dataset} --store "${name}0" &
-    python main.py -g 2 -label_type 1 -p6 0 -version "${version}1" -name ${dataset} --store "${name}1" &
-    python main.py -g 2 -label_type 1 -p6 0 -version "${version}2" -name ${dataset} --store "${name}2" &
-    python main.py -g 3 -label_type 1 -p6 0 -version "${version}3" -name ${dataset} --store "${name}3" &
-    python main.py -g 3 -label_type 1 -p6 0 -version "${version}4" -name ${dataset} --store "${name}4"
-
-    wait
-done
-
-for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
-do
-    name="CDL_wo_scale"
+    name="CDL_slr0.7_v"
     ### with all
-    store="CDL_wo_scale"
-    python main_trans_ewc.py -shot ${shot} -g 2 -aug True -ewc True -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}0" &
-    python main_trans_ewc.py -shot ${shot} -g 2 -aug True -ewc True -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}1" &
-    python main_trans_ewc.py -shot ${shot} -g 2 -aug True -ewc True -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}2" &
-    python main_trans_ewc.py -shot ${shot} -g 3 -aug True -ewc True -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}3" & 
-    python main_trans_ewc.py -shot ${shot} -g 3 -aug True -ewc True -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}4" 
+    store="ewc_results/CDL_slr0.7_all_ewc5_v0"
+    python main_trans_ewc.py -shot ${shot} -g 2 -ewc_lambda 5 -aug True -ewc True -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}0" &
+    python main_trans_ewc.py -shot ${shot} -g 2 -ewc_lambda 5 -aug True -ewc True -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}1" &
+    python main_trans_ewc.py -shot ${shot} -g 2 -ewc_lambda 5 -aug True -ewc True -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}2" &
+    python main_trans_ewc.py -shot ${shot} -g 3 -ewc_lambda 5 -aug True -ewc True -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}3" & 
+    python main_trans_ewc.py -shot ${shot} -g 3 -ewc_lambda 5 -aug True -ewc True -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}4" 
 done
 wait

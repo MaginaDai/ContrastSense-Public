@@ -153,24 +153,114 @@
 #     done
 # done
 
-version="shot"
-name="user"
-for shot in 100
-do 
-    pretrain_version="shot"
-    version="shot"
-    store="ft_shot_${shot}"
-    for v in 0 1 2 3 4
-    do
-        python classifier_bert.py v1_v2 "${version}${v}" -g 1 -f "${name}" -pv "${pretrain_version}${v}" -shot ${shot} -p MotionSense -name 'MotionSense' -s "MotionSense_${store}" &
-        python classifier_bert.py v1_v2 "${version}${v}" -g 1 -f "${name}" -pv "${pretrain_version}${v}" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}"
+# version="cp"
+# name="positions"
+# for shot in 5 50 100
+# do 
+#     pretrain_version="cp"
+#     version="cp"
+#     store="ft_shot_${shot}"
+#     for v in 0 1 2 3 4
+#     do
+#         python classifier_bert.py v1_v2 "${version}${v}" -g 1 -f "${name}" -pv "${pretrain_version}${v}" -shot ${shot} -p MotionSense -name 'MotionSense' -s "MotionSense_${store}" &
+#         python classifier_bert.py v1_v2 "${version}${v}" -g 1 -f "${name}" -pv "${pretrain_version}${v}" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}"
         
-        wait
+#         wait
 
-        python classifier_bert.py v1_v2 "${version}${v}" -g 1 -f "${name}" -pv "${pretrain_version}${v}" -shot ${shot} -p HASC -name 'HASC' -s "HASC_${store}" &
-        python classifier_bert.py v1_v2 "${version}${v}" -g 1 -f "${name}" -pv "${pretrain_version}${v}" -shot ${shot} -p Shoaib -name 'Shoaib' -s "Shoaib_${store}"
+#         python classifier_bert.py v1_v2 "${version}${v}" -g 1 -f "${name}" -pv "${pretrain_version}${v}" -shot ${shot} -p HASC -name 'HASC' -s "HASC_${store}" &
+#         python classifier_bert.py v1_v2 "${version}${v}" -g 1 -f "${name}" -pv "${pretrain_version}${v}" -shot ${shot} -p Shoaib -name 'Shoaib' -s "Shoaib_${store}"
 
-        wait
+#         wait
 
-    done
-done
+#     done
+# done
+
+# version="cp"
+# name="position"
+# for shot in 5 50 100
+# do 
+#     pretrain_version="cp"
+#     version="cp"
+#     store="ft_shot_${shot}"
+#     python classifier_bert.py v1_v2 "${version}0" -g 2 -f "${name}" -pv "${pretrain_version}0" -shot ${shot} -p Shoaib -name 'Shoaib' -s "Shoaib_${store}" &
+#     python classifier_bert.py v1_v2 "${version}1" -g 2 -f "${name}" -pv "${pretrain_version}1" -shot ${shot} -p Shoaib -name 'Shoaib' -s "Shoaib_${store}" &
+#     python classifier_bert.py v1_v2 "${version}2" -g 2 -f "${name}" -pv "${pretrain_version}2" -shot ${shot} -p Shoaib -name 'Shoaib' -s "Shoaib_${store}"
+    
+#     wait
+
+#     python classifier_bert.py v1_v2 "${version}3" -g 2 -f "${name}" -pv "${pretrain_version}3" -shot ${shot} -p Shoaib -name 'Shoaib' -s "Shoaib_${store}" &
+#     python classifier_bert.py v1_v2 "${version}4" -g 2 -f "${name}" -pv "${pretrain_version}4" -shot ${shot} -p Shoaib -name 'Shoaib' -s "Shoaib_${store}"
+
+#     wait
+# done
+
+# version="cd"
+# name="devices"
+# pretrain_version="cd"
+# for shot in 5 50 100
+# do 
+#     store="ft_shot_${shot}"
+#     python classifier_bert.py v1_v2 "${version}0" -g 2 -f "${name}" -pv "${pretrain_version}0" -shot ${shot} -p HASC -name 'HASC' -s "HASC_${store}" &
+#     python classifier_bert.py v1_v2 "${version}1" -g 2 -f "${name}" -pv "${pretrain_version}1" -shot ${shot} -p HASC -name 'HASC' -s "HASC_${store}" &
+#     python classifier_bert.py v1_v2 "${version}2" -g 2 -f "${name}" -pv "${pretrain_version}2" -shot ${shot} -p HASC -name 'HASC' -s "HASC_${store}"
+    
+#     wait
+
+#     python classifier_bert.py v1_v2 "${version}3" -g 2 -f "${name}" -pv "${pretrain_version}3" -shot ${shot} -p HASC -name 'HASC' -s "HASC_${store}" &
+#     python classifier_bert.py v1_v2 "${version}4" -g 2 -f "${name}" -pv "${pretrain_version}4" -shot ${shot} -p HASC -name 'HASC' -s "HASC_${store}"
+
+#     wait
+# done
+
+# for portion in 60 80 100
+# do
+# version="cd_tune_portion_${portion}_shot"
+# name="devices"
+# pretrain_version="cd"
+#     for shot in 50
+#     do 
+#         store="ft_shot_${shot}"
+#         python classifier_bert.py v1_v2 "${version}0" -g 2 -f "${name}" -pv "${pretrain_version}0" -shot ${shot} -p HASC -name 'HASC' -s "HASC_${store}" &
+#         python classifier_bert.py v1_v2 "${version}1" -g 2 -f "${name}" -pv "${pretrain_version}1" -shot ${shot} -p HASC -name 'HASC' -s "HASC_${store}" &
+#         python classifier_bert.py v1_v2 "${version}2" -g 2 -f "${name}" -pv "${pretrain_version}2" -shot ${shot} -p HASC -name 'HASC' -s "HASC_${store}" &
+#         python classifier_bert.py v1_v2 "${version}3" -g 3 -f "${name}" -pv "${pretrain_version}3" -shot ${shot} -p HASC -name 'HASC' -s "HASC_${store}" &
+#         python classifier_bert.py v1_v2 "${version}4" -g 3 -f "${name}" -pv "${pretrain_version}4" -shot ${shot} -p HASC -name 'HASC' -s "HASC_${store}"
+
+#         wait
+#     done
+# done
+
+# version="cp_tune_portion_100_shot"
+# name="position"
+# pretrain_version="cp"
+# for shot in 5 10 50 100
+# do 
+#     store="ft_shot_${shot}"
+#     python classifier_bert.py v1_v2 "${version}0" -g 2 -f "${name}" -pv "${pretrain_version}0" -shot ${shot} -p Shoaib -name 'Shoaib' -s "Shoaib_${store}" &
+#     python classifier_bert.py v1_v2 "${version}1" -g 2 -f "${name}" -pv "${pretrain_version}1" -shot ${shot} -p Shoaib -name 'Shoaib' -s "Shoaib_${store}" &
+#     python classifier_bert.py v1_v2 "${version}2" -g 2 -f "${name}" -pv "${pretrain_version}2" -shot ${shot} -p Shoaib -name 'Shoaib' -s "Shoaib_${store}" &
+#     python classifier_bert.py v1_v2 "${version}3" -g 3 -f "${name}" -pv "${pretrain_version}3" -shot ${shot} -p Shoaib -name 'Shoaib' -s "Shoaib_${store}" &
+#     python classifier_bert.py v1_v2 "${version}4" -g 3 -f "${name}" -pv "${pretrain_version}4" -shot ${shot} -p Shoaib -name 'Shoaib' -s "Shoaib_${store}"
+
+#     wait
+# done
+
+name='preliminary'
+
+python pretrain.py v1 "train25_supervised_random" -g 0 -f "${name}" -s HHAR -name 'HHAR' &
+python pretrain.py v1 "train45_supervised_random" -g 0 -f "${name}" -s HHAR -name 'HHAR' &
+python pretrain.py v1 "train65_supervised_random" -g 0 -f "${name}" -s HHAR -name 'HHAR' &
+python pretrain.py v1 "train25_supervised_label" -g 1 -f "${name}" -s HHAR -name 'HHAR' &
+python pretrain.py v1 "train45_supervised_label" -g 1 -f "${name}" -s HHAR -name 'HHAR' &
+python pretrain.py v1 "train65_supervised_label" -g 1 -f "${name}" -s HHAR -name 'HHAR'
+
+wait
+shot=50
+store="ft_shot_${shot}"
+
+python classifier_bert.py v1_v2 "train25_supervised_random" -g 0 -f "${name}" -pv "train25_supervised_random" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}" &
+python classifier_bert.py v1_v2 "train45_supervised_random" -g 0 -f "${name}" -pv "train45_supervised_random" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}" &
+python classifier_bert.py v1_v2 "train65_supervised_random" -g 0 -f "${name}" -pv "train65_supervised_random" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}" &
+python classifier_bert.py v1_v2 "train25_supervised_label" -g 1 -f "${name}" -pv "train25_supervised_label" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}" &
+python classifier_bert.py v1_v2 "train45_supervised_label" -g 1 -f "${name}" -pv "train45_supervised_label" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}" &
+python classifier_bert.py v1_v2 "train65_supervised_label" -g 1 -f "${name}" -pv "train65_supervised_label" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}"

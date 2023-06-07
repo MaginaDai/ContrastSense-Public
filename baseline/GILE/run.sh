@@ -14,15 +14,40 @@
 # done
 
 # g=0
-# name="GILE_cp"
-# version="cp"
+# for portion in 60 80 100
+# do
+#     name="GILE_cd_tune_portion_${portion}_shot"
+#     version="cd_tune_portion_${portion}_shot"
+#     for shot in 50
+#     do
+#     python main.py -g ${g} -version "${version}0" -shot ${shot} -name HASC --store "${name}0" -cross "devices" &
+#     python main.py -g ${g} -version "${version}1" -shot ${shot} -name HASC --store "${name}1" -cross "devices" &
+#     python main.py -g ${g} -version "${version}2" -shot ${shot} -name HASC --store "${name}2" -cross "devices" &
+#     python main.py -g ${g} -version "${version}3" -shot ${shot} -name HASC --store "${name}3" -cross "devices" &
+#     python main.py -g ${g} -version "${version}4" -shot ${shot} -name HASC --store "${name}4" -cross "devices" 
+#     wait
 
-# python main.py -g ${g} -version "${version}0" -shot 10 -name Shoaib --store "${name}0" &
-# python main.py -g ${g} -version "${version}1" -shot 10 -name Shoaib --store "${name}1" &
-# python main.py -g ${g} -version "${version}2" -shot 10 -name Shoaib --store "${name}2" &
-# python main.py -g ${g} -version "${version}3" -shot 10 -name Shoaib --store "${name}3" &
-# python main.py -g ${g} -version "${version}4" -shot 10 -name Shoaib --store "${name}4"
+#     done
+# done
 
+# g=2
+# for portion in 100
+# do
+#     name="GILE_cp_tune_portion_${portion}_shot"
+#     version="cp_tune_portion_${portion}_shot"
+#     for shot in 100
+#     do
+    # python main.py -g ${g} -version "${version}0" -shot ${shot} -name Shoaib --store "${name}0" -cross "positions" &
+    # python main.py -g ${g} -version "${version}1" -shot ${shot} -name Shoaib --store "${name}1" -cross "positions" &
+    # python main.py -g ${g} -version "${version}2" -shot ${shot} -name Shoaib --store "${name}2" -cross "positions" &
+    # wait
+    
+    # python main.py -g ${g} -version "${version}3" -shot ${shot} -name Shoaib --store "${name}3" -cross "positions" &
+    # python main.py -g ${g} -version "${version}4" -shot ${shot} -name Shoaib --store "${name}4" -cross "positions" 
+    # wait
+
+#     done
+# done
 
 # g=3
 # name="GILE_cu"
@@ -60,51 +85,27 @@
 #     done
 # done
 
-name="GILE_cu"
-version="shot"
-g=2
-shot=100
-for v in 0 1 2 3 4
-do
-    python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name HASC &
-    python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name HHAR &
-    python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name MotionSense &
-    python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name Shoaib 
-    wait
+# name="GILE_cu"
+# version="shot"
+# g=2
+# shot=100
+# for v in 0 1 2 3 4
+# do
+#     python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name HASC &
+#     python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name HHAR &
+#     python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name MotionSense &
+#     python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name Shoaib 
+#     wait
 
-done
+# done
 
 
 ##################
-# 25 45 65
-# 10 50 100 200 500
-
-# v=0
-# store="GILE_full_version_v${v}"
-
-# python main.py -g 1 -name HHAR -version "train25_alltune_cross_v${v}" --setting full --store "${store}_25" &
-# python main.py -g 1 -name HHAR -version "train65_alltune_cross_v${v}" --setting full --store "${store}_65"
-
-# wait
-
-# for v in 2 3 4
-# do
-#     for shot in 10 50 200 500
-#     do 
-#         store="GILE_shot${shot}_version_v${v}"
-
-#         python main.py -g 1 -name HHAR -version "train25_alltune_cross_v${v}" -shot ${shot} --store "${store}_25" &
-#         python main.py -g 1 -name HHAR -version "train45_alltune_cross_v${v}" -shot ${shot} --store "${store}_45" &
-#         python main.py -g 1 -name HHAR -version "train65_alltune_cross_v${v}" -shot ${shot} --store "${store}_65"
-        
-#         wait
-#     done
-
-#     store="GILE_full_version_v${v}"
-
-#     python main.py -g 1 -name HHAR -version "train25_alltune_cross_v${v}" --setting full --store "${store}_25" &
-#     python main.py -g 1 -name HHAR -version "train45_alltune_cross_v${v}" --setting full --store "${store}_45" &
-#     python main.py -g 1 -name HHAR -version "train65_alltune_cross_v${v}" --setting full --store "${store}_65"
-    
-#     wait
-# done
+version="train25_supervised_cross"
+store="preliminary_25_across"
+g=1
+python main.py -g ${g} -version "${version}" --setting 'full' -shot 0 -name HHAR -cross "users" --store "${store}" &
+python main.py -g ${g} -version "${version}" -shot 5 -name HHAR -cross "users" --store "${store}" &
+python main.py -g ${g} -version "${version}" -shot 10 -name HHAR -cross "users" --store "${store}" &
+python main.py -g ${g} -version "${version}" -shot 50 -name HHAR -cross "users" --store "${store}" &
+python main.py -g ${g} -version "${version}" -shot 100 -name HHAR -cross "users" --store "${store}"

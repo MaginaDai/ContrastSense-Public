@@ -54,7 +54,7 @@ class CPCHARDataset4Training(Dataset):
             data = np.load(val_dir)
             self.windows_frame = data['val_set']
         elif self.split == 'tune':
-            if shot:
+            if shot >= 0:
                 tune_dir = '../../' + root_dir + '_' + version + '/tune_set_' + str(int(shot)) + '.npz'
             else:
                 if percent <= 0.99:

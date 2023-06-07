@@ -239,7 +239,7 @@ class CPC(object):
                 writer_pos += '_ft'
             else:
                 writer_pos += '_le'
-            if self.args.shot:
+            if self.args.shot >= 0:
                 writer_pos += f'_shot_{self.args.shot}'
             else:
                 writer_pos += f'_percent_{self.args.percent}'

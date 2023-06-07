@@ -176,8 +176,6 @@
 #     done
 # done
 
-# shot=10
-# version="cd"
 
 # for dataset in "HASC"
 # do
@@ -191,57 +189,126 @@
 #     wait
 # done
 
-
-# for dataset in "HASC"
+# shot=10
+# version="shot"
+# ##########
+# for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
 # do
-#     name="CDL_cd"
-#     ### with all
-#     store="CDL_cd"
+#     name="CL_wo_queue"
+#     python main.py -g 0 -label_type 0 -moco_K 256 -version "${version}0" -name ${dataset} --store "${name}0" &
+#     python main.py -g 0 -label_type 0 -moco_K 256 -version "${version}1" -name ${dataset} --store "${name}1" &
+#     python main.py -g 0 -label_type 0 -moco_K 256 -version "${version}2" -name ${dataset} --store "${name}2" &
+#     python main.py -g 1 -label_type 0 -moco_K 256 -version "${version}3" -name ${dataset} --store "${name}3" &
+#     python main.py -g 1 -label_type 0 -moco_K 256 -version "${version}4" -name ${dataset} --store "${name}4"
+
+#     wait
+# done
+
+# shot=10
+# for portion in 60 80 100
+# do
+#     version="tune_portion_${portion}_shot"
+#     for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
+#     do
+#         name="CDL_slr0.7_v"
+#         ### with all
+#         store="/tune_portion/CDL_tune_portion_${portion}_v"
+#         python main_trans_ewc.py -shot ${shot} -g 1 -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}0" &
+#         python main_trans_ewc.py -shot ${shot} -g 1 -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}1" &
+#         python main_trans_ewc.py -shot ${shot} -g 3 -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}2" &
+#         python main_trans_ewc.py -shot ${shot} -g 3 -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}3" & 
+#         python main_trans_ewc.py -shot ${shot} -g 3 -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}4" 
+#         wait
+#     done
+# done
+# "
+#  
+
+# for dataset in "Shoaib"
+# do
+    
+#     python main.py -g 0 -label_type 1 -slr ${slr} -version "${version}0" -name ${dataset} --store "${name}0" -cross "positions" &
+#     python main.py -g 0 -label_type 1 -slr ${slr} -version "${version}1" -name ${dataset} --store "${name}1" -cross "positions" &
+#     python main.py -g 0 -label_type 1 -slr ${slr} -version "${version}2" -name ${dataset} --store "${name}2" -cross "positions" &
+#     python main.py -g 1 -label_type 1 -slr ${slr} -version "${version}3" -name ${dataset} --store "${name}3" -cross "positions" &
+#     python main.py -g 1 -label_type 1 -slr ${slr} -version "${version}4" -name ${dataset} --store "${name}4" -cross "positions" 
+    
+#     wait
+# done
+
+
+# for dataset in "Shoaib"
+# do
 #     python main_trans_ewc.py -shot ${shot} -g 0 -aug True -ewc True -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}0" &
 #     python main_trans_ewc.py -shot ${shot} -g 0 -aug True -ewc True -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}1" &
 #     python main_trans_ewc.py -shot ${shot} -g 0 -aug True -ewc True -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}2" &
 #     python main_trans_ewc.py -shot ${shot} -g 1 -aug True -ewc True -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}3" & 
 #     python main_trans_ewc.py -shot ${shot} -g 1 -aug True -ewc True -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}4" 
 # done
+# wait
 
-
-# for dataset in "HASC"
+# version="cp"
+# name="CDL_cp_slr0.7_v"
+# store="CDL_cp_slr0.7_v"
+# for shot in 5 50 100
 # do
-#     name="CDL_cd"
-#     python main.py -g 0 -label_type 1 -version "${version}0" -name ${dataset} --store "${name}0" -cross "devices" &
-#     python main.py -g 0 -label_type 1 -version "${version}1" -name ${dataset} --store "${name}1" -cross "devices" &
-#     python main.py -g 0 -label_type 1 -version "${version}2" -name ${dataset} --store "${name}2" -cross "devices" &
-#     python main.py -g 1 -label_type 1 -version "${version}3" -name ${dataset} --store "${name}3" -cross "devices" &
-#     python main.py -g 1 -label_type 1 -version "${version}4" -name ${dataset} --store "${name}4" -cross "devices" 
-    
-#     wait
+#     for dataset in "Shoaib"
+#     do
+#         python main_trans_ewc.py -shot ${shot} -g 0 -aug True -ewc True -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}0" &
+#         python main_trans_ewc.py -shot ${shot} -g 0 -aug True -ewc True -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}1" &
+#         python main_trans_ewc.py -shot ${shot} -g 0 -aug True -ewc True -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}2" &
+#         python main_trans_ewc.py -shot ${shot} -g 1 -aug True -ewc True -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}3" & 
+#         python main_trans_ewc.py -shot ${shot} -g 1 -aug True -ewc True -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}4" 
+#     done
+# done
+
+
+# for portion in 100
+# do
+#     version="cd_tune_portion_${portion}_shot"
+#     name="CDL_cd_v"
+#     store="CDL_cd_tune_portion_${portion}_shot"
+#     for shot in 50
+#     do
+#         for dataset in "HASC"
+#         do
+#             python main_trans_ewc.py -shot ${shot} -g 0 -aug True -ewc True -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}0" &
+#             python main_trans_ewc.py -shot ${shot} -g 0 -aug True -ewc True -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}1" &
+#             python main_trans_ewc.py -shot ${shot} -g 0 -aug True -ewc True -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}2" &
+#             python main_trans_ewc.py -shot ${shot} -g 1 -aug True -ewc True -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}3" & 
+#             python main_trans_ewc.py -shot ${shot} -g 1 -aug True -ewc True -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}4" 
+#             wait
+#         done
+#     done
+# done
+
+# version="cp_tune_portion_100_shot"
+# name="CDL_cp_v"
+# store="CDL_cp_tune_portion_100_v"
+# for shot in 5 10 50 100
+# do
+#     for dataset in "Shoaib"
+#     do
+#         python main_trans_ewc.py -shot ${shot} -g 0 -aug True -ewc True -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}0" &
+#         python main_trans_ewc.py -shot ${shot} -g 0 -aug True -ewc True -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}1" &
+#         python main_trans_ewc.py -shot ${shot} -g 0 -aug True -ewc True -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}2" &
+#         python main_trans_ewc.py -shot ${shot} -g 1 -aug True -ewc True -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}3" & 
+#         python main_trans_ewc.py -shot ${shot} -g 1 -aug True -ewc True -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}4" 
+#         wait
+#     done
 # done
 
 shot=10
 version="shot"
-##########
-for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
+#  
+for dataset in "HHAR"
 do
-    name="CL_wo_queue"
-    python main.py -g 0 -label_type 0 -moco_K 256 -version "${version}0" -name ${dataset} --store "${name}0" &
-    python main.py -g 0 -label_type 0 -moco_K 256 -version "${version}1" -name ${dataset} --store "${name}1" &
-    python main.py -g 0 -label_type 0 -moco_K 256 -version "${version}2" -name ${dataset} --store "${name}2" &
-    python main.py -g 1 -label_type 0 -moco_K 256 -version "${version}3" -name ${dataset} --store "${name}3" &
-    python main.py -g 1 -label_type 0 -moco_K 256 -version "${version}4" -name ${dataset} --store "${name}4"
-
-    wait
-done
-
-for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
-do
-    name="CL_wo_queue"
+    name="ablation/CL_v"
     ### with all
-    store="CL_wo_queue"
-    python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}0" &
-    python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}1" &
-    python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}2" &
-    python main_trans_ewc.py -shot ${shot} -g 1 -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}3" & 
-    python main_trans_ewc.py -shot ${shot} -g 1 -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}4" 
+    store="ft_CDL_v"
+    python main_trans_SCL.py -shot ${shot} -g 0 -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}0" &
+    python main_trans_SCL.py -shot ${shot} -g 0 -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}1" &
+    python main_trans_SCL.py -shot ${shot} -g 0 -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}2" &
+    # python main_trans_SCL.py -shot ${shot} -g 1 -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}3" & 
+    # python main_trans_SCL.py -shot ${shot} -g 1 -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}4" 
 done
-
-wait

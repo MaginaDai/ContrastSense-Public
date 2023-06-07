@@ -12,8 +12,8 @@ from mpl_toolkits.mplot3d import Axes3D
 import re
 import seaborn as sns
 
-color_blue = '#A1A9D0'
-color_red = '#F0988C'
+# color_blue = '#A1A9D0'
+# color_red = '#F0988C'
 
 
 def figure_plot_element(y):
@@ -277,42 +277,51 @@ def figure_SCL_during_ft():
 
 
 def figure_domain_shift():
-    train_random = [99.25, 99.24, 98.66]
-    train_cross = [96.29, 85.79, 69.67]
+    train_random = [97.83, 94.33, 94.67]
+    train_cross = [94.57, 75.18, 58.53]
+    # train_label = [88.00, 69.03, 40.79]
     x=np.arange(len(train_random))
-    width=0.35
+    width=0.4
     fig, ax = plt.subplots()
-    ax.bar(x-width/2, train_random, width, color=color_blue, label="random split")
-    ax.bar(x+width/2, train_cross, width, color=color_red, label="cross-user")
+    ax.bar(x-width/2, train_cross, width, color=color_red, label="Setting A")
+    ax.bar(x+width/2, train_random, width, color=color_blue, label="Setting B")
+    # ax.bar(x+width, train_label, width, color=color_red, label="Setting C")
     ax.set_xticks(x)
-    ax.set_xticklabels([r'80', r'60', r'40'])
+    ax.set_xticklabels([r'65', r'45', r'25'])
     # ax.set_xticklabels([r'$\alpha$ = 60', r'$\alpha$ = 25'], fontsize=14)
-    ax.legend(fontsize=16, loc='lower right')
-    ax.set_ylim(50, 105)
-    plt.xlabel(r"Portion of Source Domains in the Dataset", fontsize=16)
+    ax.legend(fontsize=14, loc='lower right')
+    ax.set_ylim(0, 105)
+    plt.xlabel(r"Percentage $\alpha$ (%)", fontsize=16)
     plt.ylabel("F1 Score (%)", fontsize=16)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.tight_layout()
-    plt.savefig('./figure_plot/preliminary_new.png')
+    plt.savefig('./figure_plot/preliminary_new.pdf')
     return
 
-
 def figure_limited_labels():
-    train_25 = np.flipud([51.50, 63.56, 65.38, 62.02, 63.88])
-    train_45 = np.flipud([46.09, 56.39, 65.73, 68.85, 70.96])
-    train_65 = np.flipud([52.21, 59.00, 76.83, 83.31, 77.34])
-    x=np.arange(len(train_25))
+    ## on the label source domain setting
+    # GILE_result = [43.26, 45.44, 43.49, 43.15, 39.86]
+    # CMUDA_result = [70.71, 62.63, 65.02, 45.93, 36.54]
+    # FMUDA_result = [73.56, 70.86, 57.80, 46.30, 37.01]
+    # supervised_result = [40.79, 37.46, 35.83, 34.23, 24.54]
+    # on the cross domain setting
+    GILE_result = [63.34, 57.17, 57.81, 42.48, 41.36]
+    CMUDA_result = [82.96, 72.66, 69.45, 50.09, 37.86]
+    Mixup_result = [71.36, 70.62, 70.14, 67.40, 55.65]
+    x=np.arange(len(GILE_result))
     
     plt.figure()
-    plt.plot(x, train_25, 'r-o')
-    plt.plot(x, train_45, 'b-v')
-    plt.plot(x, train_65, 'g-*')
-    plt.legend([r"$\alpha$=25", r"$\alpha$=45", r"$\alpha$=65"], fontsize=14)
-    plt.xticks(x, labels=["full", 500, 200, 50, 10,])
+    plt.plot(x, GILE_result, '-o', color=color_box[0], linewidth=2, markersize=10)
+    plt.plot(x, Mixup_result, '-v', color=color_red, linewidth=2, markersize=10)
+    plt.plot(x, CMUDA_result, '-^', color=color_blue, linewidth=2, markersize=10)
+    # plt.plot(x, ewq)
+    # plt.plot(x, train_65, 'g-*')
+    plt.legend(["GILE", "Mixup", "CMUDA"], fontsize=14)
+    plt.xticks(x, labels=["Full", 100, 50, 10, 5])
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-    plt.xlabel("Shots", fontsize=16)
+    plt.xlabel(r"Shots $n$", fontsize=16)
     plt.ylabel("F1 Score (%)", fontsize=16)
     plt.tight_layout()
     plt.savefig('./figure_plot/limited labels.pdf')
@@ -357,7 +366,22 @@ def fig_batch_size_result():
 
 
 def fig_label_domain_portion():
-    portion=[40,60,80,100]
+    portion=[40, 60, 80, 100]
+    portion=[33.3, 66.7, 100]
+    
+    HASC_result = [[25.57, 23.70, 27.46, 29.64],
+                   [31.81, 33.04, 37.20, 37.10],
+                   [31.75, 31.22, 33.02, 33.41],
+                   [35.71, 38.80, 38.42, 36.05],
+                   [30.97, 34.40, 35.20, 33.00],
+                   [31.86, 40.13, 39.48, 42.69],
+                   [42.78, 49.56, 49.25, 51.48]]
+    
+    HHAR_result = [[55.61, 68.29, 68.45],
+                   [61.25, 67.04, 75.91],
+                   [41.26, 56.73, 55.50],
+                   []]
+    
     LIMU_results = [55.14, 56.52, 61.42, 63.00]
     CPC_results = [57.43, 59.43, 65.54, 65.96]
     Mixup_results = [58.83, 59.91, 64.86, 67.74]
@@ -365,7 +389,7 @@ def fig_label_domain_portion():
     CMUDA_results = [57.75, 59.76, 62.88, 63.63]
     GILE_results = [52.86, 53.04, 58.59, 58.52]
     ContrastSense_results = [65.97, 69.94, 71.18, 72.81]
-    Methods = ["LIMU-BERT", "CPCHAR", "FMUDA", "CMUDA", "GILE", "Mixup", "ContrastSense"]
+    Methods = ["LIMU-BERT", "Mixup","GILE", "FMUDA", "CMUDA", "CPCHAR", "ContrastSense"]
     results = np.vstack([LIMU_results, CPC_results, FMUDA_results, CMUDA_results,GILE_results,Mixup_results, ContrastSense_results])
     # print(results)
     x=np.arange(len(portion))
@@ -384,63 +408,199 @@ def fig_label_domain_portion():
 
 def fig_queue_results():
     queue_size=[256, 512, 1024, 2048]
-    result = [59.49, 60.38, 62.59, 61.29]
+    queue_result = [59.49, 60.38, 62.59, 61.29]
+    err=[2.39, 2.53, 2.53, 2.49]
     x=np.arange(len(queue_size))
-    plt.figure()
-    plt.bar(x, result, align='center', color=color_blue, capsize=14)
-    plt.xticks(x, labels=queue_size, fontsize=16)
-    plt.yticks([56, 57, 58, 59, 60, 61, 62, 63], fontsize=16)
-    plt.xlabel("Queue Size", fontsize=16)
-    plt.ylabel("F1 Score (%)", fontsize=16)
-    plt.ylim(56, 63)
+    # plt.subplot(131)
+    plt.grid(axis='y')
+    plt.bar(x, queue_result, align='center', color=color_blue, yerr=err, capsize=10, ecolor='black', error_kw=dict(elinewidth=3, capthick=3), edgecolor='black', zorder=100)
+    plt.xticks(x, labels=queue_size, fontsize=22)
+    plt.yticks(fontsize=22)
+    plt.xlabel(r"$|Q|$", fontsize=22)
+    plt.ylabel("F1 Score (%)", fontsize=22)
+    plt.ylim(55, 67)
     plt.tight_layout()
     plt.savefig('./figure_plot/Queue_size_sensativity.pdf')
     
 
 def fig_slr_results():
     slr=[0.1, 0.3, 0.5, 0.7, 0.9]
-    result = [59.75, 60.71, 60.50, 62.59, 60.16]
+    slr_result = [59.75, 60.71, 60.50, 62.59, 60.16]
+    err=[3.28, 2.10, 2.63, 2.52, 1.65]
     x=np.arange(len(slr))
-    plt.figure()
-    plt.bar(x, result, align='center', color=color_blue, capsize=14)
-    plt.xticks(x, labels=slr, fontsize=16)
-    plt.yticks([57, 58, 59, 60, 61, 62, 63], fontsize=16)
-    plt.xlabel("$\lambda_1$", fontsize=16)
-    plt.ylabel("F1 Score (%)", fontsize=16)
-    plt.ylim(57, 63)
+    plt.grid(axis='y')
+    plt.errorbar(x, slr_result, fmt='--', color=color_blue, linewidth=6, yerr=err, capsize=10, capthick=3, elinewidth=3, ecolor='black')
+    plt.xticks(x, labels=slr, fontsize=22)
+    plt.yticks(np.arange(55, 66, 2), fontsize=22)
+    plt.xlabel("$\lambda_1$", fontsize=22)
+    plt.ylabel("F1 Score (%)", fontsize=22)
+    plt.ylim(55, 66)
     plt.tight_layout()
     plt.savefig('./figure_plot/Slr_sensativity.pdf')
 
 def fig_ewc_results():
     ewc=[0.5, 5, 50, 100, 500]
-    result = [61.63, 62.06, 62.59, 61.60, 60.83]
+    ewc_result = [61.63, 62.06, 62.59, 61.60, 60.83]
+    err=[2.85, 2.63, 2.52, 2.55, 3.13]
     x=np.arange(len(ewc))
-    plt.figure()
-    plt.bar(x, result, align='center', color=color_blue, capsize=14)
-    plt.xticks(x, labels=ewc, fontsize=16)
-    plt.yticks([59, 60, 61, 62, 63], fontsize=16)
-    plt.xlabel("$\lambda_2$", fontsize=16)
-    plt.ylabel("F1 Score (%)", fontsize=16)
-    plt.ylim(59, 63)
+    plt.grid(axis='y')
+    plt.errorbar(x, ewc_result, fmt='--', color=color_blue, linewidth=6, yerr=err, capsize=10, capthick=3, elinewidth=3, ecolor='black')
+    plt.xticks(x, labels=ewc, fontsize=22)
+    plt.yticks(np.arange(57, 66, 2), fontsize=22)
+    plt.xlabel("$\lambda_2$", fontsize=22)
+    plt.ylabel("F1 Score (%)", fontsize=22)
+    plt.ylim(57, 66)
     plt.tight_layout()
     plt.savefig('./figure_plot/EWC_sensativity.pdf')
 
 def fig_aug_effect():
-    name = ['All', 'w/o Rotation', 'w/o Negating', 'w/o Scaling', 'w/o Wrapping', 'w/o Flipping', 'w/o Noise']
-    results = [62.59, 58.23, 60.68, 60.14, 61.15, 61.08, 61.11]
+    name = ['All', 'w/o Negate', 'w/o Scale', 'w/o Wrap', 'w/o Flip', 'w/o Noise', 'w/o Rotate']
+    results = [62.59, 60.37, 59.94, 59.65, 60.97, 60.04, 57.73]
+    std_results = [2.52, 2.87, 2.41, 2.45, 3.31, 2.66, 1.52]
     x=np.arange(len(name))
-    ax = plt.figure()
-    plt.grid(axis='y')
-    plt.bar(x, results, align='center', color=color_blue, capsize=14)
-    plt.xticks(x, labels=name, fontsize=16, rotation=30)
-    plt.yticks(np.arange(50, 64, 2), fontsize=16)
-    plt.ylabel("F1 Score (%)", fontsize=16)
-    plt.ylim(54, 64)
+    plt.figure()
+    # ax = plt.figure(figsize=(6, 4))
+    plt.grid(axis='y', zorder=0)
+    plt.bar(x, results, align='center', color=color_blue, capsize=10, yerr=std_results, ecolor='black', error_kw=dict(elinewidth=3, capthick=3), edgecolor='black', zorder=100)
+    plt.xticks(x, labels=name, fontsize=22, rotation=30)
+    plt.yticks(np.arange(50, 66, 2), fontsize=22)
+    plt.ylabel("F1 Score (%)", fontsize=22)
+    plt.ylim(50, 66)
     plt.tight_layout()
     plt.savefig('./figure_plot/aug_effect.pdf')
 
-color_blue = '#A1A9D0'
-color_box = ['#A1A9D0', '#96CCCB', '#B883D4', '#9E9E9E', '#CFEAF1', '#C4A5DE', '#F0988C', '#F6CAE5']
+def fig_sensativity_analysis():
+    plt.figure(figsize=(16, 3))
+    queue_size=[256, 512, 1024, 2048]
+    queue_result = [59.49, 60.38, 62.59, 61.29]
+    x=np.arange(len(queue_size))
+    plt.subplot(131)
+    plt.grid(axis='y')
+    plt.bar(x, queue_result, align='center', color=color_blue, capsize=14)
+    plt.xticks(x, labels=queue_size, fontsize=16)
+    plt.yticks(np.arange(57, 64), fontsize=16)
+    plt.xlabel("Domain Queue Size", fontsize=16)
+    plt.ylabel("F1 Score (%)", fontsize=16)
+    plt.title('(a)', fontsize=16, y=-0.4)
+    plt.ylim(56, 63)
+    
+    slr=[0.1, 0.3, 0.5, 0.7, 0.9]
+    slr_result = [59.75, 60.71, 60.50, 62.59, 60.16]
+    x=np.arange(len(slr))
+    plt.subplot(132)
+    plt.grid(axis='y')
+    plt.plot(x, slr_result, '-^', color=color_blue, linewidth=3)
+    plt.xticks(x, labels=slr, fontsize=16)
+    plt.yticks(np.arange(57, 64), fontsize=16)
+    plt.xlabel("$\lambda_1$", fontsize=16)
+    plt.ylabel("F1 Score (%)", fontsize=16)
+    plt.title('(b)', fontsize=16, y=-0.4)
+    plt.ylim(57, 63)
+
+    ewc=[0.5, 5, 50, 100, 500]
+    ewc_result = [61.63, 62.06, 62.59, 61.60, 60.83]
+    x=np.arange(len(ewc))
+    plt.subplot(133)
+    plt.grid(axis='y')
+    plt.plot(x, ewc_result, '-^', color=color_blue, linewidth=3)
+    plt.xticks(x, labels=ewc, fontsize=16)
+    plt.yticks(np.arange(59, 64), fontsize=16)
+    plt.xlabel("$\lambda_2$", fontsize=16)
+    plt.ylabel("F1 Score (%)", fontsize=16)
+    plt.ylim(59, 63)
+    plt.title('(c)', fontsize=16, y=-0.4)
+    plt.savefig('./figure_plot/sensitivity_analysis.png', bbox_inches='tight')
+    return
+
+def figure_domain_shift_new_previous():
+    cpc_random = [94.76, 95.62, 95.87]
+    cpc_label = [94.91, 74.68, 51.61]
+    
+    limu_random = [95.62, 96.66, 95.11]
+    limu_label = [95.90, 78.70, 56.87]
+    
+    x=np.arange(len(cpc_random)*2)
+    width=0.4
+    interval=0.4
+
+    fig, ax = plt.subplots()
+    # print(fig.size())
+    ax.bar(x[0:3]-interval-width/2, cpc_label, width, color=color_red, label="Setting A")
+    ax.bar(x[0:3]-interval+width/2, cpc_random, width, color=color_blue, label="Setting B")
+
+    ax.bar(x[3:]+interval-width/2, limu_label, width, color=color_red)
+    ax.bar(x[3:]+interval+width/2, limu_random, width, color=color_blue)
+    ax.axvline((x[2]+x[3])/2, linestyle='--', color="#b4b4b4")
+
+    # ax.plot(x[0:3]-interval-width/2, cpc_random, '--', color='black', linewidth=3)
+    # ax.plot(x[0:3]-interval+width/2, cpc_label, '--', color='black', linewidth=2)
+
+    # ax.plot(x[3:]+interval-width/2, limu_random, '--', color='black', linewidth=3)
+    # ax.plot(x[3:]+interval+width/2, limu_label, '--', color='black', linewidth=2)
+
+    
+    # ax.bar(x+width, train_label, width, color=color_red, label="Setting C")
+    ax.set_xticks(np.concatenate([x[0:3]-interval, x[3:]+interval]))
+    ax.set_xticklabels([r"65", r"45", r"25", r"65", r"45", r"25"])
+    # ax.set_xticklabels([r'$\alpha$ = 60', r'$\alpha$ = 25'], fontsize=14)
+    ax.legend(fontsize=14, loc='lower right', ncol=1)
+    ax.set_ylim(40, 100)
+    # plt.xlabel(r"Percentage $\alpha$ (%)", fontsize=16)
+    plt.xlabel("CPCHAR                           LIMU", fontsize=16)
+    plt.ylabel("F1 Score (%)", fontsize=16)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.tight_layout()
+    plt.savefig('./figure_plot/preliminary_sparse.png')
+
+def figure_domain_shift_new():
+    cpc_random = [94.76, 95.62, 95.87]
+    cpc_label = [94.91, 74.68, 51.61]
+    
+    limu_random = [95.62, 96.66, 95.11]
+    limu_label = [95.90, 78.70, 56.87]
+
+    x=np.arange(len(cpc_random))
+    width=0.3
+
+    fig, ax = plt.subplots(2)
+    # print(fig.size())
+    ax[0].bar(x-width/2, cpc_label, width, color=color_red, label="Setting A", edgecolor='black')
+    ax[0].bar(x+width/2, cpc_random, width, color=color_blue, label="Setting B", edgecolor='black')
+    ax[0].set_ylim(40, 100)
+    ax[0].set_xlim(-0.6, 2.6)
+    # plt.xlabel(r"Percentage $\alpha$", fontsize=16)
+    ax[0].set_ylabel("F1 Score (%)", fontsize=16)
+    ax[0].set_xlabel("CPCHAR", fontsize=16)
+    ax[0].set_xticks(x, labels=[r"$\alpha=65$", r"$\alpha=45$", r"$\alpha=25$"], fontsize=16)
+    ax[0].set_yticks(np.arange(40,120,20), fontsize=16)
+    ax[0].tick_params(axis='y', labelsize=16)
+    ax[0].legend(fontsize=14, loc='lower left', ncol=1)
+   
+
+    ax[1].bar(x-width/2, limu_label, width, color=color_red, label="Setting A", edgecolor='black')
+    ax[1].bar(x+width/2, limu_random, width, color=color_blue, label="Setting B", edgecolor='black')
+    # ax.axvline((x[2]+x[3])/2, linestyle='--', color="#b4b4b4")
+    ax[1].set_ylim(40, 100)
+    ax[1].set_xlim(-0.6, 2.6)
+    
+
+    # plt.xlabel(r"Percentage $\alpha$", fontsize=16)
+    # plt.ylabel("F1 Score (%)", fontsize=16)
+    ax[1].tick_params(axis='y', labelsize=16)
+    ax[1].set_ylabel("F1 Score (%)", fontsize=16)
+    ax[1].set_xticks(x, labels=[r"$\alpha=65$", r"$\alpha=45$", r"$\alpha=25$"], fontsize=16)
+    ax[1].set_yticks(np.arange(40,120,20), fontsize=16)
+    ax[1].set_xlabel("LIMU", fontsize=16)
+    ax[1].legend(fontsize=14, loc='lower left', ncol=1)
+    plt.tight_layout()
+    plt.savefig('./figure_plot/preliminary_new.pdf')
+    plt.savefig('./figure_plot/preliminary_new.png')
+
+color_blue = '#3c75b0'
+color_red = '#e6843b'
+# color_box = ['#A1A9D0', '#96CCCB', '#B883D4', '#9E9E9E', '#CFEAF1', '#C4A5DE', '#F0988C', '#F6CAE5']
+color_box = ['#529e52', '#e6843b', '#c53a32', '#529e52', '#e6843b', '#c53a32', '#3c75b0']
 
 if __name__ == '__main__':
     # fig_extract_phone_loss()
@@ -448,12 +608,13 @@ if __name__ == '__main__':
     # cmp_segmentation_performance()
     # figure_supervised_learning()
     # figure_domain_shift()
-    # figure_limited_labels()
+    figure_limited_labels()
     # figure_cross_domain(cross='positions')
     # fig_label_domain_portion()
     # fig_batch_size_result()
+    # fig_aug_effect()
     # fig_queue_results()
     # fig_slr_results()
     # fig_ewc_results()
-    fig_aug_effect()
-    
+    # fig_sensativity_analysis()
+    # figure_domain_shift_new()

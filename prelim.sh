@@ -4,10 +4,27 @@
 
 # wait
 
-# python main_supervised.py -g 2 -name "HHAR" -version "train70_supervised_plain" --setting 'full' --store "train70_HHAR_supervised_plain" &
-# python main_supervised.py -g 2 -name "HHAR" -version "train70_supervised_cross" --setting 'full' --store "train70_HHAR_supervised_cross_full" &
-# python main_supervised.py -g 2 -name "HHAR" -version "train45_supervised_plain" --setting 'full' --store "train45_HHAR_supervised_plain" &
-# python main_supervised.py -g 2 -name "HHAR" -version "train45_supervised_cross" --setting 'full' --store "train45_HHAR_supervised_cross_full"
+# python main_supervised.py -g 2 -name "HHAR" -lr 0.00005 -version "train65_supervised_random" --setting 'full' --store "train65_HHAR_supervised_random_lr5-5" &
+# python main_supervised.py -g 3 -name "HHAR" -lr 0.00005 -version "train65_supervised_cross" --setting 'full' --store "train65_HHAR_supervised_cross_full_lr5-5" 
+
+# wait
+
+# python main_supervised.py -g 2 -name "HHAR" -lr 0.00005 -version "train45_supervised_random" --setting 'full' --store "train45_HHAR_supervised_random_lr5-5" &
+# python main_supervised.py -g 3 -name "HHAR" -lr 0.00005 -version "train45_supervised_cross" --setting 'full' --store "train45_HHAR_supervised_cross_full_lr5-5" 
+
+# wait
+# python main_supervised.py -g 2 -name "HHAR" -lr 0.00005 -version "train25_supervised_random" --setting 'full' --store "train25_HHAR_supervised_random_lr5-5" &
+# python main_supervised.py -g 3 -name "HHAR" -lr 0.00005 -version "train25_supervised_cross" --setting 'full' --store "train25_HHAR_supervised_cross_full_lr5-5"
+
+# python main_supervised.py -g 2 -name "HHAR" -lr 0.00005 -version "train25_supervised_label" --setting 'sparse' -shot 0 --store "train25_HHAR_supervised_label_lr5-5" &
+# python main_supervised.py -g 3 -name "HHAR" -lr 0.00005 -version "train45_supervised_label" --setting 'sparse' -shot 0 --store "train45_HHAR_supervised_label_lr5-5" &
+# python main_supervised.py -g 3 -name "HHAR" -lr 0.00005 -version "train65_supervised_label" --setting 'sparse' -shot 0 --store "train65_HHAR_supervised_label_lr5-5"
+
+# python main_supervised.py -g 2 -name "HHAR" -lr 0.00005 -version "train25_supervised_cross" --setting 'sparse' -shot 5 --store "train25_supervised_cross" &
+python main_supervised.py -g 2 -name "HHAR" -lr 0.00005 -version "train25_supervised_cross" --setting 'sparse' -shot 10 --store "train25_supervised_cross" &
+# python main_supervised.py -g 2 -name "HHAR" -lr 0.00005 -version "train25_supervised_cross" --setting 'sparse' -shot 50 --store "train25_supervised_cross" &
+# python main_supervised.py -g 2 -name "HHAR" -lr 0.00005 -version "train25_supervised_cross" --setting 'sparse' -shot 100 --store "train25_supervised_cross" &
+# python main_supervised.py -g 2 -name "HHAR" -lr 0.00005 -version "train25_supervised_cross" --setting 'full' -shot 0 --store "train25_supervised_cross" &
 
 # for e in 50 100 200
 # do
@@ -28,16 +45,4 @@
 # python main_supervised.py -g 2 -e 200 -name "HHAR" -version "train25_supervised_cross" --setting 'full' --store "train25_HHAR_supervised_cross_full_e200"
 
 
-version="cp"
-shot=10
-for dataset in "Shoaib"
-do
-    name="CDL_cp"
-    ### with all
-    store="CDL_cp_ewc5_"
-    python main_trans_ewc.py -shot ${shot} -g 2 -aug True -ewc True -ewc_lambda 5 -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}0" -cross "positions" &
-    python main_trans_ewc.py -shot ${shot} -g 2 -aug True -ewc True -ewc_lambda 5 -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}1" -cross "positions" &
-    python main_trans_ewc.py -shot ${shot} -g 2 -aug True -ewc True -ewc_lambda 5 -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}2" -cross "positions" &
-    python main_trans_ewc.py -shot ${shot} -g 2 -aug True -ewc True -ewc_lambda 5 -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}3" -cross "positions" & 
-    python main_trans_ewc.py -shot ${shot} -g 2 -aug True -ewc True -ewc_lambda 5 -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}4" -cross "positions" 
-done
+# python main_supervised.py -g 2 -name "HHAR" -version "domain_shift" --setting 'sparse' -shot 0 --store "CPC_domain_shift" &

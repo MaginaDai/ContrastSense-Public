@@ -118,7 +118,8 @@ test_num_of_user = 3
 
 # MAX_INDEX = 9166
 percent = [0.2, 0.5, 1, 2, 5, 10]
-shot_num = [1, 5, 10, 15, 20, 50, 100, 200, 500] # enlarge to 500
+# shot_num = [1, 5, 10, 15, 20, 50, 100, 200, 500] # enlarge to 500
+shot_num=[0]
 
 
 def preprocessing_plain_segmentation(dir, target_dir, val_portion=0.15, test_portion=0.25):
@@ -428,9 +429,6 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
             for label_per_class in shot_num:
                 tune_set = []
                 counter = []
-                if label_per_class < 1:
-                    label_per_class = 1  # at least one label for each class
-                    print("at least one sample per class")
                 
                 for i in label_type:
                     idx = np.argwhere((label == i)).squeeze()
@@ -440,12 +438,17 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
                             if domain[j] in domain_selected:
                                 idx_domain_selected.append(j)
                         idx = np.array(idx_domain_selected)
+                        
                     np.random.shuffle(idx)
                     if len(idx) == 0:
                         irreasonable_segmentation = 1
                         break
-                    tune_set.extend(train_set[idx[:label_per_class]])
-                    counter.append(len(list(idx[:label_per_class])))
+                    if label_per_class == 0:
+                        tune_set.extend(train_set[idx])
+                        counter.append(len(list(idx)))
+                    else:
+                        tune_set.extend(train_set[idx[:label_per_class]])
+                        counter.append(len(list(idx[:label_per_class])))
                 
                 if irreasonable_segmentation:
                     break
@@ -586,14 +589,36 @@ def new_segmentation_for_domain_shift_visual(seed=940, seg_types=5):
 def new_tune_segmentation_with_different_portion(seed=940, seg_type=1):
     random.seed(seed)
     np.random.seed(seed)
-    dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
+    # dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
+    dataset_name = ["HASC"]
     # dataset_name = ["HHAR"]
     tune_portion = [0.6, 0.8, 1.0]
     for i in range(seg_type):
         for portion in tune_portion:
             for dataset in dataset_name:
-                write_balance_tune_set(ori_dir=f'datasets/{dataset}/', train_dir=f'datasets/{dataset}_shot{i}/', target_dir=f'datasets/{dataset}_tune_portion_{int(portion*100)}_shot{i}/', dataset=dataset, tune_domain_portion=portion, cross='users')
+                write_balance_tune_set(ori_dir=f'datasets/{dataset}/', train_dir=f'datasets/{dataset}_cd{i}/', target_dir=f'datasets/{dataset}_cd_tune_portion_{int(portion*100)}_shot{i}/', dataset=dataset, tune_domain_portion=portion, cross='devices')
     return
+
+def random_split(dir, cross_domain_dir, target_dir):
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+    train_loc = cross_domain_dir + 'train_set.npz'
+    val_loc = cross_domain_dir + 'val_set.npz'
+    test_loc = cross_domain_dir + 'test_set.npz'
+    cross_train_set, cross_val_set, cross_test_set = np.load(train_loc), np.load(val_loc), np.load(test_loc)
+    cross_train_set, cross_val_set, cross_test_set = cross_train_set['train_set'], cross_val_set['val_set'], cross_test_set['test_set']
+    train_len = len(cross_train_set)
+    val_len = len(cross_val_set)
+    num = fetch_instance_number_of_dataset(dir)
+    samples = np.arange(num)
+    np.random.shuffle(samples)
+    train_num = samples[:train_len]
+    val_num = samples[train_len:train_len+val_len]
+    test_num = samples[train_len+val_len:]
+    print(f"the total number is {num}, divided into train {len(train_num)}, val {len(val_num)}, test {len(test_num)}")
+    write_dataset(target_dir, train_num, val_num, test_num)
+    return
+
     
 
 if __name__ == '__main__':
@@ -601,4 +626,8 @@ if __name__ == '__main__':
     # new_segmentation_for_positions(seg_types=5)
     # new_segmentation_for_devices(seg_types=1)
     # new_segmentation_for_user(seg_types=5)
-    new_tune_segmentation_with_different_portion(seed=940, seg_type=5)
+    # new_tune_segmentation_with_different_portion(seed=940, seg_type=5)
+    dataset='HHAR'
+    write_balance_tune_set(ori_dir=f'datasets/{dataset}/', train_dir="", target_dir=f'datasets/{dataset}_train65_supervised_label/', dataset=dataset, tune_domain_portion=0.5, cross='users')
+    # preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_domain_shift/", dataset=dataset, cross='users')
+    # random_split(dir=f'datasets/{dataset}/', cross_domain_dir=f'datasets/HHAR_train25_supervised_cross/', target_dir=f'datasets/HHAR_train25_supervised_random/')

@@ -165,16 +165,25 @@ def avg_result_for_limited_labels(name):
     print("Test mean is: {}".format(np.around(np.mean(test, axis=0), 2)))
     return
     
-def avg_result_for_cross_domains(name, ft):
+def avg_result_for_cross_domains(name, ft, shot, cross="preliminary"):
     eval = np.zeros([len(name)])
     test = np.zeros([len(name)])
-    data="Shoaib"
+    if cross == 'positions' or cross == 'positions_100':
+        data="Shoaib"
+    elif cross == 'devices':
+        data="HASC"
+    elif cross == 'preliminary':
+        data='HHAR'
+    else:
+        dataset
+        NotADirectoryError
+    
     for i, n in enumerate(name):
-        # print(n)
+        print(n)
         if ft:
-            dir = f'{n}/{data}_shot_10/training.log'
+            dir = f'{n}/{data}_ft_shot_{shot}/training.log'
         else:
-            dir = f'{n}/{data}_shot_10/training.log'
+            dir = f'{n}/{data}_shot_{shot}/training.log'
         eval_pattern = r'best\seval\sf1\sis\s+\(*(\d+\.+\d*)'
         test_pattern = r'test\sf1\sis\s+\(*(\d+\.+\d*)'
         test_acc_pattern = r'test\sacc\sis\s+\(*(\d+\.+\d*)'
@@ -195,7 +204,7 @@ def avg_result_for_cross_domains(name, ft):
     print("Eval f1 is: {}".format(np.around(eval_final, 2)))
     print("Test f1 is: {}".format(np.around(test_final, 2)))
     print("Test std is: {}".format(np.around(np.std(test), 2)))
-    return
+    return test_mean
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -205,4 +214,4 @@ if __name__ == '__main__':
     # avg_result(name=args.name, ft=args.ft)
     # transfer_ability_access(args.name, ft=True)
 
-    # avg_result_for_cross_domains(args.name, ft=True)
+    # avg_result_for_cross_domains(args.name, ft=True, shot=args.shot)
