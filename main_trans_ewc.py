@@ -95,6 +95,8 @@ parser.add_argument('-aug', default=False, type=bool, help='decide use data augm
 parser.add_argument('-mixup', default=False, type=bool, help='decide use mixup or not')
 parser.add_argument('-p', default=0.2, type=float, help='possibility for one aug')
 parser.add_argument('-cross', default='users', type=str, help='decide to use which kind of labels')
+parser.add_argument('-pretrain_lr', default=1e-4, type=float, help='learning rate during pretraining')
+parser.add_argument('-label_type', default=1, type=int, help='How many different kinds of labels for pretraining')
 
 
 

@@ -100,7 +100,7 @@ def getFisherDiagonal_initial(args):
 
     user_num = None
     model = MoCo_v1(device=args.device, mol=args.mol, K=args.moco_K)
-    optimizer = torch.optim.Adam(model.parameters(), 1e-4, weight_decay=1e-4)
+    optimizer = torch.optim.Adam(model.parameters(), args.pretrain_lr, weight_decay=1e-4)
 
     model_dir = 'runs/'+ args.pretrained + '/model_best.pth.tar'
     checkpoint = torch.load(model_dir, map_location="cpu")
@@ -191,7 +191,6 @@ def getFisherDiagonal_pretrain(args, train_loader, save_dir):
     model.load_state_dict(state_dict, strict=False)
     optimizer.load_state_dict(checkpoint['optimizer'])
 
-    
     model.to(args.device)
 
     model = replenish_queue(model, train_loader, args)
