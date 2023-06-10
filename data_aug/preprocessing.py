@@ -70,7 +70,8 @@ ClassesNum = {
     'Shoaib': 7,
     'UCI': 6,
     'ICHAR': 9,
-    'HASC': 6
+    'HASC': 6,
+    'Myo': 7
 }
 
 DevicesNum = {
@@ -118,8 +119,8 @@ test_num_of_user = 3
 
 # MAX_INDEX = 9166
 percent = [0.2, 0.5, 1, 2, 5, 10]
-# shot_num = [1, 5, 10, 15, 20, 50, 100, 200, 500] # enlarge to 500
-shot_num=[0]
+shot_num = [0, 1, 5, 10, 15, 20, 50, 100, 200, 500] # enlarge to 500
+# shot_num=[0]
 
 
 def preprocessing_plain_segmentation(dir, target_dir, val_portion=0.15, test_portion=0.25):
@@ -204,7 +205,7 @@ def preprocessing_dataset_cross_domain_val(dir, target_dir, dataset, test_portio
     for i in range(num):
         sub_dir = dir + str(i) + '.npz'
         data = np.load(sub_dir, allow_pickle=True)
-        motion = data['add_infor'][0]
+        motion = np.int32(data['add_infor'][0])
         if cross == 'users':
             domain.append(data['add_infor'][1])
         elif cross == 'devices':
@@ -522,7 +523,7 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
-    dataset_name = ["HASC"]
+    dataset_name = ["Myo"]
     # dataset_name = ["Shoaib"]
     for i in range(seg_types):
         for dataset in dataset_name:
@@ -625,9 +626,11 @@ if __name__ == '__main__':
     # datasets_shot_record(datasets='HASC', version='s1', shot=100)
     # new_segmentation_for_positions(seg_types=5)
     # new_segmentation_for_devices(seg_types=1)
-    # new_segmentation_for_user(seg_types=5)
+    new_segmentation_for_user(seg_types=5)
     # new_tune_segmentation_with_different_portion(seed=940, seg_type=5)
-    dataset='HHAR'
-    write_balance_tune_set(ori_dir=f'datasets/{dataset}/', train_dir="", target_dir=f'datasets/{dataset}_train65_supervised_label/', dataset=dataset, tune_domain_portion=0.5, cross='users')
+    # dataset='Myo'
+    # preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot0/", test_portion=0.6, val_portion=0.15, tune_domain_portion=0.4, dataset=dataset, cross='users')
+    
+    # write_balance_tune_set(ori_dir=f'datasets/{dataset}/', train_dir="", target_dir=f'datasets/{dataset}_shot0/', dataset=dataset, cross='users')
     # preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_domain_shift/", dataset=dataset, cross='users')
     # random_split(dir=f'datasets/{dataset}/', cross_domain_dir=f'datasets/HHAR_train25_supervised_cross/', target_dir=f'datasets/HHAR_train25_supervised_random/')

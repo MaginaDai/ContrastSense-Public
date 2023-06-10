@@ -327,13 +327,13 @@ shot=10
 store="improve_ewc"
 for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
 do
-    for ewc in 10000 100000
+    for ewc in 1 10 100 1000 10000 100000
     do
-        python main_trans_ewc.py -shot ${shot} -g 0 -aug True -ewc True -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}_w${ewc}_0" &
-        python main_trans_ewc.py -shot ${shot} -g 0 -aug True -ewc True -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}_w${ewc}_1" &
-        python main_trans_ewc.py -shot ${shot} -g 0 -aug True -ewc True -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}_w${ewc}_2" &
-        python main_trans_ewc.py -shot ${shot} -g 1 -aug True -ewc True -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}_w${ewc}_3" &
-        python main_trans_ewc.py -shot ${shot} -g 1 -aug True -ewc True -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}_w${ewc}_4"
+        python main_trans_ewc.py -ewc_lambda ${ewc} -shot ${shot} -g 0 -aug True -ewc True -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}_w${ewc}_0" &
+        python main_trans_ewc.py -ewc_lambda ${ewc} -shot ${shot} -g 0 -aug True -ewc True -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}_w${ewc}_1" &
+        python main_trans_ewc.py -ewc_lambda ${ewc} -shot ${shot} -g 0 -aug True -ewc True -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}_w${ewc}_2" &
+        python main_trans_ewc.py -ewc_lambda ${ewc} -shot ${shot} -g 1 -aug True -ewc True -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}_w${ewc}_3" &
+        python main_trans_ewc.py -ewc_lambda ${ewc} -shot ${shot} -g 1 -aug True -ewc True -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}_w${ewc}_4"
         
         wait
     done

@@ -1,7 +1,8 @@
 {
     "python.analysis.extraPaths": [
         "./baseline/ClusterHAR",
-        "./baseline/GILE"
+        "./baseline/GILE",
+        "./baseline/Mixup"
     ],
     "python.analysis.typeCheckingMode": "off"
 }

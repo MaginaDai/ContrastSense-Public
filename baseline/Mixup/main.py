@@ -13,12 +13,15 @@ from data_aug.preprocessing import ClassesNum, UsersNum
 from baseline.CPCHAR.dataload import CPCHAR_Dataset
 from baseline.Mixup.MIX import MIX
 from utils import evaluate, seed_torch
+from baseline.Mixup.myo_dataload import Myo_Dataset
+from baseline.Mixup.ConvNet import ConvNet
+
 
 parser = argparse.ArgumentParser(description='PyTorch Mixup for Wearable Sensing')
 
-parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
-parser.add_argument('-name', default='HHAR', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC'])
-parser.add_argument('--store', default='Mixup', type=str, help='define the name head for model storing')
+parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
+parser.add_argument('-name', default='Myo', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo'])
+parser.add_argument('--store', default='test_Myo', type=str, help='define the name head for model storing')
 
 parser.add_argument('-lr', '--learning-rate', default=5e-3, type=float, metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
@@ -46,8 +49,11 @@ def main():
         args.device = torch.device('cpu')
         args.gpu_index = -1
 
-
-    dataset = CPCHAR_Dataset(transfer=True, version=args.version, datasets_name=args.name)
+    if args.name == 'Myo':
+        dataset = Myo_Dataset(transfer=True, version=args.version, datasets_name=args.name)
+    else:
+        dataset = CPCHAR_Dataset(transfer=True, version=args.version, datasets_name=args.name)
+    
     tune_dataset = dataset.get_dataset('tune', percent=args.percent, shot=args.shot)
     val_dataset = dataset.get_dataset('val')
     test_dataset = dataset.get_dataset('test')
@@ -64,7 +70,10 @@ def main():
         test_dataset, batch_size=args.batch_size, shuffle=True,
         num_workers=args.workers, pin_memory=False, drop_last=False)
 
-    model = Transfer_Coder(classes=ClassesNum[args.name], method='CL')
+    if args.name == 'Myo':
+        model = ConvNet(number_of_class=ClassesNum[args.name])
+    else:
+        model = Transfer_Coder(classes=ClassesNum[args.name], method='CL')
     optimizer = torch.optim.Adam(model.parameters(), args.lr)
 
     with torch.cuda.device(args.gpu_index):
