@@ -1004,7 +1004,7 @@ class MoCo(object):
                     logits_domain = self.model.discriminator(h[sensor.shape[0]:])
                     loss_domain = self.criterion(logits_domain, target_domain)
 
-                    loss = loss_class + self.args.slr * loss_domain
+                    loss = loss_class + self.args.dlr * loss_domain
 
                 self.optimizer.zero_grad()
                 scaler.scale(loss).backward()
@@ -1107,7 +1107,6 @@ class MoCo(object):
                 self.model.classifier.train()
                 
             for sensor, target in tune_loader:
-
                 sensor = sensor.to(self.args.device)
                 target = target[:, 0].to(self.args.device)
                 label_batch = torch.cat((label_batch, target))
@@ -1164,7 +1163,7 @@ class MoCo(object):
             self.scheduler.step()
 
             f1_batch = f1_score(label_batch.cpu().numpy(), pred_batch.cpu().numpy(), average='macro') * 100
-            logging.debug(f"Epoch: {epoch_counter} Loss: {loss} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch: .3f}/{val_f1: .3f}")
+            logging.debug(f"Epoch: {epoch_counter} Loss: {loss} Loss_EWC: {loss_ewc} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch: .3f}/{val_f1: .3f}")
 
         logging.info("Fine-tuning has finished.")
         logging.info(f"best eval f1 is {best_f1} at {best_epoch}.")

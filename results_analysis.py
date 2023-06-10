@@ -9,6 +9,7 @@ from xml.sax import default_parser_list
 
 
 dataset = ['HASC', 'HHAR', 'MotionSense', 'Shoaib']
+# dataset = ['HHAR']
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 parser.add_argument('-name', default=["test", "test"], nargs='+', type=str, help='the interested models file')

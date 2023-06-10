@@ -1,6 +1,6 @@
 #!/bin/bash
 key="v1"
-name="runs/ft_CDL_v"
+name="runs/improve_ewc_w1000_"
 python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4"
 # python results_analysis.py -name "runs/CDL_ewc_mixup_v0" 
 # python results_analysis.py -name "${name}0_${key}" "${name}0.2_${key}" "${name}0.8_${key}" "${name}1.0_${key}"
