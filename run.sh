@@ -327,7 +327,7 @@ shot=10
 store="improve_ewc"
 for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
 do
-    for ewc in 1 10 100 1000 10000 100000
+    for ewc in 1 10 100 1000 10000 100000 1000000
     do
         python main_trans_ewc.py -ewc_lambda ${ewc} -shot ${shot} -g 0 -aug True -ewc True -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}_w${ewc}_0" &
         python main_trans_ewc.py -ewc_lambda ${ewc} -shot ${shot} -g 0 -aug True -ewc True -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}_w${ewc}_1" &
