@@ -34,6 +34,10 @@
 /baseline/Mixup/runs
 /baseline/Mixup/__pycache__
 
+/baseline/CALDA/runs
+/baseline/CALDA/__pycache__
+
+
 /data_aug/__pycache__
 
 

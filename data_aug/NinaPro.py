@@ -13,7 +13,7 @@ feature_names = [[
 repetitions = [1, 2, 3, 4, 5, 6]
 
 window_size = 52  # 200Hz * 0.260s (260ms) = 52 samples
-window_overlap = False # which means no overlap 
+window_overlap = False # which means no overlap
 users = 10
 which_ex=2
 label_subset=[
@@ -56,13 +56,13 @@ def get_data():
     label = np.hstack(label)
 
     for i in range(len(data)):
-        np.savez('./datasets/DB5/' + str(i) + '.npz', emg = data[i], add_infor=label[:, i])
+        np.savez('./datasets/NinaPro/' + str(i) + '.npz', emg = data[i], add_infor=label[:, i])
     return
         
     
 
 def get_data_for_one_user(user_num):
-    fp = f'original_dataset/DB5/s{user_num}/S{user_num}_E2_A1.mat'
+    fp = f'original_dataset/NinaPro/s{user_num}/S{user_num}_E2_A1.mat'
     mat = scipy.io.loadmat(fp)
     xs = mat["emg"]
 

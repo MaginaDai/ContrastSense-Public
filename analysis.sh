@@ -1,6 +1,8 @@
 #!/bin/bash
 key="v1"
-name="runs/improve_ewc_w100000_"
+lr=0.001
+name="runs/improve_ewc_w200_"
+# name="baseline/Mixup/runs/mixup_EMG_lr0.0005_e1000_v"
 python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4"
 # python results_analysis.py -name "runs/CDL_ewc_mixup_v0" 
 # python results_analysis.py -name "${name}0_${key}" "${name}0.2_${key}" "${name}0.8_${key}" "${name}1.0_${key}"

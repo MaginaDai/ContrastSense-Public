@@ -107,10 +107,30 @@
 #     done
 # done
 
-version="train25_supervised_cross"
-store="preliminary_cross"
-python main.py -g 2 -version "${version}" --store "${store}" -shot 5 -name 'HHAR' &
-python main.py -g 2 -version "${version}" --store "${store}" -shot 10 -name 'HHAR' &
-python main.py -g 2 -version "${version}" --store "${store}" -shot 50 -name 'HHAR' &
-python main.py -g 2 -version "${version}" --store "${store}" -shot 100 -name 'HHAR' &
-python main.py -g 2 -version "${version}" --store "${store}" -shot 0 -name 'HHAR'
+# version="train25_supervised_cross"
+# store="preliminary_cross"
+# python main.py -g 2 -version "${version}" --store "${store}" -shot 5 -name 'HHAR' &
+# python main.py -g 2 -version "${version}" --store "${store}" -shot 10 -name 'HHAR' &
+# python main.py -g 2 -version "${version}" --store "${store}" -shot 50 -name 'HHAR' &
+# python main.py -g 2 -version "${version}" --store "${store}" -shot 100 -name 'HHAR' &
+# python main.py -g 2 -version "${version}" --store "${store}" -shot 0 -name 'HHAR'
+
+version='shot'
+lr=0.0001
+
+for e in 600 800
+do
+    store="mixup_EMG_lr${lr}_e${e}_v"
+
+    for dataset in "Myo" "NinaPro"
+    do
+        python main.py -lr ${lr} -e ${e} -g 3 -version "${version}0" --store "${store}0" -shot 10 -name ${dataset} &
+        python main.py -lr ${lr} -e ${e} -g 3 -version "${version}1" --store "${store}1" -shot 10 -name ${dataset} &
+        python main.py -lr ${lr} -e ${e} -g 3 -version "${version}2" --store "${store}2" -shot 10 -name ${dataset} &
+        python main.py -lr ${lr} -e ${e} -g 3 -version "${version}3" --store "${store}3" -shot 10 -name ${dataset} &
+        python main.py -lr ${lr} -e ${e} -g 3 -version "${version}4" --store "${store}4" -shot 10 -name ${dataset} 
+
+        wait
+    done
+
+done
