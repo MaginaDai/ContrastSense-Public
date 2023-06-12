@@ -53,6 +53,8 @@ UsersNum = {
     'UCI': 30,
     'ICHAR': 10,
     'HASC': 80,  # actually we have 64 users in total. But the largest user id is 79, set it to 80. +1 since it starts from 0. 
+    'Myo': 40,
+    'NinaPro': 10,
 }
 
 LabelPosition = {
@@ -71,7 +73,8 @@ ClassesNum = {
     'UCI': 6,
     'ICHAR': 9,
     'HASC': 6,
-    'Myo': 7
+    'Myo': 7,
+    'NinaPro': 7
 }
 
 DevicesNum = {
@@ -523,7 +526,7 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
-    dataset_name = ["Myo"]
+    dataset_name = ["NinaPro"]
     # dataset_name = ["Shoaib"]
     for i in range(seg_types):
         for dataset in dataset_name:

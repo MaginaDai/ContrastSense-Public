@@ -1,0 +1,26 @@
+!!python/object:argparse.Namespace
+batch_size: 128
+device: !!python/object/apply:torch.device
+- cuda
+- 2
+disable_cuda: false
+epochs: 200
+fp16_precision: false
+gpu_index: 2
+log_every_n_steps: 5
+lr: 0.0001
+modal: emg
+name: Myo
+num_units: 128
+percent: 1
+pretrained: ''
+resume: ''
+seed: 0
+shot: 10
+store: CALDA_v0
+temperature: 0.1
+transfer: false
+version: shot0
+weight_adversary: 1.0
+weight_similarity: 10.0
+workers: 10

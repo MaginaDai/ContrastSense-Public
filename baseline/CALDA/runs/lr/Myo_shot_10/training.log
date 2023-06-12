@@ -1,0 +1,13 @@
+INFO:root:Start CPC fine-tuning head for 200 epochs.
+INFO:root:Training with gpu: False.
+INFO:root:Start CPC fine-tuning head for 200 epochs.
+INFO:root:Training with gpu: False.
+DEBUG:root:Epoch: 0 Loss: 40.698184967041016 acc:  12.857/ 11.623 f1:  10.395/ 7.144
+DEBUG:root:Epoch: 1 Loss: 39.61308670043945 acc:  12.857/ 11.497 f1:  10.431/ 7.819
+INFO:root:Start CPC fine-tuning head for 200 epochs.
+INFO:root:Training with gpu: False.
+DEBUG:root:Epoch: 0 Loss: 40.698184967041016 acc:  12.857/ 11.623 f1:  10.395/ 7.144
+DEBUG:root:Epoch: 1 Loss: 39.61308670043945 acc:  12.857/ 11.497 f1:  10.431/ 7.819
+DEBUG:root:Epoch: 2 Loss: 38.558753967285156 acc:  12.857/ 11.748 f1:  10.431/ 8.239
+DEBUG:root:Epoch: 3 Loss: 37.551673889160156 acc:  14.286/ 12.030 f1:  11.310/ 8.597
+DEBUG:root:Epoch: 4 Loss: 36.61001968383789 acc:  15.714/ 11.905 f1:  12.649/ 8.458

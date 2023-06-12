@@ -8,16 +8,26 @@ import pdb
 from xml.sax import default_parser_list
 
 
-dataset = ['HASC', 'HHAR', 'MotionSense', 'Shoaib']
+dataset_imu = ['HASC', 'HHAR', 'MotionSense', 'Shoaib']
+dataset_emg = ['Myo', 'NinaPro']
+
 # dataset = ['HHAR']
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 parser.add_argument('-name', default=["test", "test"], nargs='+', type=str, help='the interested models file')
-parser.add_argument('-ft', default=False, type=bool, help='fine-tune or linear evaluation')
+parser.add_argument('-ft', default=True, type=bool, help='fine-tune or linear evaluation')
 parser.add_argument('-nad', default='ft_shot_10', type=str, help='name after datasets')
 parser.add_argument('-shot', default=10, type=int, help='how many shots we use')
+parser.add_argument('-modal', default='imu', type=str, help='which modal we use')
 
-def avg_result(name, ft, shot=10):
+def avg_result(name, ft, modal, shot=10):
+    if modal == 'imu':
+        dataset = dataset_imu
+    elif modal == 'emg':
+        dataset = dataset_emg
+    else:
+        NotImplementedError
+    
     eval = np.zeros([len(name), len(dataset)])
     test = np.zeros([len(name), len(dataset)])
     test_acc = np.zeros([len(name), len(dataset)])
@@ -101,7 +111,14 @@ def results_for_each_file(files):
     # print(f"{eval}\n{test}\n{acc}")
     return
 
-def transfer_ability_access(name, ft):
+def transfer_ability_access(name, modal, ft):
+    if modal == 'imu':
+        dataset = dataset_imu
+    elif modal == 'emg':
+        dataset = dataset_emg
+    else:
+        NotADirectoryError
+    
     eval = np.zeros([len(name), len(dataset)])
     test = np.zeros([len(name), len(dataset)])
     for i, n in enumerate(name):
@@ -166,7 +183,7 @@ def avg_result_for_limited_labels(name):
     print("Test mean is: {}".format(np.around(np.mean(test, axis=0), 2)))
     return
     
-def avg_result_for_cross_domains(name, ft, shot, cross="preliminary"):
+def avg_result_for_cross_domains(name, ft, modal, shot, cross="preliminary"):
     eval = np.zeros([len(name)])
     test = np.zeros([len(name)])
     if cross == 'positions' or cross == 'positions_100':
@@ -176,7 +193,6 @@ def avg_result_for_cross_domains(name, ft, shot, cross="preliminary"):
     elif cross == 'preliminary':
         data='HHAR'
     else:
-        dataset
         NotADirectoryError
     
     for i, n in enumerate(name):
@@ -209,7 +225,7 @@ def avg_result_for_cross_domains(name, ft, shot, cross="preliminary"):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    avg_result(args.name, ft=True, shot=args.shot)
+    avg_result(args.name, ft=args.ft, modal=args.modal, shot=args.shot)
     # avg_result_for_limited_labels(args.name)
     # results_for_each_file(args.name)
     # avg_result(name=args.name, ft=args.ft)

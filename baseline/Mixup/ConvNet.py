@@ -7,14 +7,14 @@ import numpy as np
 class ConvNet(nn.Module):
     def __init__(self, number_of_class, ):
         super(ConvNet, self).__init__()
-        self._conv1 = nn.Conv2d(1, 32, kernel_size=(3, 5))
-        self._pool1 = nn.MaxPool2d(kernel_size=(1, 3))
+        self._conv1 = nn.Conv2d(1, 32, kernel_size=(5, 3))
+        self._pool1 = nn.MaxPool2d(kernel_size=(3, 1))
         self._batch_norm1 = nn.BatchNorm2d(32)
         self._prelu1 = nn.PReLU(32)
         self._dropout1 = nn.Dropout2d(.5)
         
-        self._conv2 = nn.Conv2d(32, 64, kernel_size=(3, 5))
-        self._pool2 = nn.MaxPool2d(kernel_size=(1, 3))
+        self._conv2 = nn.Conv2d(32, 64, kernel_size=(5, 3))
+        self._pool2 = nn.MaxPool2d(kernel_size=(3, 1))
         self._batch_norm2 = nn.BatchNorm2d(64)
         self._prelu2 = nn.PReLU(64)
         self._dropout2 = nn.Dropout2d(.5)

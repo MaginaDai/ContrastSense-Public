@@ -20,8 +20,8 @@ from baseline.Mixup.ConvNet import ConvNet
 parser = argparse.ArgumentParser(description='PyTorch Mixup for Wearable Sensing')
 
 parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
-parser.add_argument('-name', default='HHAR', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo'])
-parser.add_argument('--store', default='test_HHAR', type=str, help='define the name head for model storing')
+parser.add_argument('-name', default='Myo', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro'])
+parser.add_argument('--store', default='test_Ninapro', type=str, help='define the name head for model storing')
 
 parser.add_argument('-lr', '--learning-rate', default=5e-3, type=float, metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
@@ -49,7 +49,7 @@ def main():
         args.device = torch.device('cpu')
         args.gpu_index = -1
 
-    if args.name == 'Myo':
+    if args.name == 'Myo' or args.name == 'NinaPro':
         dataset = Myo_Dataset(transfer=True, version=args.version, datasets_name=args.name)
     else:
         dataset = CPCHAR_Dataset(transfer=True, version=args.version, datasets_name=args.name)
@@ -70,7 +70,7 @@ def main():
         test_dataset, batch_size=args.batch_size, shuffle=True,
         num_workers=args.workers, pin_memory=False, drop_last=False)
 
-    if args.name == 'Myo':
+    if args.name == 'Myo' or args.name == 'NinaPro':
         model = ConvNet(number_of_class=ClassesNum[args.name])
     else:
         model = Transfer_Coder(classes=ClassesNum[args.name], method='CL')

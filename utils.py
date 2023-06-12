@@ -107,6 +107,8 @@ def evaluate(model, criterion, args, data_loader):
 
             with autocast(enabled=args.fp16_precision):
                 logits = model(sensor)
+                if type(logits) is tuple:
+                    logits = logits[0]
                 loss = criterion(logits, target)
 
             losses.update(loss.item(), sensor.size(0))
