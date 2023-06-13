@@ -314,35 +314,28 @@
 # done
 
 version="shot"
-name="CDL_slr0.7_v"
+name="improve_v1"
 slr=0.7
 shot=10
-# python main.py -g 0 -label_type 1 -slr ${slr} -version "${version}1" -name ${dataset} --store "${name}1" -cross "users" &
-# python main.py -g 0 -label_type 1 -slr ${slr} -version "${version}2" -name ${dataset} --store "${name}2" -cross "users" &
-# python main.py -g 1 -label_type 1 -slr ${slr} -version "${version}3" -name ${dataset} --store "${name}3" -cross "users" &
-# python main.py -g 1 -label_type 1 -slr ${slr} -version "${version}4" -name ${dataset} --store "${name}4" -cross "users" 
 
-# wait
-
-store="improve_ewc"
-for dataset in "HHAR" "MotionSense" "Shoaib"
+for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
 do
-    for ewc in 200 300 400 600 700 800 900
-    do
-        python main_trans_ewc.py -ewc_lambda ${ewc} -shot ${shot} -g 0 -aug True -ewc True -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}_w${ewc}_0" &
-        python main_trans_ewc.py -ewc_lambda ${ewc} -shot ${shot} -g 0 -aug True -ewc True -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}_w${ewc}_1" &
-        python main_trans_ewc.py -ewc_lambda ${ewc} -shot ${shot} -g 0 -aug True -ewc True -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}_w${ewc}_2" &
-        python main_trans_ewc.py -ewc_lambda ${ewc} -shot ${shot} -g 1 -aug True -ewc True -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}_w${ewc}_3" &
-        python main_trans_ewc.py -ewc_lambda ${ewc} -shot ${shot} -g 1 -aug True -ewc True -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}_w${ewc}_4"
-        
-        wait
-    done
+    python main.py -g 0 -label_type 1 -slr ${slr} -version "${version}0" -name ${dataset} --store "${name}0" -cross "users" &
+    python main.py -g 0 -label_type 1 -slr ${slr} -version "${version}1" -name ${dataset} --store "${name}1" -cross "users" &
+    python main.py -g 0 -label_type 1 -slr ${slr} -version "${version}2" -name ${dataset} --store "${name}2" -cross "users" &
+    python main.py -g 1 -label_type 1 -slr ${slr} -version "${version}3" -name ${dataset} --store "${name}3" -cross "users" &
+    python main.py -g 1 -label_type 1 -slr ${slr} -version "${version}4" -name ${dataset} --store "${name}4" -cross "users" 
+
+    wait
 done
 
-for dataset in "HASC"
+
+store="improve_v1_ewc"
+for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
 do
-    for ewc in 5000
+    for ewc in 50
     do
+
         python main_trans_ewc.py -ewc_lambda ${ewc} -shot ${shot} -g 0 -aug True -ewc True -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}_w${ewc}_0" &
         python main_trans_ewc.py -ewc_lambda ${ewc} -shot ${shot} -g 0 -aug True -ewc True -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}_w${ewc}_1" &
         python main_trans_ewc.py -ewc_lambda ${ewc} -shot ${shot} -g 0 -aug True -ewc True -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}_w${ewc}_2" &

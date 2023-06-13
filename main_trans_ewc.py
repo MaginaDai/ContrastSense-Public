@@ -37,9 +37,9 @@ parser.add_argument('-ft', '--if-fine-tune', default=True, type=bool, help='to d
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
-parser.add_argument('--pretrained', default='CDL_slr0.7_v0/HHAR', type=str,
+parser.add_argument('--pretrained', default='improve_v10/HASC', type=str,
                     help='path to ContrastSense pretrained checkpoint')
-parser.add_argument('-name', default='HHAR',
+parser.add_argument('-name', default='HASC',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'ICHAR', 'HASC'])
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 
@@ -88,6 +88,7 @@ parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate
 parser.add_argument('-dlr', default=0.5, type=float, help='DAL learning ratio')
 parser.add_argument('-ewc', default=True, type=bool, help='Use EWC or not')
 parser.add_argument('-ewc_lambda', default=50, type=float, help='EWC para')
+parser.add_argument('-ewc_pt', default=True, type=bool, help='use EWC acquired from pretrain or not')
 parser.add_argument('-fishermax', default=1e-4, type=float, help='fishermax')
 parser.add_argument('-slr', default=[0.7], nargs='+', type=float, help='the ratio of sup_loss')
 parser.add_argument('-moco_K', default=1024, type=int, help='keys size')
@@ -114,9 +115,6 @@ def main(args, fisher=None):
     args.transfer = True
     if args.store == None:
         args.store = deepcopy(args.pretrained)
-        
-    if args.ewc and fisher is None:
-        fisher = load_fisher_matrix(args.pretrained, args.device)
 
     args.pretrained = './runs/' + args.pretrained + '/model_best.pth.tar'
 
@@ -241,30 +239,31 @@ if __name__ == '__main__':
         args.gpu_index = -1
     
     if args.ewc:
-        fisher_cdl, fisher_infoNCE = getFisherDiagonal_initial(args)
-    else:
-        fisher_cdl, fisher_infoNCE = None, None
-    
-    fisher = {n: torch.zeros(p.shape).to(args.device) for n, p in fisher_cdl.items()}
-    
-    fmax, fmax_cdl = 0, 0
-    fmin = 10
-    
-    for n, p in fisher_infoNCE.items():
-        if torch.min(fisher_infoNCE[n]) < fmin:
-            fmin = torch.min(fisher_infoNCE[n])
-        if torch.max(fisher_infoNCE[n]) > fmax:
-            fmax = torch.max(fisher_infoNCE[n])
+        if args.ewc_pt:
+            fisher_cdl, fisher_infoNCE = load_fisher_matrix(args.pretrained, args.device)
+        else:
+            fisher_cdl, fisher_infoNCE = getFisherDiagonal_initial(args)
         
-        if torch.max(fisher_cdl[n]) > fmax_cdl:
-            fmax_cdl = torch.max(fisher_cdl[n])
-
-    # for n, p in fisher_cdl.items():
-    #     fisher[n] = (fmax - fisher_infoNCE[n]) / (fmax - fmin) *fisher_cdl[n]
+        fisher = {n: torch.zeros(p.shape).to(args.device) for n, p in fisher_cdl.items()}
     
-    for n, p in fisher_cdl.items():
-        fisher[n] = 0.5 * (fmax - fisher_infoNCE[n]) / (fmax - fmin) * fmax_cdl  + 0.5 * fisher_cdl[n]
+        fmax, fmax_cdl = 0, 0
+        fmin = 10
+        
+        for n, p in fisher_infoNCE.items():
+            if torch.min(fisher_infoNCE[n]) < fmin:
+                fmin = torch.min(fisher_infoNCE[n])
+            if torch.max(fisher_infoNCE[n]) > fmax:
+                fmax = torch.max(fisher_infoNCE[n])
+            
+            if torch.max(fisher_cdl[n]) > fmax_cdl:
+                fmax_cdl = torch.max(fisher_cdl[n])
+
+        for n, p in fisher_cdl.items():
+            fisher[n] = (fmax - fisher_infoNCE[n]) / (fmax - fmin) *fisher_cdl[n]
+    
+        # for n, p in fisher_cdl.items():
+        #     fisher[n] = 0.5 * (fmax - fisher_infoNCE[n]) / (fmax - fmin) * fmax_cdl  + 0.5 * fisher_cdl[n]
+    else:
+        fisher = None
 
     main(args, fisher)
-
-    # main(args)

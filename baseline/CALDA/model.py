@@ -205,7 +205,7 @@ class CALDA():
             logging.debug(f"Epoch: {epoch_counter} Loss: {loss} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch: .3f}/{val_f1: .3f}")
 
         logging.info("Training has finished.")
-        logging.info(f"best eval acc is {best_acc} at {best_epoch}.")
+        logging.info(f"best eval f1 is {best_f1} at {best_epoch}.")
 
         print('best eval acc is {} for {}'.format(best_acc, self.args.name))
 

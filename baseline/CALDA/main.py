@@ -34,11 +34,13 @@ parser.add_argument('-version', default="shot0", type=str, help='control the ver
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
+parser.add_argument('-w2', default=10, type=float, help='weight_similarity')
+
 def main():
     args = parser.parse_args()
     args.num_units = 128
     args.weight_adversary = 1.0
-    args.weight_similarity = 10.0
+    args.weight_similarity = args.w2
     args.temperature = 0.1
 
     seed_torch(seed=args.seed)

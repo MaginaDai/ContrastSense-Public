@@ -114,11 +114,15 @@ def getFisherDiagonal_pretrain(args, train_loader, save_dir):
     model = MoCo_v1(device=args.device, mol=args.mol, K=args.moco_K)
     optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
 
-    fisher, _ = calculateFisher(args, model, optimizer, train_loader, save_dir)
+    fisher, fisher_infoNCE = calculateFisher(args, model, optimizer, train_loader, save_dir)
     for n, p in fisher.items():
         fisher[n] = torch.min(fisher[n], torch.tensor(args.fishermax)).to('cpu')
+
+    for n, p in fisher_infoNCE.items():
+        fisher_infoNCE[n] = torch.min(fisher_infoNCE[n], torch.tensor(args.fishermax)).to('cpu')
+    
     fisher_dir = save_dir + 'fisher.npz'
-    np.savez(fisher_dir, fisher=fisher)
+    np.savez(fisher_dir, fisher=fisher, fisher_infoNCE=fisher_infoNCE)
     return
 
 def replenish_queue(model, train_loader, args):
@@ -234,10 +238,12 @@ def calculateFisher(args, model, optimizer, train_loader, save_dir):
 def load_fisher_matrix(pretrain_dir, device):
     fisher_dir = './runs/' + pretrain_dir + '/fisher.npz'
     fisher = np.load(fisher_dir, allow_pickle=True)
-    fisher = fisher['fisher'].tolist()
-    for n, _ in fisher.items():
-        fisher[n] = fisher[n].to(device)
-    return fisher
+    fisher_cdl = fisher['fisher'].tolist()
+    fisher_infoNCE = fisher['fisher_infoNCE'].tolist()
+    for n, _ in fisher_cdl.items():
+        fisher_cdl[n] = fisher_cdl[n].to(device)
+        fisher_infoNCE[n] = fisher_infoNCE[n].to(device)
+    return fisher_cdl, fisher_infoNCE
 
 if __name__ == '__main__':
     args = parser.parse_args()
