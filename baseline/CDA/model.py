@@ -23,7 +23,9 @@ from torch.autograd import Variable
 class unit_tcn(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(unit_tcn, self).__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=(9, 1), stride=1)
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=(9, 1), stride=1, padding=(4, 0)) 
+        # we add padding to the time axis to keep the len the same for residual
+
         self.bn = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU()
 
@@ -90,7 +92,7 @@ class TCN_GCN_unit(nn.Module):
 class STCN(nn.Module):
     def __init__(self, num_class=None, transfer=False):
         super(STCN, self).__init__()
-        A = torch.ones([8, 8])
+        A = np.ones([8, 8])
 
         self.l1 = TCN_GCN_unit(1, 4, A)
         self.l2 = TCN_GCN_unit(4, 8, A)
@@ -100,11 +102,11 @@ class STCN(nn.Module):
         self.transfer = transfer
         if self.transfer:
             self.Classifier = nn.Sequential(
-                nn.Linear(1024, num_class)
+                nn.Linear(2912, num_class)
             )
         else:
             self.sim_head = nn.Sequential(
-                nn.Linear(1024, 512),
+                nn.Linear(2912, 512),
                 nn.Linear(512, 128)
             )
 
@@ -118,8 +120,8 @@ class STCN(nn.Module):
         x = x.reshape(x.shape[0], -1)
 
         if self.transfer:
-            x = self.sim_head(x)
-        else:
             x = self.Classifier(x)
+        else:
+            x = self.sim_head(x)
 
         return x

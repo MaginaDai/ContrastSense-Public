@@ -37,6 +37,9 @@
 /baseline/CALDA/runs
 /baseline/CALDA/__pycache__
 
+/baseline/CDA/runs
+/baseline/CDA/__pycache__
+
 
 /data_aug/__pycache__
 

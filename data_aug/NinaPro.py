@@ -61,7 +61,7 @@ def get_data():
         
     
 
-def get_data_for_one_user(user_num):
+def get_data_for_one_user(user_num, if_cda=False):
     fp = f'original_dataset/NinaPro/s{user_num}/S{user_num}_E2_A1.mat'
     mat = scipy.io.loadmat(fp)
     xs = mat["emg"]
@@ -115,7 +115,14 @@ def get_data_for_one_user(user_num):
             x = xs[wh]
 
             x = create_windows_x(x, window_size, window_overlap)
-            y = [label_index]*len(x)
+            y = label_index * np.ones(len(x))
+
+            if if_cda:
+                if x.shape[0] % 2 == 1:
+                    x = x[:-1]
+                    y = y[:-1]
+                x = x.reshape([int(x.shape[0]/2), 2, x.shape[1], x.shape[2]])
+                y = y.reshape([int(y.shape[0]/2), 2])
 
             windows_per_this_label += len(x)
 
@@ -135,7 +142,10 @@ def get_data_for_one_user(user_num):
     # Concat all labels/reps, otherwise if we take the subset first we
     # essentially get all the data
     data_rest = np.vstack(data_rest).astype(np.float32)
-    labels_rest = np.hstack(labels_rest).astype(np.float32)
+    if if_cda:
+        labels_rest = np.vstack(labels_rest).astype(np.float32)
+    else:
+        labels_rest = np.hstack(labels_rest).astype(np.float32)
 
     # Shuffle both together; we don't want to always get just the first
     # "rest" instances. Also, make this repeatable.
@@ -149,7 +159,11 @@ def get_data_for_one_user(user_num):
     labels.append(labels_rest[:avg_windows_others])
 
     data = np.vstack(data).astype(np.float32)
-    labels = np.hstack(labels).astype(np.float32)
+
+    if if_cda:
+        labels = np.vstack(labels).astype(np.float32)
+    else:
+        labels = np.hstack(labels).astype(np.float32)
     return data, labels
 
 def create_windows_x(x, window_size, overlap):
@@ -200,5 +214,26 @@ def window_next_i(i, overlap, window_size):
 
     return i
 
+def get_data_for_CDA():
+    data = []
+    label = []
+    
+    for i in range(10):
+        data_i, label_i = get_data_for_one_user(i+1, if_cda=True)
+        data_i = np.expand_dims(data_i, axis=2)
+        domain_label_i = np.expand_dims(i * np.ones([label_i.shape[0], label_i.shape[1]]), axis=2)
+        label_i = np.expand_dims(label_i, axis=2)
+        label_i = np.concatenate([label_i, domain_label_i], axis=2)
+    
+        data.append(data_i)
+        label.append(label_i)
+
+    data = np.vstack(data)
+    label = np.vstack(label)
+
+    for i in range(len(data)):
+        np.savez('./datasets/NinaPro_cda/' + str(i) + '.npz', emg = data[i], add_infor=label[i, 0])  # since the label for the two are always the same, we just keep one of them, to make the split more easier.
+
+
 if __name__ == '__main__':
-    get_data()
+    get_data_for_CDA()

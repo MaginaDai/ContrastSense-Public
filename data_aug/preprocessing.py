@@ -74,7 +74,9 @@ ClassesNum = {
     'ICHAR': 9,
     'HASC': 6,
     'Myo': 7,
-    'NinaPro': 7
+    'Myo_cda': 7,
+    'NinaPro': 7,
+    'NinaPro_cda': 7,
 }
 
 DevicesNum = {
@@ -358,7 +360,7 @@ def write_tune_set(dir):
     return
     
 
-def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_percent=False, if_cross_user=True, tune_domain_portion=0.4, train_dir=None, cross='users'):
+def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_percent=False, if_cross_user=True, tune_domain_portion=0.4, train_dir=None, cross='users', domain_for_tune=None):
     if train_dir is None:
         loc = target_dir + 'train_set' + '.npz'
     else:
@@ -402,7 +404,11 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
 
 
         np.random.shuffle(domain_type)
-        domain_selected = domain_type[:domain_selected_num]
+
+        if domain_for_tune is None:
+            domain_selected = domain_type[:domain_selected_num]
+        else:
+            domain_selected = domain_for_tune
 
         if dataset_size is None:
             set_size = fetch_instance_number_of_dataset(ori_dir)
@@ -526,7 +532,7 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
-    dataset_name = ["NinaPro"]
+    dataset_name = ["NinaPro_cda"]
     # dataset_name = ["Shoaib"]
     for i in range(seg_types):
         for dataset in dataset_name:
@@ -623,13 +629,103 @@ def random_split(dir, cross_domain_dir, target_dir):
     write_dataset(target_dir, train_num, val_num, test_num)
     return
 
+
+def cmp_split():
+    # dataset_1 = 'NinaPro_cda'
+    # dataset_2 = 'NinaPro'
+
+    dataset_1 = 'Myo_cda'
+    dataset_2 = 'Myo'
+
+    for v in range(5):
+        dir = 'datasets/' + dataset_1 + '_shot' + str(v)
+        domain_split_1 = get_split_infor(dir)
+
+        dir = 'datasets/' + dataset_2 + '_shot' + str(v)
+        domain_split_2 = get_split_infor(dir)
+
+        print(domain_split_1)
+        print(domain_split_2)
+
+
+def generate_split_for_cda_based_on_previous_split():
+    # dataset_1 = 'NinaPro_cda'
+    # dataset_2 = 'NinaPro'
     
+    dataset_1 = 'Myo_cda'
+    dataset_2 = 'Myo'
+
+    for v in range(5):
+        dir = 'datasets/' + dataset_2 + '_shot' + str(v)
+        split_v = get_split_infor(dir)
+        preprocessing_dataset_cross_domain_based_on_existing_split(split_v, dir=f'datasets/{dataset_1}/', 
+                                                                   target_dir=f"datasets/{dataset_1}_shot{v}/", 
+                                                                   dataset=dataset_1, cross='users')
+
+
+def get_split_infor(dir):
+    train = 'train_set.npz'
+    val = 'val_set.npz'
+    tune = 'tune_set_500.npz'
+    test = 'test_set.npz'
+    
+    split_list = [train, val, tune, test]
+    
+    domain_split = []
+    for i in split_list:
+        domain = []
+        i_dir = dir + '/' + i
+        id_list = np.load(i_dir, allow_pickle=True)
+        if 'tune' in i:
+            id_list = id_list[i[:-8]]
+        else:
+            id_list = id_list[i[:-4]]
+        for j in id_list:
+            d = np.load(dir[:-6]+'/'+j, allow_pickle=True)
+            domain.append(d['add_infor'][1])
+        
+        domain = np.unique(np.hstack(domain))
+        
+        domain_split.append(domain)
+        # print(domain)
+    
+    return domain_split
+
+def preprocessing_dataset_cross_domain_based_on_existing_split(split, dir, target_dir, dataset, tune_domain_portion=0.4, cross='users'):
+    domains_train_name = split[0]
+    domains_val_name = split[1]
+    domains_test_name = split[3]
+
+    num = fetch_instance_number_of_dataset(dir)
+    domain = []
+    for i in range(num):
+        sub_dir = dir + str(i) + '.npz'
+        data = np.load(sub_dir, allow_pickle=True)
+        motion = np.int32(data['add_infor'][0])
+        if cross == 'users':
+            domain.append(data['add_infor'][1])
+        elif cross == 'devices':
+            domain.append(data['add_infor'][2])
+        elif cross == 'positions':
+            domain.append(data['add_infor'][2])
+        else:
+            NotADirectoryError()
+    
+    train_num = [j for j in range(num) if domain[j] in domains_train_name]
+    val_num =  [j for j in range(num) if domain[j] in domains_val_name]
+    test_num = [j for j in range(num) if domain[j] in domains_test_name]
+
+    write_dataset(target_dir, train_num, val_num, test_num)
+    write_balance_tune_set(dir, target_dir, dataset, dataset_size=num, tune_domain_portion=tune_domain_portion, cross=cross, domain_for_tune=split[2])
+
 
 if __name__ == '__main__':
     # datasets_shot_record(datasets='HASC', version='s1', shot=100)
     # new_segmentation_for_positions(seg_types=5)
     # new_segmentation_for_devices(seg_types=1)
-    new_segmentation_for_user(seg_types=5)
+    # new_segmentation_for_user(seg_types=5)
+    generate_split_for_cda_based_on_previous_split()
+    cmp_split()
     # new_tune_segmentation_with_different_portion(seed=940, seg_type=5)
     # dataset='Myo'
     # preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot0/", test_portion=0.6, val_portion=0.15, tune_domain_portion=0.4, dataset=dataset, cross='users')

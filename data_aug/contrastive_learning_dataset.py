@@ -32,7 +32,10 @@ def fetch_dataset_root(dataset_name):
             'ICHAR': './datasets/ICHAR',
             'HASC': './datasets/HASC',
             'Myo': './datasets/Myo',
-            'NinaPro': './datasets/NinaPro'}
+            'Myo_cda': './datasets/Myo_cda',
+            'NinaPro': './datasets/NinaPro',
+            'NinaPro_cda': './datasets/NinaPro_cda',
+            }
     try:
         root_dir = root[dataset_name]
     except KeyError:

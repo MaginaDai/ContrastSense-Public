@@ -38,6 +38,33 @@ class ConSSL(object):
         logging.basicConfig(filename=os.path.join(self.writer.log_dir, 'training.log'), level=logging.DEBUG)
         self.criterion = torch.nn.CrossEntropyLoss().to(self.args.device)
 
+    
+    def compute_contrastive_loss(self, features):
+        labels = torch.cat([torch.arange(self.args.batch_size) for i in range(2)], dim=0)
+        labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
+        labels = labels.to(self.args.device)
+
+        features = F.normalize(features, dim=1)
+
+        similarity_matrix = torch.matmul(features, features.T)
+
+        # discard the main diagonal from both: labels and similarities matrix
+        mask = torch.eye(labels.shape[0], dtype=torch.bool).to(self.args.device)
+        labels = labels[~mask].view(labels.shape[0], -1)
+        similarity_matrix = similarity_matrix[~mask].view(similarity_matrix.shape[0], -1)
+        # assert similarity_matrix.shape == labels.shape
+
+        # select and combine multiple positives
+        positives = similarity_matrix[labels.bool()].view(labels.shape[0], -1)
+
+        # select only the negatives the negatives
+        negatives = similarity_matrix[~labels.bool()].view(similarity_matrix.shape[0], -1)
+
+        logits = torch.cat([positives, negatives], dim=1)
+        labels = torch.zeros(logits.shape[0], dtype=torch.long).to(self.args.device)
+        logits = logits / self.args.temperature
+        return logits, labels
+
 
     def train(self, train_loader, val_loader):
         scaler = GradScaler(enabled=self.args.fp16_precision)
@@ -61,11 +88,18 @@ class ConSSL(object):
             self.model.train()
             
             for sensor, _ in train_loader:
-                sensor = sensor.to(self.args.device)
+                x1 = sensor[:, 0]
+                x2 = sensor[:, 1]
 
+                sensor = torch.cat([x1, x2], dim=0).to(self.args.device)
+                
                 with autocast(enabled=self.args.fp16_precision):
-                    acc, loss, _ = self.model(sensor)
+                    features = self.model(sensor)
+                    logits, labels = self.compute_contrastive_loss(features)
 
+                    loss = self.criterion(logits, labels)
+                
+                acc = accuracy(logits, labels, topk=(1,))
                 acc_batch.update(acc, sensor.size(0))
                 loss_batch.update(loss, sensor.size(0))
 
@@ -114,15 +148,20 @@ class ConSSL(object):
         model.eval()
 
         with torch.no_grad():
-            for sensor, target in data_loader:
-                sensor = sensor.to(self.args.device)
+            for sensor, _ in data_loader:
+                x1 = sensor[:, 0]
+                x2 = sensor[:, 1]
+                sensor = torch.cat([x1, x2], dim=0).to(self.args.device)
                 if sensor.shape == 2:
                     sensor = sensor.unsqueeze(dim=0)
-                target = target[:, 0].to(self.args.device)
 
                 with autocast(enabled=self.args.fp16_precision):
-                    acc, loss, _ = model(sensor)
-                
+                    features = model(sensor)
+                    logits, labels = self.compute_contrastive_loss(features)
+
+                    loss = self.criterion(logits, labels)
+
+                acc = accuracy(logits, labels, topk=(1,))
                 acc_eval.update(acc, sensor.size(0))
                 loss_eval.update(loss, sensor.size(0))
 
@@ -159,7 +198,7 @@ class ConSSL(object):
 
             for sensor, target in tune_loader:
 
-                sensor = sensor.to(self.args.device)
+                sensor = sensor[:, 0].to(self.args.device) ## among the two samples, we only sample the first sample to make the setting aligned with the others.
                 target = target[:, 0].to(self.args.device)
 
                 with autocast(enabled=self.args.fp16_precision):
@@ -188,7 +227,7 @@ class ConSSL(object):
                 n_iter_train += 1
 
             f1_batch = f1_score(label_batch.cpu().numpy(), pred_batch.cpu().numpy(), average='macro') * 100
-            val_acc, val_f1 = evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
+            val_acc, val_f1 = cda_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
 
             is_best = val_f1 > best_f1
             best_f1 = max(val_f1, best_f1)
@@ -218,9 +257,51 @@ class ConSSL(object):
         checkpoint = torch.load(best_model_dir, map_location="cpu")
         state_dict = checkpoint['state_dict']
         self.model.load_state_dict(state_dict, strict=False)
-        test_acc, test_f1 = evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=test_loader)
+        test_acc, test_f1 = cda_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=test_loader)
         logging.info(f"test f1 is {test_f1}.")
         logging.info(f"test acc is {test_acc}.")
         
         print('test f1 is {} for {}'.format(test_f1, self.args.name))
         print('test acc is {} for {}'.format(test_acc, self.args.name))
+
+    
+
+def cda_evaluate(model, criterion, args, data_loader):
+    losses = AverageMeter('Loss', ':.4e')
+    acc_eval = AverageMeter('acc_eval', ':6.2f')
+    # f1_eval = AverageMeter('f1_eval', ':6.2f')
+
+    model.eval()
+
+    label_all = []
+    pred_all = []
+
+    with torch.no_grad():
+        for sensor, target in data_loader:
+
+            x1 = sensor[:, 0]
+            x2 = sensor[:, 1]
+            sensor = torch.cat([x1, x2], axis=0).to(args.device)
+
+            target1 = target[:, 0]
+            target2 = target[:, 0]
+            target = torch.cat([target1, target2], axis=0).to(args.device)
+
+            with autocast(enabled=args.fp16_precision):
+                logits = model(sensor)
+                if type(logits) is tuple:
+                    logits = logits[0]
+                loss = criterion(logits, target)
+
+            losses.update(loss.item(), sensor.size(0))
+            _, pred = logits.topk(1, 1, True, True)
+
+            label_all = np.concatenate((label_all, target.cpu().numpy()))
+            pred_all = np.concatenate((pred_all, pred.cpu().numpy().reshape(-1)))
+
+            acc = accuracy(logits, target, topk=(1,))
+            acc_eval.update(acc, sensor.size(0))
+
+    f1_eval = f1_score(label_all, pred_all, average='macro') * 100
+
+    return acc_eval.avg, f1_eval
