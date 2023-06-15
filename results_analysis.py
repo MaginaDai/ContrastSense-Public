@@ -18,7 +18,7 @@ parser.add_argument('-name', default=["test", "test"], nargs='+', type=str, help
 parser.add_argument('-ft', default=True, type=bool, help='fine-tune or linear evaluation')
 parser.add_argument('-nad', default='ft_shot_10', type=str, help='name after datasets')
 parser.add_argument('-shot', default=10, type=int, help='how many shots we use')
-parser.add_argument('-modal', default='imu', type=str, help='which modal we use')
+parser.add_argument('-modal', default='emg', type=str, help='which modal we use')
 
 def avg_result(name, ft, modal, shot=10):
     if modal == 'imu':
@@ -35,7 +35,7 @@ def avg_result(name, ft, modal, shot=10):
         for j, data in enumerate(dataset):
             print(n, j)
             if ft:
-                dir = f'{n}/{data}_ft_shot_{shot}/training.log'
+                dir = f'{n}/{data}_cda_ft_shot_{shot}/training.log'
             else:
                 dir = f'{n}/{data}_shot_{shot}/training.log'
             eval_pattern = r'best\seval\sf1\sis\s+\(*(\d+\.+\d*)'

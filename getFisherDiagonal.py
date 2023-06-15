@@ -97,11 +97,12 @@ def getFisherDiagonal_initial(args):
     save_dir = 'runs/'+ args.pretrained
 
     fisher_cdl, fisher_infoNCE = calculateFisher(args, model, optimizer, train_loader, save_dir)
+
     for n, p in fisher_cdl.items():
         fisher_cdl[n] = torch.min(fisher_cdl[n], torch.tensor(args.fishermax)).to(args.device)
     
     for n, p in fisher_infoNCE.items():
-        fisher_infoNCE[n] = torch.min(fisher_infoNCE[n], torch.tensor(args.fishermax)).to(args.device)
+        fisher_infoNCE[n] = torch.min(fisher_infoNCE[n], torch.tensor(1e-4)).to(args.device)
 
     return fisher_cdl, fisher_infoNCE
 

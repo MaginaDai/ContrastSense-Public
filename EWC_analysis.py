@@ -14,7 +14,7 @@ parser.add_argument('-pretrain_lr', default=1e-4, type=float, help='learning rat
 parser.add_argument('-cross', default='users', type=str, help='decide to use which kind of labels')
 parser.add_argument('-label_type', default=1, type=int, help='How many different kinds of labels for pretraining')
 parser.add_argument('-g', '--gpu-index', default=3, type=int, help='Gpu index.')
-parser.add_argument('-fishermax', default=1e-4, type=float, help='fishermax')
+parser.add_argument('-fishermax', default=1e-2, type=float, help='fishermax')
 parser.add_argument('-slr', default=[0.7], nargs='+', type=float, help='the ratio of sup_loss')
 
 parser.add_argument('--pretrained', default='CDL_slr0.7_v0/Shoaib', type=str, help='path to ContrastSense pretrained checkpoint')
@@ -83,7 +83,9 @@ def ewc_cmp_the_influcence_of_add_InfoNCE(args):
     
     for n, p in fisher_cdl.items():
         fisher_ratio[n] = (fmax - fisher_infoNCE[n]) / (fmax - fmin) * fmax_cdl # make them around the same scale
-        fisher[n] = 0.5 * fisher_ratio[n]  + 0.5 * fisher_cdl[n]
+        # fisher[n] = 0.5 * fisher_ratio[n]  + 0.5 * fisher_cdl[n]
+
+        fisher[n] = (fmax - fisher_infoNCE[n]) / (fmax - fmin) * fisher_cdl[n]
         
         if torch.min(fisher[n]) < low_f:
             low_f = torch.min(fisher[n])
@@ -113,6 +115,7 @@ def cdf_plot_cmp(x1, x2, x3):
     plt.plot(x1_s, y)
     plt.plot(x2_s, y)
     plt.plot(x3_s, y)
+    # plt.xlim([0, 1e-3])
     plt.legend(['cdl', 'infoNCE', 'combined'])
     plt.savefig('before and after combined.png')
 

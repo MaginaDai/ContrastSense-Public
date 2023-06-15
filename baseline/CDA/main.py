@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description='PyTorch Contrastive Domain Adaptat
 
 #----------- paper related -----------------
 
-parser.add_argument('-lr', '--learning-rate', default=1e-4, type=float, metavar='LR', help='initial learning rate', dest='lr')
+parser.add_argument('-lr', '--learning-rate', default=1e-3, type=float, metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('-b', '--batch-size', default=32, type=int, metavar='N')
 parser.add_argument('-e', '--epochs', default=100, type=int, metavar='N', help='number of total epochs to run')
 parser.add_argument('-t', '--temperature', default=0.5, type=float, help='softmax temperature (default: 0.1)')

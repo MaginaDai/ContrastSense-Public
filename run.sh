@@ -330,12 +330,12 @@ shot=10
 # done
 
 
-store="improve_v1_ewc_max"
+store="improve_v1_ewc_info_max"
 ewc=400
 
 for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
 do
-    for fishermax in 1e-4 5e-4 1e-3 5e-3
+    for fishermax in 1e-4
     do
 
         python main_trans_ewc.py -fishermax ${fishermax} -ewc_lambda ${ewc} -shot ${shot} -g 0 -aug True -ewc True -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}_${fishermax}_0" &
