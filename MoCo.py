@@ -427,7 +427,9 @@ class MoCo_v1(nn.Module):
         self.label_type = args.label_type
         self.if_cross_entropy = args.CE
         self.DAL = args.DAL
+
         self.modal = args.modal
+        self.hard_sample = args.hard
 
         # create the encoders
         # num_classes is the output fc dimension
@@ -473,6 +475,7 @@ class MoCo_v1(nn.Module):
 
         self.queue = F.normalize(self.queue, dim=0)
         self.queue_dis = F.normalize(self.queue_dis, dim=0)
+
         if num_clusters is not None:
             self.cluster_centers = []
 
@@ -570,12 +573,12 @@ class MoCo_v1(nn.Module):
     
 
     
-    def forward(self, sen_q, sen_k, labels, num_clusters, iter_tol, gt, if_plot=False, n_iter=None):
+    def forward(self, sen_q, sen_k, domain_label, num_clusters, iter_tol, gt, if_plot=False, n_iter=None):
         """
         Input:
             sen_q: a batch of query sensors data
             sen_k: a batch of key sensors data
-            labels: the label for nuisance suppression
+            domain_label: the label for nuisance suppression
             gt: the ground truth label for visualization
         Output:
             logits, targets
@@ -603,7 +606,12 @@ class MoCo_v1(nn.Module):
         # positive logits: Nx1
         l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)
         # negative logits: NxK
-        l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])
+        if self.hard_sample:
+            mask = torch.eq(domain_label[0].contiguous().view(-1, 1), self.queue_labels.T).bool().to(device)  # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
+            l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  ## we further improve this step
+            l_neg[~mask] = -torch.inf
+        else:
+            l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])
         
         feature = torch.concat([q, self.queue.clone().detach().T], dim=0)  # the overall features rather than the dot product of features.  
 
@@ -617,7 +625,7 @@ class MoCo_v1(nn.Module):
         targets = torch.zeros(logits.shape[0], dtype=torch.long).cuda()
 
         # dequeue and enqueue
-        self._dequeue_and_enqueue(k, labels, gt, d_k)
+        self._dequeue_and_enqueue(k, domain_label, gt, d_k)
         
         if self.DAL: # we do / T when calculating the SupCon
             logits_labels = torch.einsum('nc,ck->nk', [d_q, self.queue_dis.clone().detach()])
@@ -721,31 +729,34 @@ class MoCo(object):
             loss_batch = AverageMeter('loss_batch', ':6.5f')
 
             for sensor, labels in train_loader:
+
                 if n_iter % 100 == 0 and n_iter != 0: # every 250 epoch produce one image.
                     see_cluster_effect = True
                 else:
                     see_cluster_effect = False
+                
                 sensor = [t.to(self.args.device) for t in sensor]
-                gt_label = labels[:, 0].to(self.args.device) # the first dim is motion labels
+                class_label = labels[:, 0].to(self.args.device) # the first dim is motion labels
+
                 if self.args.label_type:
                     if self.args.cross == 'users': # use domain labels
-                        sup_label = [labels[:, 1].to(self.args.device)] 
+                        domain_label = [labels[:, 1].to(self.args.device)] 
                     elif self.args.cross == 'positions' or self.args.cross == 'devices' :
-                        sup_label = [labels[:, 2].to(self.args.device)] 
+                        domain_label = [labels[:, 2].to(self.args.device)] 
                     else:
                         NotADirectoryError
                 else:
-                    sup_label = None
+                    domain_label = None
                 with autocast(enabled=self.args.fp16_precision):
-                    output, target, logits_labels, cluster_eval, cluster_loss, center_shift, feature = self.model(sensor[0], sensor[1], labels=sup_label, 
+                    output, target, logits_labels, cluster_eval, cluster_loss, center_shift, feature = self.model(sensor[0], sensor[1], domain_label=domain_label, 
                                                                                                         num_clusters=self.args.num_clusters, 
                                                                                                         iter_tol=self.args.iter_tol,
-                                                                                                        gt=gt_label, if_plot=see_cluster_effect,
+                                                                                                        gt=class_label, if_plot=see_cluster_effect,
                                                                                                         n_iter=n_iter)
                     if self.model.if_cross_entropy:
-                        sup_loss = self.model.supervised_CL(logits_labels=feature, labels=sup_label)
+                        sup_loss = self.model.supervised_CL(logits_labels=feature, labels=domain_label)
                     else:
-                        sup_loss = self.model.supervised_CL(logits_labels=logits_labels, labels=sup_label)
+                        sup_loss = self.model.supervised_CL(logits_labels=logits_labels, labels=domain_label)
                     if cluster_loss is not None:
                         loss = cluster_loss
                     else:

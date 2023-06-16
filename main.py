@@ -35,7 +35,7 @@ parser.add_argument('--out_dim', default=256, type=int,
                     help='feature dimension (default: 256)')
 parser.add_argument('-t', '--temperature', default=0.1, type=float,
                     help='softmax temperature (default: 1)')
-parser.add_argument('--store', default='EMG_test', type=str, help='define the name head for model storing')
+parser.add_argument('--store', default='hard_test', type=str, help='define the name head for model storing')
 parser.add_argument('-b', '--batch-size', default=256, type=int,
                     metavar='N',
                     help='mini-batch size (default: 256), this is the total '
@@ -63,6 +63,7 @@ parser.add_argument('--best-acc', default=0., type=float, help='The initial best
 parser.add_argument('-mol', default='MoCo', type=str, help='which model to use', choices=['SimCLR', 'LIMU', 'CPC', 'MoCo', 'DeepSense'])
 parser.add_argument('--timestep', default=15, type=int, help='how many time steps for CPC')
 parser.add_argument('-d', default=32, type=int, help='feature dimension')
+
 parser.add_argument('-moco_K', default=1024, type=int, help='keys size')
 parser.add_argument('-moco_m', default=0.999, type=float, help='momentum value')
 
@@ -95,8 +96,7 @@ parser.add_argument('-p5', default=0.8, type=float, help='possibility for one au
 parser.add_argument('-p6', default=0.8, type=float, help='possibility for one aug')
 parser.add_argument('-cross', default='users', type=str, help='decide to use which kind of labels')
 
-
-parser.add_argument('-modal', default='imu', type=str, help='which modal in running')
+parser.add_argument('-hard', default=False, type=bool, help='hard sampling or not')  # we sample hard ones from the data.
 
 
 def main():

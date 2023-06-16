@@ -45,7 +45,7 @@
 version="shot"
 e=1000
 lr=5e-5
-for lr in 1e-5
+for lr in 5e-5
 do
     store="emg_cdl_e${e}_lr${lr}_v"
     for dataset in "Myo" "NinaPro"
@@ -58,20 +58,20 @@ do
 
         # wait
 
-        python main.py -g 2 -e ${e} -lr ${lr} -label_type 1 -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
-        python main.py -g 2 -e ${e} -lr ${lr} -label_type 1 -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
-        python main.py -g 2 -e ${e} -lr ${lr} -label_type 1 -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
-        python main.py -g 3 -e ${e} -lr ${lr} -label_type 1 -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
-        python main.py -g 3 -e ${e} -lr ${lr} -label_type 1 -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
+        python main.py -g 0 -e ${e} -lr ${lr} -label_type 1 -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
+        python main.py -g 0 -e ${e} -lr ${lr} -label_type 1 -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
+        python main.py -g 1 -e ${e} -lr ${lr} -label_type 1 -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
+        python main.py -g 1 -e ${e} -lr ${lr} -label_type 1 -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
+        python main.py -g 1 -e ${e} -lr ${lr} -label_type 1 -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
 
         wait
     done
 
     for dataset in "Myo" "NinaPro"
     do
-        python main_trans_ewc.py -g 2 -ft True -lr 0.0005 -version "${version}0" -shot 10 -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store}0" &
-        python main_trans_ewc.py -g 2 -ft True -lr 0.0005 -version "${version}1" -shot 10 -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store}1" &
-        python main_trans_ewc.py -g 2 -ft True -lr 0.0005 -version "${version}2" -shot 10 -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store}2" &
+        python main_trans_ewc.py -g 3 -ft True -lr 0.0005 -version "${version}0" -shot 10 -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store}0" &
+        python main_trans_ewc.py -g 3 -ft True -lr 0.0005 -version "${version}1" -shot 10 -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store}1" &
+        python main_trans_ewc.py -g 3 -ft True -lr 0.0005 -version "${version}2" -shot 10 -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store}2" &
         python main_trans_ewc.py -g 3 -ft True -lr 0.0005 -version "${version}3" -shot 10 -name ${dataset} --pretrained "${store}3/${dataset}" --store "${store}3" &
         python main_trans_ewc.py -g 3 -ft True -lr 0.0005 -version "${version}4" -shot 10 -name ${dataset} --pretrained "${store}4/${dataset}" --store "${store}4"
 
