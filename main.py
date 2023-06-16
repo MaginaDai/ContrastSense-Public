@@ -35,14 +35,14 @@ parser.add_argument('--out_dim', default=256, type=int,
                     help='feature dimension (default: 256)')
 parser.add_argument('-t', '--temperature', default=0.1, type=float,
                     help='softmax temperature (default: 1)')
-parser.add_argument('--store', default='CDL_moco_K1536_v1', type=str, help='define the name head for model storing')
+parser.add_argument('--store', default='EMG_test', type=str, help='define the name head for model storing')
 parser.add_argument('-b', '--batch-size', default=256, type=int,
                     metavar='N',
                     help='mini-batch size (default: 256), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('-name', default='HHAR',
-                    help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'ICHAR', 'HASC'])
+parser.add_argument('-name', default='NinaPro',
+                    help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro'])
 parser.add_argument('-wd', '--weight-decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)',
                     dest='weight_decay')
@@ -96,6 +96,9 @@ parser.add_argument('-p6', default=0.8, type=float, help='possibility for one au
 parser.add_argument('-cross', default='users', type=str, help='decide to use which kind of labels')
 
 
+parser.add_argument('-modal', default='imu', type=str, help='which modal in running')
+
+
 def main():
     args = parser.parse_args()
     # check if gpu training is available
@@ -107,8 +110,13 @@ def main():
     else:
         args.device = torch.device('cpu')
         args.gpu_index = -1
+    
+    if args.name in ['NinaPro', 'Myo']:
+        args.modal = 'emg'
+    else:
+        args.modal = 'imu'
 
-    dataset = ContrastiveLearningDataset(transfer=False, version=args.version, datasets_name=args.name, p=args.p, p2=args.p2, p3=args.p3, p4=args.p4, p5=args.p5, p6=args.p6)
+    dataset = ContrastiveLearningDataset(transfer=False, version=args.version, datasets_name=args.name, modal=args.modal)
 
     train_dataset = dataset.get_dataset(split='train')
 
@@ -121,9 +129,7 @@ def main():
     else:
         user_num = None
     
-    model = MoCo_v1(device=args.device, out_dim=args.out_dim, K=args.moco_K, m=args.moco_m, T=args.temperature, 
-                    T_labels=args.tem_labels, dims=args.d, label_type=args.label_type, num_clusters=args.num_clusters, mol=args.mol, 
-                    final_dim=args.final_dim, momentum=args.mo, drop=args.drop, DAL=args.DAL, if_cross_entropy=args.CE, users_class=user_num)
+    model = MoCo_v1(args, users_class=user_num)
     
     optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)

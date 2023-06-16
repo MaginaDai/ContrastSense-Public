@@ -5,7 +5,7 @@ import torch
 import os
 import pdb
 
-from data_aug import imu_transforms
+from data_aug import imu_transforms, emg_transforms
 from torch.utils.data import Dataset
 from torchvision.transforms import transforms
 from torchvision import transforms, datasets
@@ -45,11 +45,13 @@ def fetch_dataset_root(dataset_name):
     
 
 class ContrastiveLearningDataset:
-    def __init__(self, transfer, version, datasets_name=None, cross_dataset=False, p=0.8, p2=0.4, p3=0.2, p4=0.4, p5=0.8, p6=0.8):
+    def __init__(self, transfer, version, datasets_name=None, cross_dataset=False, modal='imu', p=0.8, p2=0.4, p3=0.2, p4=0.4, p5=0.8, p6=0.8):
         self.transfer = transfer
         self.datasets_name = datasets_name
         self.version = version
         self.cross_dataset = cross_dataset
+        self.modal = modal
+
         self.p = p
         self.p2=p2
         self.p3=p3
@@ -91,7 +93,7 @@ class ContrastiveLearningDataset:
     def get_ft_pipeline_transform(self):
         imu_noise = imu_transforms.IMUNoise(var=0.05, p=0.8)
         imu_scale = imu_transforms.IMUScale(scale=[0.9, 1.1], p=0.8)
-        imu_rotate = imu_transforms.IMURotate(p=0.8)  # change to 0.4
+        imu_rotate = imu_transforms.IMURotate(p=0.8) 
         imu_negate = imu_transforms.IMUNegated(p=0.4)
         imu_flip = imu_transforms.IMUHorizontalFlip(p=0.2)
         imu_warp = imu_transforms.IMUTimeWarp(p=0.4)
@@ -105,30 +107,61 @@ class ContrastiveLearningDataset:
                                               imu_noise,
                                               imu_toTensor])
         return data_transforms
+    
+    def get_emg_pipeline_transform(self):  # need to rewrite for emg
+        emg_noise = emg_transforms.EMGNoise(var=0.05, p=self.p5)
+        emg_scale = emg_transforms.EMGScale(scale=[0.9, 1.1], p=self.p6)
+        emg_flip = emg_transforms.EMGHorizontalFlip(p=self.p3)
+        emg_negate = emg_transforms.EMGNegated(p=self.p2)
+        emg_warp = emg_transforms.EMGTimeWarp(p=self.p4)
+        emg_toTensor = emg_transforms.EMGToTensor()
+
+        data_transforms = transforms.Compose([emg_scale,
+                                              emg_negate,
+                                              emg_flip,
+                                              emg_warp,
+                                              emg_noise,
+                                              emg_toTensor])
+        return data_transforms
+
 
     def get_dataset(self, split, n_views=2, percent=20, shot=None):
+        if not self.transfer or split == 'train' or split == 'tune':
+            if self.modal == 'imu':
+                transformation = self.get_simclr_pipeline_transform()
+            elif self.modal == 'emg':
+                transformation = self.get_emg_pipeline_transform()
+            else:
+                NotADirectoryError
+        else:
+            if self.modal == 'imu':
+                transformation = transforms.Compose([imu_transforms.ToTensor()])
+            elif self.modal == 'emg':
+                transformation = transforms.Compose([emg_transforms.EMGToTensor()])
+            else:
+                NotADirectoryError
+        
         if self.transfer is False:
             # here it is for generating positive samples and negative samples
             return Dataset4Training(self.datasets_name, self.version, n_views, 
                                     transform=ContrastiveLearningViewGenerator(
-                                        self.get_simclr_pipeline_transform(), n_views),
-                                    split=split, transfer=self.transfer, percent=percent, shot=shot, cross_dataset=self.cross_dataset)
+                                        transformation, n_views),
+                                    split=split, transfer=self.transfer, percent=percent, 
+                                    shot=shot, cross_dataset=self.cross_dataset, modal=self.modal)
         elif split == 'train' or split == 'tune':
-                # here it is for data augmentation, make it more challenging.
-            return Dataset4Training(self.datasets_name, self.version, n_views,
-                                    # self.get_simclr_pipeline_transform(),
-                                    self.get_ft_pipeline_transform(),
-                                    split=split, transfer=self.transfer, percent=percent, shot=shot, cross_dataset=self.cross_dataset)
+            # here it is for data augmentation, make it more challenging.
+            return Dataset4Training(self.datasets_name, self.version, n_views, transformation, 
+                                    split=split, transfer=self.transfer, percent=percent, 
+                                    shot=shot, cross_dataset=self.cross_dataset, modal=self.modal)
         else:  # val or test
-            return Dataset4Training(self.datasets_name, self.version, n_views,
-                                    transform=transforms.Compose([
-                                        imu_transforms.ToTensor()]),
-                                    split=split, transfer=self.transfer, percent=percent, shot=shot, cross_dataset=self.cross_dataset)
+            return Dataset4Training(self.datasets_name, self.version, n_views, transformation,
+                                    split=split, transfer=self.transfer, percent=percent,
+                                      shot=shot, cross_dataset=self.cross_dataset, modal=self.modal)
 
 
 class Dataset4Training(Dataset):
 
-    def __init__(self, datasets_name, version, n_views=2, transform=None, split='train', transfer=True, percent=20, shot=None, cross_dataset=False):
+    def __init__(self, datasets_name, version, n_views=2, transform=None, split='train', transfer=True, percent=20, shot=None, cross_dataset=False, modal='imu'):
         """
         Args:
             datasets_name (string): dataset name.
@@ -146,6 +179,8 @@ class Dataset4Training(Dataset):
         self.datasets_name = datasets_name
         self.transfer = transfer
         self.split = split
+        self.modal = modal
+
         if self.split == 'train':
             data = np.load(train_dir)
             self.windows_frame = data['train_set']
@@ -191,11 +226,14 @@ class Dataset4Training(Dataset):
 
 
     def sperate_label_data(self, sample):
-        acc, gyro, label = sample['acc'], sample['gyro'], sample['add_infor']
-        sensor = np.concatenate((acc, gyro), axis=1)
+        if self.modal == 'imu':
+            acc, gyro, label = sample['acc'], sample['gyro'], sample['add_infor']
+            sensor = np.concatenate((acc, gyro), axis=1)
 
-        if self.cross_dataset:
-            label = label_alignment(label, self.datasets_name)
+            if self.cross_dataset:
+                label = label_alignment(label, self.datasets_name)
+        elif self.modal == 'emg':
+            sensor, label = sample['emg'], sample['add_infor']
 
         return sensor, torch.from_numpy(label).long()
 

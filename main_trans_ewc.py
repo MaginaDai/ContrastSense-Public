@@ -21,7 +21,7 @@ from getFisherDiagonal import getFisherDiagonal_initial, load_fisher_matrix
 from simclr import SimCLR, MyNet, LIMU_encoder
 from utils import MoCo_evaluate, evaluate, identify_users_number, load_model_config, CPC_evaluate
 from torchvision.transforms import transforms
-from data_aug import imu_transforms
+from data_aug import imu_transforms, emg_transforms
 
 import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -37,10 +37,10 @@ parser.add_argument('-ft', '--if-fine-tune', default=True, type=bool, help='to d
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
-parser.add_argument('--pretrained', default='improve_v10/HASC', type=str,
+parser.add_argument('--pretrained', default='EMG_test/NinaPro', type=str,
                     help='path to ContrastSense pretrained checkpoint')
-parser.add_argument('-name', default='HASC',
-                    help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'ICHAR', 'HASC'])
+parser.add_argument('-name', default='NinaPro',
+                    help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro'])
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 
 parser.add_argument('-e', '--epochs', default=400, type=int, metavar='N',
@@ -69,7 +69,7 @@ parser.add_argument('--log-every-n-steps', default=4, type=int,
 parser.add_argument('-t', '--temperature', default=1, type=float,
                     help='softmax temperature (default: 1)')
 
-parser.add_argument('-g', '--gpu-index', default=1, type=int, help='Gpu index.')
+parser.add_argument('-g', '--gpu-index', default=3, type=int, help='Gpu index.')
 parser.add_argument('--evaluate', default=False, type=bool, help='To decide whether to evaluate')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
 
@@ -86,12 +86,14 @@ parser.add_argument('-version', default="shot2", type=str, help='control the ver
 parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate')
 parser.add_argument('-dlr', default=0.5, type=float, help='DAL learning ratio')
-parser.add_argument('-ewc', default=True, type=bool, help='Use EWC or not')
+
+parser.add_argument('-ewc', default=False, type=bool, help='Use EWC or not')
 parser.add_argument('-ewc_lambda', default=50, type=float, help='EWC para')
 parser.add_argument('-ewc_pt', default=True, type=bool, help='use EWC acquired from pretrain or not')
 parser.add_argument('-fishermax', default=1e-4, type=float, help='fishermax')
 parser.add_argument('-slr', default=[0.7], nargs='+', type=float, help='the ratio of sup_loss')
 parser.add_argument('-moco_K', default=1024, type=int, help='keys size')
+
 parser.add_argument('-aug', default=False, type=bool, help='decide use data augmentation or not')
 parser.add_argument('-mixup', default=False, type=bool, help='decide use mixup or not')
 parser.add_argument('-p', default=0.2, type=float, help='possibility for one aug')
@@ -118,13 +120,26 @@ def main(args, fisher=None):
 
     args.pretrained = './runs/' + args.pretrained + '/model_best.pth.tar'
 
-    dataset = ContrastiveLearningDataset(transfer=True, version=args.version, datasets_name=args.name)
+    if args.name in ['NinaPro', 'Myo']:
+        args.modal = 'emg'
+    else:
+        args.modal = 'imu'
+
+    dataset = ContrastiveLearningDataset(transfer=True, version=args.version, datasets_name=args.name, modal=args.modal)
     if args.aug:
         tune_dataset = dataset.get_dataset('tune', percent=args.percent, shot=args.shot)
+    elif args.modal == 'imu':
+        tune_dataset = Dataset4Training(args.name, args.version, transform=transforms.Compose([imu_transforms.ToTensor()]), 
+                                        split='tune', transfer=True, shot=args.shot, modal=args.modal)
+    elif args.modal == 'emg':
+        tune_dataset = Dataset4Training(args.name, args.version, transform=transforms.Compose([emg_transforms.EMGToTensor()]), 
+                                        split='tune', transfer=True, shot=args.shot, modal=args.modal)
     else:
-        tune_dataset = Dataset4Training(args.name, args.version, transform=transforms.Compose([imu_transforms.ToTensor()]), split='tune', transfer=True, shot=args.shot)
+        NotADirectoryError
+
     val_dataset = dataset.get_dataset('val')
     test_dataset = dataset.get_dataset('test')
+    
 
     val_loader = torch.utils.data.DataLoader(
         val_dataset, batch_size=args.batch_size, shuffle=True, pin_memory=False, drop_last=False)
@@ -137,8 +152,9 @@ def main(args, fisher=None):
     tune_loader = torch.utils.data.DataLoader(
         tune_dataset, batch_size=int(args.batch_size), shuffle=True, pin_memory=False, drop_last=False)
     
-    model = MoCo_model(transfer=True, out_dim=args.out_dim, classes=ClassesNum[args.name], dims=args.d, 
-                       classifier_dim=args.classifer_dims, final_dim=args.final_dim, momentum=args.mo, drop=args.drop, DAL=args.DAL, users_class=user_num)
+    model = MoCo_model(transfer=True, classes=ClassesNum[args.name], dims=args.d, 
+                       classifier_dim=args.classifer_dims, final_dim=args.final_dim, 
+                       momentum=args.mo, drop=args.drop, DAL=args.DAL, users_class=user_num, modal=args.modal)
 
     classifier_name = []
     # load pre-trained model
@@ -268,7 +284,7 @@ if __name__ == '__main__':
             fisher[n] = (fmax - fisher_infoNCE[n]) / (fmax - fmin) *fisher_cdl[n]
     
         # for n, p in fisher_cdl.items():
-        #     fisher[n] = 0.5 * (fmax - fisher_infoNCE[n]) / (fmax - fmin) * fmax_cdl  + 0.5 * fisher_cdl[n]
+            # fisher[n] = 0.5 * (fmax - fisher_infoNCE[n]) / (fmax - fmin) * fmax_cdl  + 0.5 * fisher_cdl[n]
     else:
         fisher = None
 

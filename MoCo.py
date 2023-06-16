@@ -38,23 +38,33 @@ from sklearn.metrics import f1_score
 
 
 class MoCo_model(nn.Module):
-    def __init__(self, transfer=False, out_dim=256, classes=6, dims=32, classifier_dim=1024, final_dim=8, momentum=0.9, drop=0.1, DAL=False, users_class=None, SCL=False):
+    def __init__(self, transfer=False, out_dim=256, classes=6, dims=32, classifier_dim=1024, final_dim=8, momentum=0.9, drop=0.1, DAL=False, users_class=None, SCL=False, modal='imu'):
         super(MoCo_model, self).__init__()
         self.DAL = DAL
-        self.encoder = MoCo_encoder(dims=dims, momentum=momentum, drop=drop)
-        if transfer:
-            self.classifier = MoCo_classifier(classes=classes, dims=dims, classifier_dim=classifier_dim, final_dim=final_dim, drop=drop)
-            if SCL:
-                self.projector = MoCo_projector(out_dim=out_dim)
+        self.modal = modal
+        self.transfer = transfer
+
+        if self.modal == 'imu':
+            self.encoder = MoCo_encoder(dims=dims, momentum=momentum, drop=drop)
+        elif self.modal == 'emg':
+            self.encoder = MoCo_encoder_for_emg(dims=dims, momentum=momentum, drop=drop)
         else:
-            self.projector = MoCo_projector(out_dim=out_dim)
+            NotADirectoryError
+        
+        if transfer:
+            self.classifier = MoCo_classifier(classes=classes, dims=dims, classifier_dim=classifier_dim, final_dim=final_dim, drop=drop, modal=self.modal)
+            if SCL:
+                self.projector = MoCo_projector(out_dim=out_dim, modal=self.modal)
+        else:
+            self.projector = MoCo_projector(out_dim=out_dim, modal=self.modal)
+        
         if self.DAL:
             if users_class is None:
-                self.discriminator = MoCo_discriminator(out_dim=out_dim)
+                self.discriminator = MoCo_discriminator(out_dim=out_dim, modal=self.modal)
             else:
-                self.discriminator = MoCo_discriminator(out_dim=users_class)
+                self.discriminator = MoCo_discriminator(out_dim=users_class, modal=self.modal)
                 # print(users_class)
-        self.transfer = transfer
+        
         
 
     def forward(self, x):
@@ -72,11 +82,18 @@ class MoCo_model(nn.Module):
 
 
 class MoCo_classifier(nn.Module):
-    def __init__(self, classes=6, dims=32, classifier_dim=1024, final_dim=8, drop=0.1):
+    def __init__(self, classes=6, dims=32, classifier_dim=1024, final_dim=8, drop=0.1, modal='imu'):
         super(MoCo_classifier, self).__init__()
 
-        self.gru = torch.nn.GRU(dims, final_dim, num_layers=1, batch_first=True, bidirectional=True) #??? why decrease it....
-        self.MLP = nn.Sequential(nn.Linear(in_features=3200, out_features=classifier_dim), # 1920 for 120
+        if modal == 'imu':
+            feature_num = 3200
+        elif modal == 'emg':
+            feature_num = 832
+        else:
+            NotADirectoryError
+
+        self.gru = torch.nn.GRU(dims, final_dim, num_layers=1, batch_first=True, bidirectional=True)
+        self.MLP = nn.Sequential(nn.Linear(in_features=feature_num, out_features=classifier_dim), # 1920 for 120
                                 nn.ReLU(),
                                 nn.Linear(in_features=classifier_dim, out_features=classes))
         self.dropout = torch.nn.Dropout(p=drop)
@@ -90,13 +107,21 @@ class MoCo_classifier(nn.Module):
         h = h.reshape(h.shape[0], -1)
         h = self.MLP(h)
         return h
+    
 
 class MoCo_discriminator(nn.Module):
-    def __init__(self, out_dim=32):
+    def __init__(self, out_dim=32, modal='imu'):
         super(MoCo_discriminator, self).__init__()
+        if modal == 'imu':
+            feature_num = 6400
+        elif modal == 'emg':
+            feature_num = 1024
+        else:
+            NotADirectoryError
+
         self.discriminator = nn.Sequential(
                                 GradientReversal(),
-                                nn.Linear(6400, out_dim*4),
+                                nn.Linear(feature_num, out_dim*4),
                                 nn.ReLU(),
                                 nn.Linear(out_dim*4, out_dim*2),
                                 nn.ReLU(),
@@ -142,9 +167,16 @@ class GradientReversal(torch.nn.Module):
 
 
 class MoCo_projector(nn.Module):
-    def __init__(self, out_dim=512):
+    def __init__(self, out_dim=512, modal='imu'):
         super(MoCo_projector, self).__init__()
-        self.linear1= torch.nn.Linear(in_features=6400, out_features=out_dim*4)  # 3840 for 120
+        if modal == 'imu':
+            feature_num = 6400
+        elif modal == 'emg':
+            feature_num = 1664
+        else:
+            NotADirectoryError
+
+        self.linear1= torch.nn.Linear(in_features=feature_num, out_features=out_dim*4)  # 3840 for 120
         self.linear2 = torch.nn.Linear(in_features=out_dim*4, out_features=out_dim*2)
         self.linear3 = torch.nn.Linear(in_features=out_dim*2, out_features=out_dim)
         self.relu = torch.nn.ReLU()
@@ -153,7 +185,7 @@ class MoCo_projector(nn.Module):
         # keep the output layer constant with the SimCLR output
         h = h.reshape(h.shape[0], -1)
         h = self.relu(self.linear1(h))
-        h = self.relu(self.linear2(h))  # add nonlinear / add linear
+        h = self.relu(self.linear2(h))
         z = self.linear3(h)
         return z
 
@@ -276,6 +308,75 @@ class MoCo_encoder(nn.Module):
         # if torch.isnan(h).any():
         #     pdb.set_trace()
         return h
+    
+
+class MoCo_encoder_for_emg(nn.Module):
+    def __init__(self, dims=32, momentum=0.9, drop=0.1):
+        super(MoCo_encoder_for_emg, self).__init__()
+
+        self.dropout = torch.nn.Dropout(p=drop)
+        self.relu = torch.nn.ReLU()
+
+        self.per_channel_conv = nn.Sequential(
+            torch.nn.Conv2d(1, dims, kernel_size=(5, 1), stride=1, padding=(2, 0)),
+            self.relu,
+            self.dropout,
+            torch.nn.Conv2d(dims, dims, kernel_size=(5, 1), stride=1, padding=(2, 0)),
+            self.relu,
+            self.dropout,
+            torch.nn.Conv2d(dims, dims, kernel_size=(5, 1), stride=1, padding=(2, 0)),
+        )
+        self.BN_1 = torch.nn.BatchNorm2d(num_features=dims, momentum=momentum, affine=False)
+
+        self.cross_channel_conv = nn.Sequential(
+            torch.nn.Conv2d(dims, dims, kernel_size=(5, 4), stride=(1, 4), padding=(2, 0)),  # We follow the design for IMU, the former 4 channels and the later 4 channels are fused seperately.
+            self.relu,
+            self.dropout,
+        )
+
+        self.per_channel_conv_2 = nn.Sequential(
+            torch.nn.Conv2d(dims, dims, kernel_size=(5, 1), stride=1, padding=(2, 0)),
+            self.relu,
+            self.dropout,
+            torch.nn.Conv2d(dims, dims, kernel_size=(5, 1), stride=1, padding=(2, 0)),
+        )
+
+        self.cross_channel_conv_2 = nn.Sequential(
+            torch.nn.Conv2d(dims, dims, kernel_size=(5, 2), stride=1, padding=(2, 0)),  # We follow the design for IMU, the former 4 channels and the later 4 channels are fused seperately.
+            self.relu,
+            self.dropout,
+        )
+
+        self.attn = MultiHeadedSelfAttention(dims)
+        self.proj = nn.Linear(dims, dims)
+        self.norm1 = LayerNorm(dims)
+        self.pwff = PositionWiseFeedForward(hidden_dim=dims, hidden_ff=dims*2)
+        self.norm2 = LayerNorm(dims)
+
+
+
+    def forward(self, x):
+        h = self.per_channel_conv(x)
+        h = self.dropout(self.relu(h + x))
+        h = self.BN_1(h)
+
+        h = self.cross_channel_conv(h)
+
+        h1 = self.per_channel_conv_2(h)
+        h = self.dropout(self.relu(h1 + h))
+
+        h = self.cross_channel_conv_2(h)
+
+        h = h.view(h.shape[0], h.shape[1], -1)
+        h = h.permute(0, 2, 1)
+        # if torch.isnan(h).any():
+        #     pdb.set_trace()
+        
+        h = self.attn(h)
+        h = self.norm1(h + self.proj(h))
+        h = self.norm2(h + self.pwff(h))
+        h = self.dropout(h)
+        return h
 
 
 # utils
@@ -298,8 +399,7 @@ class MoCo_v1(nn.Module):
     Build a MoCo model with: a query encoder, a key encoder, and a queue
     https://arxiv.org/abs/1911.05722
     """
-    def __init__(self, device, transfer=False, out_dim=256, K=1024, m=0.999, T=0.1, T_labels=[0.1], classes=6, dims=32,\
-                 label_type=1, num_clusters=None, mol='MoCo', final_dim=8, momentum=0.9, drop=0.1, DAL=False, if_cross_entropy=False, users_class=None):
+    def __init__(self, args, transfer=False, classes=6, users_class=None):
         """
         dim: feature dimension (default: 128)
         K: queue size; number of negative keys (default: 65536)
@@ -308,25 +408,45 @@ class MoCo_v1(nn.Module):
         """
         super(MoCo_v1, self).__init__()
 
-        self.K = K
-        self.m = m
-        self.T = T
-        self.T_labels = T_labels
-        self.label_type = label_type
-        self.if_cross_entropy = if_cross_entropy
-        self.DAL = DAL
+        device=args.device
+        modal=args.modal
+        out_dim=args.out_dim
+        dims=args.d 
+        num_clusters=args.num_clusters
+        mol=args.mol
+        final_dim=args.final_dim
+        momentum=args.mo
+        drop=args.drop
+        modal = args.modal
+        
+
+        self.K = args.moco_K 
+        self.m = args.moco_m
+        self.T = args.temperature
+        self.T_labels = args.tem_labels
+        self.label_type = args.label_type
+        self.if_cross_entropy = args.CE
+        self.DAL = args.DAL
+        self.modal = args.modal
 
         # create the encoders
         # num_classes is the output fc dimension
         if mol == 'MoCo':
             if self.if_cross_entropy:
                 self.encoder_q = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, 
-                                            final_dim=final_dim, momentum=momentum, drop=drop, DAL=self.DAL, users_class=users_class)
+                                            final_dim=final_dim, momentum=momentum, drop=drop, DAL=self.DAL, 
+                                            users_class=users_class, modal=modal)
                 self.encoder_k = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims,
-                                            final_dim=final_dim, momentum=momentum, drop=drop, DAL=self.DAL, users_class=users_class)
+                                            final_dim=final_dim, momentum=momentum, drop=drop, DAL=self.DAL, 
+                                            users_class=users_class, modal=modal)
             else:
-                self.encoder_q = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, final_dim=final_dim, momentum=momentum, drop=drop, DAL=self.DAL)
-                self.encoder_k = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, final_dim=final_dim, momentum=momentum, drop=drop, DAL=self.DAL)
+                self.encoder_q = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims,
+                                            final_dim=final_dim, momentum=momentum, drop=drop, 
+                                            DAL=self.DAL, modal=self.modal)
+                self.encoder_k = MoCo_model(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims, 
+                                            final_dim=final_dim, momentum=momentum, drop=drop, 
+                                            DAL=self.DAL, modal=self.modal)
+        
         elif mol == 'DeepSense':
             self.encoder_q = DeepSense_encoder(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims)
             self.encoder_k = DeepSense_encoder(transfer=transfer, out_dim=out_dim, classes=classes, dims=dims)
@@ -338,17 +458,17 @@ class MoCo_v1(nn.Module):
             param_k.requires_grad = False  # not update by gradient
 
         # create the queue
-        self.register_buffer("queue", torch.randn(out_dim, K))
+        self.register_buffer("queue", torch.randn(out_dim, self.K))
         if users_class is not None:
-            self.register_buffer("queue_dis", torch.randn(users_class, K))
+            self.register_buffer("queue_dis", torch.randn(users_class, self.K))
         else:
-            self.register_buffer("queue_dis", torch.randn(out_dim, K))
-        self.register_buffer("queue_labels", torch.randint(0, 10, [K, label_type]))  # store label for SupCon
-        self.register_buffer("queue_gt", torch.randint(0, 10, [K, 1])) # store label for visualization
+            self.register_buffer("queue_dis", torch.randn(out_dim, self.K))
+        self.register_buffer("queue_labels", torch.randint(0, 10, [self.K, self.label_type]))  # store label for SupCon
+        self.register_buffer("queue_gt", torch.randint(0, 10, [self.K, 1])) # store label for visualization
 
         self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))
         self.register_buffer("queue_dis_ptr", torch.zeros(1, dtype=torch.long))
-        self.register_buffer("queue_labels_ptr", torch.zeros(label_type, dtype=torch.long))
+        self.register_buffer("queue_labels_ptr", torch.zeros(self.label_type, dtype=torch.long))
         self.register_buffer("queue_gt_ptr", torch.zeros(1, dtype=torch.long))
 
         self.queue = F.normalize(self.queue, dim=0)

@@ -330,19 +330,19 @@ shot=10
 # done
 
 
-store="improve_v1_ewc_info_max"
-ewc=400
+store="improve_v3_no_aug_ewc"
+fishermax=1e-4
 
 for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
 do
-    for fishermax in 1e-4
+    for ewc in 10 50 100 500 1000 5000
     do
 
-        python main_trans_ewc.py -fishermax ${fishermax} -ewc_lambda ${ewc} -shot ${shot} -g 0 -aug True -ewc True -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}_${fishermax}_0" &
-        python main_trans_ewc.py -fishermax ${fishermax} -ewc_lambda ${ewc} -shot ${shot} -g 0 -aug True -ewc True -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}_${fishermax}_1" &
-        python main_trans_ewc.py -fishermax ${fishermax} -ewc_lambda ${ewc} -shot ${shot} -g 0 -aug True -ewc True -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}_${fishermax}_2" &
-        python main_trans_ewc.py -fishermax ${fishermax} -ewc_lambda ${ewc} -shot ${shot} -g 1 -aug True -ewc True -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}_${fishermax}_3" &
-        python main_trans_ewc.py -fishermax ${fishermax} -ewc_lambda ${ewc} -shot ${shot} -g 1 -aug True -ewc True -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}_${fishermax}_4"
+        python main_trans_ewc.py -fishermax ${fishermax} -ewc_lambda ${ewc} -shot ${shot} -g 0 -ewc True -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}_${ewc}_0" &
+        python main_trans_ewc.py -fishermax ${fishermax} -ewc_lambda ${ewc} -shot ${shot} -g 0 -ewc True -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}_${ewc}_1" &
+        python main_trans_ewc.py -fishermax ${fishermax} -ewc_lambda ${ewc} -shot ${shot} -g 0 -ewc True -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}_${ewc}_2" &
+        python main_trans_ewc.py -fishermax ${fishermax} -ewc_lambda ${ewc} -shot ${shot} -g 1 -ewc True -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}_${ewc}_3" &
+        python main_trans_ewc.py -fishermax ${fishermax} -ewc_lambda ${ewc} -shot ${shot} -g 1 -ewc True -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}_${ewc}_4"
         
         wait
     done

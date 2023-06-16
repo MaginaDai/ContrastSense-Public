@@ -1,9 +1,10 @@
 #!/bin/bash
 key="v1"
 lr=0.001
-# name="runs/improve_v1_ewc_max_1e-6"
-name="baseline/CDA/runs/CDA_lr1e-2_v"
-python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4"
+name="runs/emg_cl_e1000_lr1e-5_v"
+# name="runs/emg_cl_e1000_lr5e-5_v"
+# name="baseline/CDA/runs/CDA_lr1e-2_v"
+python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4" -modal "emg"
 # python results_analysis.py -name "runs/CDL_ewc_mixup_v0" 
 # python results_analysis.py -name "${name}0_${key}" "${name}0.2_${key}" "${name}0.8_${key}" "${name}1.0_${key}"
 # python results_analysis.py -name "${name}0.1" "${name}0.2" "${name}0.3" "${name}0.4" "${name}0.5" "${name}0.6" "${name}0.7" "${name}0.8" "${name}0.9" "${name}1.0"
