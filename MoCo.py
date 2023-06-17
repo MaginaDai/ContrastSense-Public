@@ -33,7 +33,7 @@ from utils import f1_cal, save_config_file, save_checkpoint, accuracy, CPC_evalu
 from sklearn.decomposition import PCA
 from sklearn.metrics import calinski_harabasz_score, adjusted_rand_score
 from sklearn.manifold import TSNE
-from kmeans_pytorch import kmeans
+# from kmeans_pytorch import kmeans
 from sklearn.metrics import f1_score
 
 
@@ -430,6 +430,7 @@ class MoCo_v1(nn.Module):
 
         self.modal = args.modal
         self.hard_sample = args.hard
+        self.sample_ratio = args.sample_ratio
 
         # create the encoders
         # num_classes is the output fc dimension
@@ -465,12 +466,13 @@ class MoCo_v1(nn.Module):
             self.register_buffer("queue_dis", torch.randn(users_class, self.K))
         else:
             self.register_buffer("queue_dis", torch.randn(out_dim, self.K))
-        self.register_buffer("queue_labels", torch.randint(0, 10, [self.K, self.label_type]))  # store label for SupCon
+        
+        self.register_buffer("queue_labels", torch.randint(0, 10, [self.K, 1]))  # store label for SupCon
         self.register_buffer("queue_gt", torch.randint(0, 10, [self.K, 1])) # store label for visualization
 
         self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))
         self.register_buffer("queue_dis_ptr", torch.zeros(1, dtype=torch.long))
-        self.register_buffer("queue_labels_ptr", torch.zeros(self.label_type, dtype=torch.long))
+        self.register_buffer("queue_labels_ptr", torch.zeros(1, dtype=torch.long))
         self.register_buffer("queue_gt_ptr", torch.zeros(1, dtype=torch.long))
 
         self.queue = F.normalize(self.queue, dim=0)
@@ -572,7 +574,6 @@ class MoCo_v1(nn.Module):
         return x_gather[idx_this]
     
 
-    
     def forward(self, sen_q, sen_k, domain_label, num_clusters, iter_tol, gt, if_plot=False, n_iter=None):
         """
         Input:
@@ -608,7 +609,19 @@ class MoCo_v1(nn.Module):
         # negative logits: NxK
         if self.hard_sample:
             mask = torch.eq(domain_label[0].contiguous().view(-1, 1), self.queue_labels.T).bool().to(device)  # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
+            num_mask = torch.sum(~mask, dim=1)
+
             l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  ## we further improve this step
+
+            sim_wih_other_domain = l_neg.clone().detach()
+            sim_wih_other_domain[mask] = -torch.inf  # then sample within the same domain would be -inf
+
+            sim_sorted, indices = torch.sort(sim_wih_other_domain, dim=1, descending=True)
+            dim_wise_len = (num_mask * self.sample_ratio).int()
+
+            for i in range(indices.shape[0]):
+                mask[i, indices[i, : dim_wise_len[i]]] = True
+
             l_neg[~mask] = -torch.inf
         else:
             l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])
@@ -668,7 +681,7 @@ class MoCo_v1(nn.Module):
     
     
     def supervised_CL(self, logits_labels=None, labels=None):
-        if labels:
+        if labels and self.label_type:
             loss = torch.zeros(self.label_type)
             for i in range(self.label_type):
                 loss[i] = self.sup_loss(logits_labels/self.T_labels[i], labels=labels[i], queue_labels=self.queue_labels[:, i].view(-1, 1))
@@ -722,7 +735,6 @@ class MoCo(object):
         best_loss = 1e6
         see_cluster_effect = False
 
-
         for epoch_counter in tqdm(range(self.args.epochs)):
             acc_batch = AverageMeter('acc_batch', ':6.2f')
             chs = AverageMeter('chs', ':6.2f')
@@ -738,7 +750,7 @@ class MoCo(object):
                 sensor = [t.to(self.args.device) for t in sensor]
                 class_label = labels[:, 0].to(self.args.device) # the first dim is motion labels
 
-                if self.args.label_type:
+                if self.args.label_type or self.args.hard:
                     if self.args.cross == 'users': # use domain labels
                         domain_label = [labels[:, 1].to(self.args.device)] 
                     elif self.args.cross == 'positions' or self.args.cross == 'devices' :

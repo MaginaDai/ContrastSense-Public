@@ -8,7 +8,6 @@ import string
 
 import torch
 import torch.backends.cudnn as cudnn
-from torchvision import models
 
 from CPC import CPCV1, CPC
 from MoCo import MoCo_v1, MoCo
@@ -41,7 +40,7 @@ parser.add_argument('-b', '--batch-size', default=256, type=int,
                     help='mini-batch size (default: 256), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('-name', default='NinaPro',
+parser.add_argument('-name', default='HHAR',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro'])
 parser.add_argument('-wd', '--weight-decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)',
@@ -72,7 +71,7 @@ parser.add_argument('-T_max_ratio', default=0.8, type=float, help='the stop-lr-t
 parser.add_argument('-s_step', default=500, type=int, help='the step size of StepLR')
 parser.add_argument('-s_gamma', default=0.5, type=float, help='the gamma of StepLR')
 
-parser.add_argument('-label_type', default=1, type=int, help='How many different kinds of labels for pretraining')
+parser.add_argument('-label_type', default=0, type=int, help='How many different kinds of labels for pretraining')
 parser.add_argument('-slr', default=[0.7], nargs='+', type=float, help='the ratio of sup_loss')
 parser.add_argument('-tem_labels', default=[0.1], nargs='+', type=float, help='the temperature for supervised CL')
 
@@ -96,7 +95,8 @@ parser.add_argument('-p5', default=0.8, type=float, help='possibility for one au
 parser.add_argument('-p6', default=0.8, type=float, help='possibility for one aug')
 parser.add_argument('-cross', default='users', type=str, help='decide to use which kind of labels')
 
-parser.add_argument('-hard', default=False, type=bool, help='hard sampling or not')  # we sample hard ones from the data.
+parser.add_argument('-hard', default=True, type=bool, help='hard sampling or not')  # we sample hard ones from the data.
+parser.add_argument('-sample_ratio', default=0.5, type=float, help='hard sampling or not')  # we sample hard ones from the data.
 
 
 def main():
