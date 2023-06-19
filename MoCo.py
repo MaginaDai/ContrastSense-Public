@@ -623,7 +623,6 @@ class MoCo_v1(nn.Module):
                 mask[i, indices[i, : dim_wise_len[i]]] = True
 
             l_neg[~mask] = -torch.inf
-
             # mask = torch.eq(domain_label[0].contiguous().view(-1, 1), self.queue_labels.T).bool().to(device)  # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
             # l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  ## we further improve this step
             # l_neg[~mask] = -torch.inf
