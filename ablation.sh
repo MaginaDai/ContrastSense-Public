@@ -43,39 +43,44 @@
 
 
 version="shot"
-e=1000
+e=2000
 lr=5e-5
-for lr in 5e-5
+slr=0.7
+for lr in 5e-4
 do
-    store="emg_cdl_e${e}_lr${lr}_v"
-    for dataset in "Myo" "NinaPro"
+    for e in 400
     do
-        # python main_trans_ewc.py -g 2 -ft True -lr 0.0005 -version "shot0" -shot 10 -name ${dataset} --pretrained "no" --store "${store}0" &
-        # python main_trans_ewc.py -g 2 -ft True -lr 0.0005 -version "shot1" -shot 10 -name ${dataset} --pretrained "no" --store "${store}1" &
-        # python main_trans_ewc.py -g 2 -ft True -lr 0.0005 -version "shot2" -shot 10 -name ${dataset} --pretrained "no" --store "${store}2" &
-        # python main_trans_ewc.py -g 3 -ft True -lr 0.0005 -version "shot3" -shot 10 -name ${dataset} --pretrained "no" --store "${store}3" &
-        # python main_trans_ewc.py -g 3 -ft True -lr 0.0005 -version "shot4" -shot 10 -name ${dataset} --pretrained "no" --store "${store}4"
+        store="emg_cdl_e2000_slr${slr}_v"
+        # for dataset in "Myo" "NinaPro"
+        # do
+        #     # python main_trans_ewc.py -g 2 -ft True -lr 0.0005 -version "shot0" -shot 10 -name ${dataset} --pretrained "no" --store "${store}0" &
+        #     # python main_trans_ewc.py -g 2 -ft True -lr 0.0005 -version "shot1" -shot 10 -name ${dataset} --pretrained "no" --store "${store}1" &
+        #     # python main_trans_ewc.py -g 2 -ft True -lr 0.0005 -version "shot2" -shot 10 -name ${dataset} --pretrained "no" --store "${store}2" &
+        #     # python main_trans_ewc.py -g 3 -ft True -lr 0.0005 -version "shot3" -shot 10 -name ${dataset} --pretrained "no" --store "${store}3" &
+        #     # python main_trans_ewc.py -g 3 -ft True -lr 0.0005 -version "shot4" -shot 10 -name ${dataset} --pretrained "no" --store "${store}4"
 
-        # wait
+        #     # wait
 
-        python main.py -g 0 -e ${e} -lr ${lr} -label_type 1 -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
-        python main.py -g 0 -e ${e} -lr ${lr} -label_type 1 -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
-        python main.py -g 1 -e ${e} -lr ${lr} -label_type 1 -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
-        python main.py -g 1 -e ${e} -lr ${lr} -label_type 1 -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
-        python main.py -g 1 -e ${e} -lr ${lr} -label_type 1 -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
+        #     python main.py -g 0 -e ${e} -lr ${lr} --out_dim ${out} -label_type 1 -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
+        #     python main.py -g 0 -e ${e} -lr ${lr} --out_dim ${out} -label_type 1 -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
+        #     python main.py -g 1 -e ${e} -lr ${lr} --out_dim ${out} -label_type 1 -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
+        #     python main.py -g 1 -e ${e} -lr ${lr} --out_dim ${out} -label_type 1 -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
+        #     python main.py -g 1 -e ${e} -lr ${lr} --out_dim ${out} -label_type 1 -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
 
-        wait
+        #     wait
+        # done
+        store_ft="emg_cdl_ft_lr${lr}_e${e}"
+
+        for dataset in "Myo" "NinaPro"
+        do
+            python main_trans_ewc.py -g 0 -ft True -e ${e} -lr ${lr} -version "${version}0" -shot 10 -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store_ft}0" &
+            python main_trans_ewc.py -g 0 -ft True -e ${e} -lr ${lr} -version "${version}1" -shot 10 -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store_ft}1" &
+            python main_trans_ewc.py -g 0 -ft True -e ${e} -lr ${lr} -version "${version}2" -shot 10 -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store_ft}2" &
+            python main_trans_ewc.py -g 1 -ft True -e ${e} -lr ${lr} -version "${version}3" -shot 10 -name ${dataset} --pretrained "${store}3/${dataset}" --store "${store_ft}3" &
+            python main_trans_ewc.py -g 1 -ft True -e ${e} -lr ${lr} -version "${version}4" -shot 10 -name ${dataset} --pretrained "${store}4/${dataset}" --store "${store_ft}4"
+
+            wait
+        done
     done
 
-    for dataset in "Myo" "NinaPro"
-    do
-        python main_trans_ewc.py -g 3 -ft True -lr 0.0005 -version "${version}0" -shot 10 -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store}0" &
-        python main_trans_ewc.py -g 3 -ft True -lr 0.0005 -version "${version}1" -shot 10 -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store}1" &
-        python main_trans_ewc.py -g 3 -ft True -lr 0.0005 -version "${version}2" -shot 10 -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store}2" &
-        python main_trans_ewc.py -g 3 -ft True -lr 0.0005 -version "${version}3" -shot 10 -name ${dataset} --pretrained "${store}3/${dataset}" --store "${store}3" &
-        python main_trans_ewc.py -g 3 -ft True -lr 0.0005 -version "${version}4" -shot 10 -name ${dataset} --pretrained "${store}4/${dataset}" --store "${store}4"
-
-        wait
-    done
 done
-

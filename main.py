@@ -95,7 +95,7 @@ parser.add_argument('-p5', default=0.8, type=float, help='possibility for one au
 parser.add_argument('-p6', default=0.8, type=float, help='possibility for one aug')
 parser.add_argument('-cross', default='users', type=str, help='decide to use which kind of labels')
 
-parser.add_argument('-hard', default=True, type=bool, help='hard sampling or not')  # we sample hard ones from the data.
+parser.add_argument('-hard', default=False, type=bool, help='hard sampling or not')  # we sample hard ones from the data.
 parser.add_argument('-sample_ratio', default=0.5, type=float, help='hard sampling or not')  # we sample hard ones from the data.
 
 
