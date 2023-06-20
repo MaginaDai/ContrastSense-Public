@@ -37,9 +37,9 @@ parser.add_argument('-ft', '--if-fine-tune', default=True, type=bool, help='to d
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
-parser.add_argument('--pretrained', default='EMG_test/NinaPro', type=str,
+parser.add_argument('--pretrained', default='test/Myo', type=str,
                     help='path to ContrastSense pretrained checkpoint')
-parser.add_argument('-name', default='NinaPro',
+parser.add_argument('-name', default='Myo',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro'])
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 
@@ -69,7 +69,7 @@ parser.add_argument('--log-every-n-steps', default=4, type=int,
 parser.add_argument('-t', '--temperature', default=1, type=float,
                     help='softmax temperature (default: 1)')
 
-parser.add_argument('-g', '--gpu-index', default=3, type=int, help='Gpu index.')
+parser.add_argument('-g', '--gpu-index', default=0, type=int, help='Gpu index.')
 parser.add_argument('--evaluate', default=False, type=bool, help='To decide whether to evaluate')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
 

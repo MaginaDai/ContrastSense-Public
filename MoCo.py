@@ -47,7 +47,7 @@ class MoCo_model(nn.Module):
         if self.modal == 'imu':
             self.encoder = MoCo_encoder(dims=dims, momentum=momentum, drop=drop)
         elif self.modal == 'emg':
-            self.encoder = MoCo_encoder_for_emg(dims=dims, momentum=momentum, drop=drop)
+            self.encoder = MoCo_encoder_for_emg_v2(dims=dims, momentum=momentum, drop=drop)
         else:
             NotADirectoryError
         
@@ -87,12 +87,14 @@ class MoCo_classifier(nn.Module):
 
         if modal == 'imu':
             feature_num = 3200
+            self.gru = torch.nn.GRU(dims, final_dim, num_layers=1, batch_first=True, bidirectional=True)
         elif modal == 'emg':
-            feature_num = 832
+            feature_num = 1024
+            self.gru = torch.nn.GRU(int(dims/2), final_dim, num_layers=1, batch_first=True, bidirectional=True)
         else:
             NotADirectoryError
-
-        self.gru = torch.nn.GRU(dims, final_dim, num_layers=1, batch_first=True, bidirectional=True)
+    
+        
         self.MLP = nn.Sequential(nn.Linear(in_features=feature_num, out_features=classifier_dim), # 1920 for 120
                                 nn.ReLU(),
                                 nn.Linear(in_features=classifier_dim, out_features=classes))
@@ -172,7 +174,7 @@ class MoCo_projector(nn.Module):
         if modal == 'imu':
             feature_num = 6400
         elif modal == 'emg':
-            feature_num = 1664
+            feature_num = 1024
         else:
             NotADirectoryError
 
@@ -377,6 +379,35 @@ class MoCo_encoder_for_emg(nn.Module):
         h = self.norm2(h + self.pwff(h))
         h = self.dropout(h)
         return h
+    
+
+class MoCo_encoder_for_emg_v2(nn.Module):  
+    ## keep align with lysseCoteAllard/MyoArmbandDataset
+    ## at 62b886fc7014aeb81af65d77affedadf40de684c (github.com)
+    def __init__(self, dims=32, momentum=0.9, drop=0.1):
+        super(MoCo_encoder_for_emg_v2, self).__init__()
+
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(1, dims, kernel_size=(5, 3)),
+            nn.BatchNorm2d(dims),
+            nn.PReLU(dims),
+            nn.Dropout2d(.5),
+            nn.MaxPool2d(kernel_size=(3, 1)),
+        )
+
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(dims, dims*2, kernel_size=(5, 3)),
+            nn.BatchNorm2d(dims*2),
+            nn.PReLU(dims*2),
+            nn.Dropout2d(.5),
+            nn.MaxPool2d(kernel_size=(3, 1)),
+        )
+
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.conv2(x)
+        return x.view(x.shape[0], x.shape[1], -1)  # to keep align with IMU encoder
 
 
 # utils
