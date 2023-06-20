@@ -281,7 +281,7 @@ if __name__ == '__main__':
                 fmax_cdl = torch.max(fisher_cdl[n])
 
         for n, p in fisher_cdl.items():
-            fisher[n] = (fmax - fisher_infoNCE[n]) / (fmax - fmin) *fisher_cdl[n]
+            fisher[n] = (fmax - fisher_infoNCE[n]) / (fmax - fmin) * fisher_cdl[n]
     
         # for n, p in fisher_cdl.items():
             # fisher[n] = 0.5 * (fmax - fisher_infoNCE[n]) / (fmax - fmin) * fmax_cdl  + 0.5 * fisher_cdl[n]

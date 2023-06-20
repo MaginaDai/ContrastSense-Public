@@ -314,20 +314,19 @@
 # done
 
 version="shot"
-name="CL"
+name="improve_v1"
 slr=0.7
-shot=10
 
-for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
-do
-    python main.py -g 0 -label_type 0 -slr ${slr} -version "${version}0" -name ${dataset} --store "${name}_0" -cross "users" &
-    python main.py -g 0 -label_type 0 -slr ${slr} -version "${version}1" -name ${dataset} --store "${name}_1" -cross "users" &
-    python main.py -g 0 -label_type 0 -slr ${slr} -version "${version}2" -name ${dataset} --store "${name}_2" -cross "users" &
-    python main.py -g 1 -label_type 0 -slr ${slr} -version "${version}3" -name ${dataset} --store "${name}_3" -cross "users" &
-    python main.py -g 1 -label_type 0 -slr ${slr} -version "${version}4" -name ${dataset} --store "${name}_4" -cross "users" 
+# for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
+# do
+#     python main.py -g 0 -label_type 0 -slr ${slr} -version "${version}0" -name ${dataset} --store "${name}_0" -cross "users" &
+#     python main.py -g 0 -label_type 0 -slr ${slr} -version "${version}1" -name ${dataset} --store "${name}_1" -cross "users" &
+#     python main.py -g 0 -label_type 0 -slr ${slr} -version "${version}2" -name ${dataset} --store "${name}_2" -cross "users" &
+#     python main.py -g 1 -label_type 0 -slr ${slr} -version "${version}3" -name ${dataset} --store "${name}_3" -cross "users" &
+#     python main.py -g 1 -label_type 0 -slr ${slr} -version "${version}4" -name ${dataset} --store "${name}_4" -cross "users" 
 
-    wait
-done
+#     wait
+# done
 
 
 version="shot"
@@ -335,18 +334,34 @@ name="no"
 slr=0.7
 shot=10
 
-store="CL"
+# store="CL"
 
+# for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
+# do
+#     python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}_0" &
+#     python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}_1" &
+#     python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}_2" &
+#     python main_trans_ewc.py -shot ${shot} -g 1 -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}_3" &
+#     python main_trans_ewc.py -shot ${shot} -g 1 -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}_4"
+    
+#     wait
+# done
+
+
+store="improve_v3_rerun"
+lam=500
+shot=10
 for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
 do
-    python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}_0" &
-    python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}_1" &
-    python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}_2" &
-    python main_trans_ewc.py -shot ${shot} -g 1 -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}_3" &
-    python main_trans_ewc.py -shot ${shot} -g 1 -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}_4"
+    python main_trans_ewc.py -ewc True -ewc_lambda ${lam} -shot ${shot} -g 0 -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}_0" &
+    python main_trans_ewc.py -ewc True -ewc_lambda ${lam} -shot ${shot} -g 0 -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}_1" &
+    python main_trans_ewc.py -ewc True -ewc_lambda ${lam} -shot ${shot} -g 0 -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}_2" &
+    python main_trans_ewc.py -ewc True -ewc_lambda ${lam} -shot ${shot} -g 1 -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}_3" &
+    python main_trans_ewc.py -ewc True -ewc_lambda ${lam} -shot ${shot} -g 1 -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}_4"
     
     wait
 done
+
 
 # wait
 
