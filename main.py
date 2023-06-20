@@ -33,14 +33,14 @@ parser.add_argument('--resume', default='', type=str, help='To restart the model
 parser.add_argument('--out_dim', default=256, type=int,
                     help='feature dimension (default: 256)')
 parser.add_argument('-t', '--temperature', default=0.1, type=float,
-                    help='softmax temperature (default: 1)')
+                    help='softmax temperature (default: 0.1)')
 parser.add_argument('--store', default='hard_test', type=str, help='define the name head for model storing')
 parser.add_argument('-b', '--batch-size', default=256, type=int,
                     metavar='N',
                     help='mini-batch size (default: 256), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('-name', default='HHAR',
+parser.add_argument('-name', default='Myo',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro'])
 parser.add_argument('-wd', '--weight-decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)',

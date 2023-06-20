@@ -42,11 +42,11 @@ class SupConLoss(nn.Module):
         # loss = -(mean_log_prob_pos * mask_zero).sum()/ mask_zero.sum()
         # loss
         loss = - mean_log_prob_pos.mean()
-        if torch.isnan(loss).any():
-            print(logits)
-            print(mask.sum(1))
-            print(mean_log_prob_pos)
-            pdb.set_trace()
+        # if torch.isnan(loss).any():
+        #     print(logits)
+        #     print(mask.sum(1))
+        #     print(mean_log_prob_pos)
+        #     pdb.set_trace()
         return loss
     
     def transfer_calculate(self, logits, labels):
