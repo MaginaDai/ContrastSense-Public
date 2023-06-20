@@ -155,8 +155,8 @@ def MoCo_evaluate(model, criterion, args, data_loader, test=False):
             acc_eval.update(acc, sensor.size(0))
 
     f1_eval = f1_score(label_all, pred_all, average='macro') * 100
-    if test:
-        np.savez('pred_all.npz', pred_all=pred_all)
+    # if test:
+    #     np.savez('pred_all.npz', pred_all=pred_all)
     return acc_eval.avg, f1_eval
 
 
