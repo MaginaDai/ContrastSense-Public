@@ -330,11 +330,23 @@ do
 done
 
 
+version="shot"
+name="no"
+slr=0.7
+shot=10
 
+<<<<<<< Updated upstream
 store="CL"
 
 for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
 do
+=======
+store="plain"
+
+for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
+do
+
+>>>>>>> Stashed changes
     python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}_0" &
     python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}_1" &
     python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}_2" &

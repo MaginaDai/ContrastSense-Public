@@ -608,21 +608,35 @@ class MoCo_v1(nn.Module):
         l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)
         # negative logits: NxK
         if self.hard_sample:
-            mask = torch.eq(domain_label[0].contiguous().view(-1, 1), self.queue_labels.T).bool().to(device)  # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
-            num_mask = torch.sum(~mask, dim=1)
-
+            #### v3
             l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  ## we further improve this step
-
             sim_wih_other_domain = l_neg.clone().detach()
-            sim_wih_other_domain[mask] = -torch.inf  # then sample within the same domain would be -inf
-
-            sim_sorted, indices = torch.sort(sim_wih_other_domain, dim=1, descending=True)
-            dim_wise_len = (num_mask * self.sample_ratio).int()
-
+            _, indices = torch.sort(sim_wih_other_domain, dim=1, descending=True)
+            mask = torch.ones(l_neg.shape).bool().to(device)
+            num_eliminate = int(l_neg.shape[1] * self.sample_ratio)
             for i in range(indices.shape[0]):
-                mask[i, indices[i, : dim_wise_len[i]]] = True
+                mask[i, indices[i, :num_eliminate]] = False ## Top r% are eliminated. They are from the same class.
 
             l_neg[~mask] = -torch.inf
+
+            #### v2 
+            # mask = torch.eq(domain_label[0].contiguous().view(-1, 1), self.queue_labels.T).bool().to(device)  # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
+            # num_mask = torch.sum(~mask, dim=1)
+
+            # l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  ## we further improve this step
+
+            # sim_wih_other_domain = l_neg.clone().detach()
+            # sim_wih_other_domain[mask] = -torch.inf  # then sample within the same domain would be -inf
+
+            # sim_sorted, indices = torch.sort(sim_wih_other_domain, dim=1, descending=True)
+            # dim_wise_len = (num_mask * self.sample_ratio).int()
+
+            # for i in range(indices.shape[0]):
+            #     mask[i, indices[i, : dim_wise_len[i]]] = True
+
+            # l_neg[~mask] = -torch.inf
+
+            #### v1
             # mask = torch.eq(domain_label[0].contiguous().view(-1, 1), self.queue_labels.T).bool().to(device)  # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
             # l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  ## we further improve this step
             # l_neg[~mask] = -torch.inf
