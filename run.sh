@@ -330,7 +330,7 @@ slr=0.7
 
 
 version="shot"
-name="no"
+name="improve_v1"
 slr=0.7
 shot=10
 
