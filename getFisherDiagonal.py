@@ -87,11 +87,11 @@ def getFisherDiagonal_initial(args):
     args.num_clusters = None
     args.iter_tol = None
 
-    dataset = ContrastiveLearningDataset(transfer=False, version=args.version, datasets_name=args.name)
+    dataset = ContrastiveLearningDataset(transfer=False, version=args.version, datasets_name=args.name, modal=args.modal)
     train_dataset = dataset.get_dataset(split='train')
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=256, shuffle=True, num_workers=10, pin_memory=False, drop_last=True)
 
-    model = MoCo_v1(device=args.device, mol=args.mol, K=args.moco_K)
+    model = MoCo_v1(args)
     optimizer = torch.optim.Adam(model.parameters(), args.pretrain_lr, weight_decay=args.weight_decay)
 
     save_dir = 'runs/'+ args.pretrained
@@ -112,7 +112,7 @@ def getFisherDiagonal_pretrain(args, train_loader, save_dir):
     #                 T_labels=args.tem_labels, dims=args.d, label_type=args.label_type, num_clusters=args.num_clusters, mol=args.mol, 
     #                 final_dim=args.final_dim, momentum=args.mo, drop=args.drop, DAL=args.DAL, if_cross_entropy=args.CE)
 
-    model = MoCo_v1(device=args.device, mol=args.mol, K=args.moco_K)
+    model = MoCo_v1(args)
     optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
 
     fisher, fisher_infoNCE = calculateFisher(args, model, optimizer, train_loader, save_dir)
@@ -189,17 +189,17 @@ def calculateFisher(args, model, optimizer, train_loader, save_dir):
             gt_label = labels[:, 0].to(args.device) # the first dim is motion labels
             if args.label_type:
                 if args.cross == 'users': # use domain labels
-                    sup_label = [labels[:, 1].to(args.device)] 
+                    domain_label = [labels[:, 1].to(args.device)] 
                 elif args.cross == 'positions' or args.cross == 'devices' :
-                    sup_label = [labels[:, 2].to(args.device)] 
+                    domain_label = [labels[:, 2].to(args.device)] 
                 else:
                     NotADirectoryError
             
-            _, _, logits_labels, _, _, _, _ = model(sensor[0], sensor[1], labels=sup_label, num_clusters=args.num_clusters, 
+            _, _, logits_labels, _, _, _, _ = model(sensor[0], sensor[1], domain_label=domain_label, num_clusters=args.num_clusters, 
                                                                                             iter_tol=args.iter_tol,
                                                                                             gt=gt_label, if_plot=False,
                                                                                             n_iter=0)
-            sup_loss = model.supervised_CL(logits_labels=logits_labels, labels=sup_label)
+            sup_loss = model.supervised_CL(logits_labels=logits_labels, labels=domain_label)
             loss = - args.slr[0] * sup_loss
             loss /= len(train_loader)
             loss.backward() 
@@ -214,13 +214,13 @@ def calculateFisher(args, model, optimizer, train_loader, save_dir):
             gt_label = labels[:, 0].to(args.device) # the first dim is motion labels
             if args.label_type:
                 if args.cross == 'users': # use domain labels
-                    sup_label = [labels[:, 1].to(args.device)] 
+                    domain_label = [labels[:, 1].to(args.device)] 
                 elif args.cross == 'positions' or args.cross == 'devices' :
-                    sup_label = [labels[:, 2].to(args.device)] 
+                    domain_label = [labels[:, 2].to(args.device)] 
                 else:
                     NotADirectoryError
             
-            output, target, _, _, _, _, _ = model(sensor[0], sensor[1], labels=sup_label, num_clusters=args.num_clusters, 
+            output, target, _, _, _, _, _ = model(sensor[0], sensor[1], domain_label=domain_label, num_clusters=args.num_clusters, 
                                                                                             iter_tol=args.iter_tol,
                                                                                             gt=gt_label, if_plot=False,
                                                                                             n_iter=0)

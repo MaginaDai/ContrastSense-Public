@@ -8,11 +8,11 @@ sys.path.append(dirname(dirname(sys.path[0])))
 sys.path.append(dirname(sys.path[0]))
 
 from baseline.CDA.model import STCN
-from baseline.CDA.ConSSL import ConSSL, cda_evaluate
+from baseline.CDA.ConSSL import ConSSL
 from baseline.Mixup.myo_dataload import Myo_Dataset
 from data_aug.preprocessing import ClassesNum
 
-from utils import seed_torch
+from utils import seed_torch, evaluate
 
 import torch.multiprocessing
 
@@ -21,19 +21,19 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 parser.add_argument('-lr', '--learning-rate', default=1e-4, type=float, metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--transfer', default=True, type=str, help='to tell whether we are doing transfer learning')
-parser.add_argument('--pretrained', default='CDA_v0/Myo_cda', type=str, help='path to pretrained checkpoint')
+parser.add_argument('--pretrained', default='CDA_lr1e-3_v0/Myo', type=str, help='path to pretrained checkpoint')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
 parser.add_argument('-b', '--batch-size', default=32, type=int, metavar='N')
 
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
 parser.add_argument('-name', default='Myo', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro'])
 parser.add_argument('--log-every-n-steps', default=5, type=int, help='Log every n steps')
-parser.add_argument('-g', '--gpu-index', default=3, type=int, help='Gpu index.')
+parser.add_argument('-g', '--gpu-index', default=0, type=int, help='Gpu index.')
 parser.add_argument('--fp16-precision', action='store_true', help='Whether or not to use 16-bit precision GPU training.')
 
 parser.add_argument('--disable-cuda', action='store_true', help='Disable CUDA')
 parser.add_argument('-j', '--workers', default=5, type=int, metavar='N', help='number of data loading workers (default: 5)')
-parser.add_argument('--store', default=None, type=str, help='define the name head for model storing')
+parser.add_argument('--store', default="DA_lr1e-3_v0", type=str, help='define the name head for model storing')
 parser.add_argument('-e', '--epochs', default=100, type=int, metavar='N', help='number of total epochs to run')
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
@@ -45,7 +45,7 @@ parser.add_argument('-version', default="shot0", type=str, help='control the ver
 
 def main():
     args = parser.parse_args()
-    args.name = args.name + '_cda'
+    args.name = args.name 
 
     seed_torch(seed=args.seed)
 
@@ -103,13 +103,12 @@ def main():
             print("=> no checkpoint found at '{}'".format(args.pretrained))
 
     optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=1e-6)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)  # keep aline with SimCLR
 
     #  It’s a no-op if the 'gpu_index' argument is a negative integer or None.
     with torch.cuda.device(args.gpu_index):
-        cda = ConSSL(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
+        cda = ConSSL(model=model, optimizer=optimizer, args=args)
         if args.evaluate:
-            test_acc, test_f1 = cda_evaluate(model=cda.model, criterion=cda.criterion, args=cda.args, data_loader=test_loader)
+            test_acc, test_f1 = evaluate(model=cda.model, criterion=cda.criterion, args=cda.args, data_loader=test_loader)
             print('test f1: {}'.format('%.3f' % test_f1))
             print('test acc: {}'.format('%.3f' % test_acc))
             return

@@ -198,7 +198,8 @@ class ConSSL(object):
 
             for sensor, target in tune_loader:
 
-                sensor = sensor[:, 0].to(self.args.device) ## among the two samples, we only sample the first sample to make the setting aligned with the others.
+                # sensor = sensor[:, 0].to(self.args.device) ## among the two samples, we only sample the first sample to make the setting aligned with the others.
+                sensor = sensor.to(self.args.device)
                 target = target[:, 0].to(self.args.device)
 
                 with autocast(enabled=self.args.fp16_precision):
@@ -227,7 +228,7 @@ class ConSSL(object):
                 n_iter_train += 1
 
             f1_batch = f1_score(label_batch.cpu().numpy(), pred_batch.cpu().numpy(), average='macro') * 100
-            val_acc, val_f1 = cda_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
+            val_acc, val_f1 = evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
 
             is_best = val_f1 > best_f1
             best_f1 = max(val_f1, best_f1)
@@ -257,7 +258,7 @@ class ConSSL(object):
         checkpoint = torch.load(best_model_dir, map_location="cpu")
         state_dict = checkpoint['state_dict']
         self.model.load_state_dict(state_dict, strict=False)
-        test_acc, test_f1 = cda_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=test_loader)
+        test_acc, test_f1 = evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=test_loader)
         logging.info(f"test f1 is {test_f1}.")
         logging.info(f"test acc is {test_acc}.")
         
@@ -266,42 +267,42 @@ class ConSSL(object):
 
     
 
-def cda_evaluate(model, criterion, args, data_loader):
-    losses = AverageMeter('Loss', ':.4e')
-    acc_eval = AverageMeter('acc_eval', ':6.2f')
-    # f1_eval = AverageMeter('f1_eval', ':6.2f')
+# def cda_evaluate(model, criterion, args, data_loader):
+#     losses = AverageMeter('Loss', ':.4e')
+#     acc_eval = AverageMeter('acc_eval', ':6.2f')
+#     # f1_eval = AverageMeter('f1_eval', ':6.2f')
 
-    model.eval()
+#     model.eval()
 
-    label_all = []
-    pred_all = []
+#     label_all = []
+#     pred_all = []
 
-    with torch.no_grad():
-        for sensor, target in data_loader:
+#     with torch.no_grad():
+#         for sensor, target in data_loader:
 
-            x1 = sensor[:, 0]
-            x2 = sensor[:, 1]
-            sensor = torch.cat([x1, x2], axis=0).to(args.device)
+#             x1 = sensor[:, 0]
+#             x2 = sensor[:, 1]
+#             sensor = torch.cat([x1, x2], axis=0).to(args.device)
 
-            target1 = target[:, 0]
-            target2 = target[:, 0]
-            target = torch.cat([target1, target2], axis=0).to(args.device)
+#             target1 = target[:, 0]
+#             target2 = target[:, 0]
+#             target = torch.cat([target1, target2], axis=0).to(args.device)
 
-            with autocast(enabled=args.fp16_precision):
-                logits = model(sensor)
-                if type(logits) is tuple:
-                    logits = logits[0]
-                loss = criterion(logits, target)
+#             with autocast(enabled=args.fp16_precision):
+#                 logits = model(sensor)
+#                 if type(logits) is tuple:
+#                     logits = logits[0]
+#                 loss = criterion(logits, target)
 
-            losses.update(loss.item(), sensor.size(0))
-            _, pred = logits.topk(1, 1, True, True)
+#             losses.update(loss.item(), sensor.size(0))
+#             _, pred = logits.topk(1, 1, True, True)
 
-            label_all = np.concatenate((label_all, target.cpu().numpy()))
-            pred_all = np.concatenate((pred_all, pred.cpu().numpy().reshape(-1)))
+#             label_all = np.concatenate((label_all, target.cpu().numpy()))
+#             pred_all = np.concatenate((pred_all, pred.cpu().numpy().reshape(-1)))
 
-            acc = accuracy(logits, target, topk=(1,))
-            acc_eval.update(acc, sensor.size(0))
+#             acc = accuracy(logits, target, topk=(1,))
+#             acc_eval.update(acc, sensor.size(0))
 
-    f1_eval = f1_score(label_all, pred_all, average='macro') * 100
+#     f1_eval = f1_score(label_all, pred_all, average='macro') * 100
 
-    return acc_eval.avg, f1_eval
+#     return acc_eval.avg, f1_eval

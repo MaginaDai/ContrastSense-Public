@@ -1,10 +1,11 @@
 #!/bin/bash
 key="v1"
 lr=0.001
-name="runs/CL_"
+name="runs/emg_model_v2_cdl_slr0.3_aug_"
 # name="runs/hard_v1_cl_"
-# name="baseline/CDA/runs/CDA_lr1e-2_v"/
-python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4" -modal "imu"
+# name="baseline/CDA/runs/CDA_lr1e-3_v"
+python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4" -modal "emg"
+
 # python results_analysis.py -name "runs/CDL_ewc_mixup_v0" 
 # python results_analysis.py -name "${name}0_${key}" "${name}0.2_${key}" "${name}0.8_${key}" "${name}1.0_${key}"
 # python results_analysis.py -name "${name}0.1" "${name}0.2" "${name}0.3" "${name}0.4" "${name}0.5" "${name}0.6" "${name}0.7" "${name}0.8" "${name}0.9" "${name}1.0"

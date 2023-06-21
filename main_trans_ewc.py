@@ -87,12 +87,11 @@ parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversar
 parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate')
 parser.add_argument('-dlr', default=0.5, type=float, help='DAL learning ratio')
 
-parser.add_argument('-ewc', default=False, type=bool, help='Use EWC or not')
+parser.add_argument('-ewc', default=True, type=bool, help='Use EWC or not')
 parser.add_argument('-ewc_lambda', default=50, type=float, help='EWC para')
-parser.add_argument('-ewc_pt', default=True, type=bool, help='use EWC acquired from pretrain or not')
+parser.add_argument('-ewc_pt', default=False, type=bool, help='use EWC acquired from pretrain or not')
 parser.add_argument('-fishermax', default=1e-2, type=float, help='fishermax')
 parser.add_argument('-slr', default=[0.7], nargs='+', type=float, help='the ratio of sup_loss')
-parser.add_argument('-moco_K', default=1024, type=int, help='keys size')
 
 parser.add_argument('-aug', default=False, type=bool, help='decide use data augmentation or not')
 parser.add_argument('-mixup', default=False, type=bool, help='decide use mixup or not')
@@ -101,6 +100,13 @@ parser.add_argument('-cross', default='users', type=str, help='decide to use whi
 parser.add_argument('-pretrain_lr', default=1e-4, type=float, help='learning rate during pretraining')
 parser.add_argument('-label_type', default=1, type=int, help='How many different kinds of labels for pretraining')
 parser.add_argument('-gama', default=1e3, type=float, help='the ratio of fisher_InfoNCE and fisher_CDL')
+
+parser.add_argument('-moco_m', default=0.999, type=int, help='keys size')
+parser.add_argument('-moco_K', default=1024, type=int, help='keys size')
+parser.add_argument('-tem_labels', default=[0.1], nargs='+', type=float, help='keys size')
+parser.add_argument('-CE', default=False, type=bool, help='keys size')
+parser.add_argument('-hard', default=False, type=bool, help='keys size')
+parser.add_argument('-sample_ratio', default=False, type=bool, help='keys size')
 
 def seed_torch(seed=0):
     random.seed(seed)
@@ -120,10 +126,6 @@ def main(args, fisher=None):
 
     args.pretrained = './runs/' + args.pretrained + '/model_best.pth.tar'
 
-    if args.name in ['NinaPro', 'Myo']:
-        args.modal = 'emg'
-    else:
-        args.modal = 'imu'
 
     dataset = ContrastiveLearningDataset(transfer=True, version=args.version, datasets_name=args.name, modal=args.modal)
     if args.aug:
@@ -254,6 +256,11 @@ if __name__ == '__main__':
         args.device = torch.device('cpu')
         args.gpu_index = -1
     
+    if args.name in ['NinaPro', 'Myo']:
+        args.modal = 'emg'
+    else:
+        args.modal = 'imu'
+
     if args.ewc:
         if args.ewc_pt:
             fisher_cdl, fisher_infoNCE = load_fisher_matrix(args.pretrained, args.device)
