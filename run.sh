@@ -348,8 +348,8 @@ shot=10
 # done
 
 
-store="improve_v3_rerun"
-lam=500
+store="improve_v3_rerun_fishermax1e-4_"
+lam=100
 shot=10
 for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
 do

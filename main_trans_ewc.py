@@ -89,8 +89,8 @@ parser.add_argument('-dlr', default=0.5, type=float, help='DAL learning ratio')
 
 parser.add_argument('-ewc', default=True, type=bool, help='Use EWC or not')
 parser.add_argument('-ewc_lambda', default=50, type=float, help='EWC para')
-parser.add_argument('-ewc_pt', default=False, type=bool, help='use EWC acquired from pretrain or not')
-parser.add_argument('-fishermax', default=1e-2, type=float, help='fishermax')
+parser.add_argument('-ewc_pt', default=True, type=bool, help='use EWC acquired from pretrain or not')
+parser.add_argument('-fishermax', default=1e-4, type=float, help='fishermax')
 parser.add_argument('-slr', default=[0.7], nargs='+', type=float, help='the ratio of sup_loss')
 
 parser.add_argument('-aug', default=False, type=bool, help='decide use data augmentation or not')
@@ -117,6 +117,7 @@ def seed_torch(seed=0):
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+    torch.set_num_threads(1)
     return
 
 def main(args, fisher=None):
