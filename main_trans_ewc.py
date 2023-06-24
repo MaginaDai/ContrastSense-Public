@@ -106,7 +106,8 @@ parser.add_argument('-moco_K', default=1024, type=int, help='keys size')
 parser.add_argument('-tem_labels', default=[0.1], nargs='+', type=float, help='keys size')
 parser.add_argument('-CE', default=False, type=bool, help='keys size')
 parser.add_argument('-hard', default=False, type=bool, help='keys size')
-parser.add_argument('-sample_ratio', default=False, type=bool, help='keys size')
+parser.add_argument('-sample_ratio', default=0.05, type=float, help='keys size')
+parser.add_argument('-last_ratio', default=0.70, type=float, help='hard sampling or not')  # we sample hard ones from the data.
 
 def seed_torch(seed=0):
     random.seed(seed)

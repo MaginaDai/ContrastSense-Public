@@ -3,16 +3,16 @@ version="shot"
 slr=0.7
 shot=10
 
-for r in 0.05
+for r in 0.30 0.70
 do
-    store="hard_v3_cdl_r${r}_"
+    store="hard_v5_cl_r${r}_"
     for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
     do
-        python main.py -g 0 -hard True -sample_ratio ${r} -label_type 1 -slr ${slr} -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
-        python main.py -g 0 -hard True -sample_ratio ${r} -label_type 1 -slr ${slr} -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
-        python main.py -g 0 -hard True -sample_ratio ${r} -label_type 1 -slr ${slr} -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
-        python main.py -g 1 -hard True -sample_ratio ${r} -label_type 1 -slr ${slr} -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
-        python main.py -g 1 -hard True -sample_ratio ${r} -label_type 1 -slr ${slr} -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
+        python main.py -g 0 -hard True -last_ratio ${r} -label_type 0 -slr ${slr} -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
+        python main.py -g 0 -hard True -last_ratio ${r} -label_type 0 -slr ${slr} -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
+        python main.py -g 0 -hard True -last_ratio ${r} -label_type 0 -slr ${slr} -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
+        python main.py -g 1 -hard True -last_ratio ${r} -label_type 0 -slr ${slr} -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
+        python main.py -g 1 -hard True -last_ratio ${r} -label_type 0 -slr ${slr} -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
 
         wait
     done
