@@ -103,10 +103,11 @@ def main():
             print("=> no checkpoint found at '{}'".format(args.pretrained))
 
     optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=1e-6)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)  # keep aline with SimCLR
 
     #  It’s a no-op if the 'gpu_index' argument is a negative integer or None.
     with torch.cuda.device(args.gpu_index):
-        cda = ConSSL(model=model, optimizer=optimizer, args=args)
+        cda = ConSSL(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
         if args.evaluate:
             test_acc, test_f1 = evaluate(model=cda.model, criterion=cda.criterion, args=cda.args, data_loader=test_loader)
             print('test f1: {}'.format('%.3f' % test_f1))

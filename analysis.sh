@@ -1,9 +1,9 @@
 #!/bin/bash
 key="v1"
 lr=0.001
-name="runs/emg_model_v2_cdl_slr0.3_aug_"
+name="runs/emg_model_v2_cdl_sota_ewc_2500"
 # name="runs/hard_v1_cl_"
-# name="baseline/CDA/runs/CDA_lr1e-3_v"
+# name="baseline/CDA/runs/CDA_lr5e-4_v"
 python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4" -modal "emg"
 
 # python results_analysis.py -name "runs/CDL_ewc_mixup_v0" 

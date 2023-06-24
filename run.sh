@@ -348,20 +348,49 @@ shot=10
 # done
 
 
-store="improve_v3_rerun_fishermax1e-4_"
-lam=100
-shot=10
-for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
-do
-    python main_trans_ewc.py -ewc True -ewc_lambda ${lam} -shot ${shot} -g 0 -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}_0" &
-    python main_trans_ewc.py -ewc True -ewc_lambda ${lam} -shot ${shot} -g 0 -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}_1" &
-    python main_trans_ewc.py -ewc True -ewc_lambda ${lam} -shot ${shot} -g 0 -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}_2" &
-    python main_trans_ewc.py -ewc True -ewc_lambda ${lam} -shot ${shot} -g 1 -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}_3" &
-    python main_trans_ewc.py -ewc True -ewc_lambda ${lam} -shot ${shot} -g 1 -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}_4"
+# store="improve_v3_rerun_fishermax1e-4_"
+# lam=100
+# shot=10
+# for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
+# do
+#     python main_trans_ewc.py -ewc True -ewc_lambda ${lam} -shot ${shot} -g 0 -version "${version}0" -name ${dataset} --pretrained "${name}0/${dataset}" --store "${store}_0" &
+#     python main_trans_ewc.py -ewc True -ewc_lambda ${lam} -shot ${shot} -g 0 -version "${version}1" -name ${dataset} --pretrained "${name}1/${dataset}" --store "${store}_1" &
+#     python main_trans_ewc.py -ewc True -ewc_lambda ${lam} -shot ${shot} -g 0 -version "${version}2" -name ${dataset} --pretrained "${name}2/${dataset}" --store "${store}_2" &
+#     python main_trans_ewc.py -ewc True -ewc_lambda ${lam} -shot ${shot} -g 1 -version "${version}3" -name ${dataset} --pretrained "${name}3/${dataset}" --store "${store}_3" &
+#     python main_trans_ewc.py -ewc True -ewc_lambda ${lam} -shot ${shot} -g 1 -version "${version}4" -name ${dataset} --pretrained "${name}4/${dataset}" --store "${store}_4"
     
-    wait
-done
+#     wait
+# done
 
+for lr in 5e-3
+do
+    for e in 200
+    do
+        store="emg_model_v2_cdl_slr0.3_"
+        # for dataset in "Myo" "NinaPro"
+        # do
+        #     python main.py -g 0 -e ${e} -slr ${slr} -label_type 1 -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
+        #     python main.py -g 0 -e ${e} -slr ${slr} -label_type 1 -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
+        #     python main.py -g 1 -e ${e} -slr ${slr} -label_type 1 -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
+        #     python main.py -g 1 -e ${e} -slr ${slr} -label_type 1 -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
+        #     python main.py -g 1 -e ${e} -slr ${slr} -label_type 1 -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
+
+        #     wait
+        # done
+
+        store_ft="emg_model_v2_cdl_slr0.3_e${e}_lr${lr}"
+        for dataset in "Myo"
+        do
+            python main_trans_ewc.py -e ${e} -lr ${lr} -g 0 -ft True -version "${version}0" -shot 10 -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store_ft}0" &
+            python main_trans_ewc.py -e ${e} -lr ${lr} -g 0 -ft True -version "${version}1" -shot 10 -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store_ft}1" &
+            python main_trans_ewc.py -e ${e} -lr ${lr} -g 0 -ft True -version "${version}2" -shot 10 -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store_ft}2" &
+            python main_trans_ewc.py -e ${e} -lr ${lr} -g 1 -ft True -version "${version}3" -shot 10 -name ${dataset} --pretrained "${store}3/${dataset}" --store "${store_ft}3" &
+            python main_trans_ewc.py -e ${e} -lr ${lr} -g 1 -ft True -version "${version}4" -shot 10 -name ${dataset} --pretrained "${store}4/${dataset}" --store "${store_ft}4"
+
+            wait
+        done
+    done
+done
 
 # wait
 

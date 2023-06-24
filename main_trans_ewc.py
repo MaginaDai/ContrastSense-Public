@@ -87,7 +87,7 @@ parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversar
 parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate')
 parser.add_argument('-dlr', default=0.5, type=float, help='DAL learning ratio')
 
-parser.add_argument('-ewc', default=True, type=bool, help='Use EWC or not')
+parser.add_argument('-ewc', default=False, type=bool, help='Use EWC or not')
 parser.add_argument('-ewc_lambda', default=50, type=float, help='EWC para')
 parser.add_argument('-ewc_pt', default=True, type=bool, help='use EWC acquired from pretrain or not')
 parser.add_argument('-fishermax', default=1e-4, type=float, help='fishermax')
@@ -273,23 +273,27 @@ if __name__ == '__main__':
         # for n, p in fisher_cdl.items():
         #     fisher_cdl[n] = torch.min(fisher_cdl[n], torch.tensor(args.fishermax)).to(args.device)
         
-        for n, p in fisher_infoNCE.items():
-            fisher_infoNCE[n] = torch.min(fisher_infoNCE[n], torch.tensor(args.fishermax)).to(args.device)
-    
-        fmax, fmax_cdl = 0, 0
-        fmin = 10
-        
-        for n, p in fisher_infoNCE.items():
-            if torch.min(fisher_infoNCE[n]) < fmin:
-                fmin = torch.min(fisher_infoNCE[n])
-            if torch.max(fisher_infoNCE[n]) > fmax:
-                fmax = torch.max(fisher_infoNCE[n])
-            
-            if torch.max(fisher_cdl[n]) > fmax_cdl:
-                fmax_cdl = torch.max(fisher_cdl[n])
 
-        for n, p in fisher_cdl.items():
-            fisher[n] = (fmax - fisher_infoNCE[n]) / (fmax - fmin) * fisher_cdl[n]
+        ### new version but no effect 
+        # for n, p in fisher_infoNCE.items():
+        #     fisher_infoNCE[n] = torch.min(fisher_infoNCE[n], torch.tensor(args.fishermax)).to(args.device)
+    
+        # fmax, fmax_cdl = 0, 0
+        # fmin = 10
+        
+        # for n, p in fisher_infoNCE.items():
+        #     if torch.min(fisher_infoNCE[n]) < fmin:
+        #         fmin = torch.min(fisher_infoNCE[n])
+        #     if torch.max(fisher_infoNCE[n]) > fmax:
+        #         fmax = torch.max(fisher_infoNCE[n])
+            
+        #     if torch.max(fisher_cdl[n]) > fmax_cdl:
+        #         fmax_cdl = torch.max(fisher_cdl[n])
+
+        # for n, p in fisher_cdl.items():
+        #     fisher[n] = (fmax - fisher_infoNCE[n]) / (fmax - fmin) * fisher_cdl[n]
+
+        fisher = fisher_cdl
     
         # for n, p in fisher_cdl.items():
             # fisher[n] = 0.5 * (fmax - fisher_infoNCE[n]) / (fmax - fmin) * fmax_cdl  + 0.5 * fisher_cdl[n]

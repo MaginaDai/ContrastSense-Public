@@ -23,6 +23,7 @@ from tqdm import tqdm
 from DeepSense import DeepSense_encoder
 
 from SupContrast import SupConLoss
+from baseline.CDA.model import TCN_GCN_unit
 from data_aug.preprocessing import UsersNum
 from figure_plot.figure_plot import t_SNE_view
 from judge import AverageMeter
@@ -90,7 +91,8 @@ class MoCo_classifier(nn.Module):
             self.gru = torch.nn.GRU(dims, final_dim, num_layers=1, batch_first=True, bidirectional=True)
         elif modal == 'emg':
             feature_num = 1024
-            self.gru = torch.nn.GRU(int(dims/2), final_dim, num_layers=1, batch_first=True, bidirectional=True)
+            # feature_num = 832
+            self.gru = torch.nn.GRU(16, final_dim, num_layers=1, batch_first=True, bidirectional=True)
         else:
             NotADirectoryError
     
@@ -118,6 +120,7 @@ class MoCo_discriminator(nn.Module):
             feature_num = 6400
         elif modal == 'emg':
             feature_num = 1024
+            # feature_num = 2912
         else:
             NotADirectoryError
 
@@ -175,6 +178,7 @@ class MoCo_projector(nn.Module):
             feature_num = 6400
         elif modal == 'emg':
             feature_num = 1024
+            # feature_num = 2912
         else:
             NotADirectoryError
 
@@ -410,6 +414,26 @@ class MoCo_encoder_for_emg_v2(nn.Module):
         return x.view(x.shape[0], x.shape[1], -1)  # to keep align with IMU encoder
 
 
+class MoCo_encoder_for_emg_v3(nn.Module):
+    ## keep align with ConSSL
+    def __init__(self, dims=32, momentum=0.9, drop=0.1):
+        super(MoCo_encoder_for_emg_v3, self).__init__()
+
+        A = np.ones([8, 8])
+
+        self.l1 = TCN_GCN_unit(1, 4, A)
+        self.l2 = TCN_GCN_unit(4, 8, A)
+        self.l3 = TCN_GCN_unit(8, 8, A)
+        self.l4 = TCN_GCN_unit(8, 7, A)
+
+    def forward(self, x):
+        x = self.l1(x)
+        x = self.l2(x)
+        x = self.l3(x)
+        x = self.l4(x)
+        x = torch.permute(x, (0, 2, 1, 3))
+        return x.reshape(x.shape[0], x.shape[1], -1)  # to keep align with IMU encoder
+    
 # utils
 @torch.no_grad()
 def concat_all_gather(tensor):

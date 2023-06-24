@@ -86,7 +86,7 @@ parser.add_argument('-version', default="shot1", type=str, help='control the ver
 parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-CE', default=False, type=bool, help='Use Cross Entropy Domain Loss or not')
 parser.add_argument('-ewc', default=True, type=float, help='Use EWC or not')
-parser.add_argument('-fishermax', default=0.01, type=float, help='fishermax')
+parser.add_argument('-fishermax', default=100, type=float, help='fishermax')
 parser.add_argument('-p', default=0.8, type=float, help='possibility for one aug')
 parser.add_argument('-p2', default=0.4, type=float, help='possibility for one aug')
 parser.add_argument('-p3', default=0.2, type=float, help='possibility for one aug')
