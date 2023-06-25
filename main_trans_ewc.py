@@ -271,8 +271,8 @@ if __name__ == '__main__':
         
         fisher = {n: torch.zeros(p.shape).to(args.device) for n, p in fisher_cdl.items()}
 
-        # for n, p in fisher_cdl.items():
-        #     fisher_cdl[n] = torch.min(fisher_cdl[n], torch.tensor(args.fishermax)).to(args.device)
+        for n, p in fisher_cdl.items():
+            fisher_cdl[n] = torch.min(fisher_cdl[n], torch.tensor(args.fishermax)).to(args.device)
         
 
         ### new version but no effect 

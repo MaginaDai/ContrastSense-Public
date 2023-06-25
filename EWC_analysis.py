@@ -6,18 +6,18 @@ from getFisherDiagonal import load_fisher_matrix, getFisherDiagonal_initial
 
 parser = argparse.ArgumentParser(description='PyTorch SimCLR for Wearable Sensing')
 
-parser.add_argument('-name', default='Shoaib', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC'])
+parser.add_argument('-name', default='NinaPro', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro'])
 parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
 parser.add_argument('--mol', default='MoCo', type=str, help='which model to use', choices=['SimCLR', 'LIMU', 'CPC', 'MoCo', 'DeepSense'])
 parser.add_argument('-moco_K', default=1024, type=int, help='keys size')
-parser.add_argument('-pretrain_lr', default=1e-4, type=float, help='learning rate during pretraining')
+parser.add_argument('-pretrain_lr', default=1e-3, type=float, help='learning rate during pretraining')
 parser.add_argument('-cross', default='users', type=str, help='decide to use which kind of labels')
 parser.add_argument('-label_type', default=1, type=int, help='How many different kinds of labels for pretraining')
-parser.add_argument('-g', '--gpu-index', default=3, type=int, help='Gpu index.')
-parser.add_argument('-fishermax', default=1e-2, type=float, help='fishermax')
+parser.add_argument('-g', '--gpu-index', default=1, type=int, help='Gpu index.')
+parser.add_argument('-fishermax', default=100, type=float, help='fishermax')
 parser.add_argument('-slr', default=[0.7], nargs='+', type=float, help='the ratio of sup_loss')
 
-parser.add_argument('--pretrained', default='CDL_slr0.7_v0/Shoaib', type=str, help='path to ContrastSense pretrained checkpoint')
+parser.add_argument('--pretrained', default='emg_model_v2_cdl_sota0/NinaPro', type=str, help='path to ContrastSense pretrained checkpoint')
 
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
 parser.add_argument('-wd', '--weight-decay', default=1e-4, type=float, help='weight decay (default: 1e-4)')
@@ -38,9 +38,9 @@ def ewc_analysis(args):
     seed_torch(seed=args.seed)
 
     args.device = torch.device(f'cuda:{args.gpu_index}')
-    fisher = load_fisher_matrix(args.pretrained, args.device)
-    fisher_new, _ = getFisherDiagonal_initial(args)
-
+    fisher, _ = load_fisher_matrix(args.pretrained, args.device)
+    # fisher_new, _ = getFisherDiagonal_initial(args)
+    fisher_new=fisher
     cdf_plot(fisher, fisher_new)
     return
 
@@ -133,7 +133,7 @@ def cdf_plot(fisher, fisher_new):
     plt.figure()
     plt.plot(x_fisher, y)
     plt.plot(x_fisher_new, y)
-    # plt.xlim([0.004, 0.006])
+    plt.xlim([0, 1e-5])
     plt.legend(['old', 'new'])
     plt.savefig('improved ewc.png')
     return
@@ -141,8 +141,8 @@ def cdf_plot(fisher, fisher_new):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    # ewc_analysis(args)
+    ewc_analysis(args)
 
     # ewc_cmp_with_different_seed(args)
 
-    ewc_cmp_the_influcence_of_add_InfoNCE(args)
+    # ewc_cmp_the_influcence_of_add_InfoNCE(args)
