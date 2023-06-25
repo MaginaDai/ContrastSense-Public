@@ -453,3 +453,31 @@ def fetch_test_loader_for_all_dataset(args, datasets):
         test_loader_for_all_datasets.append(test_loader)
 
     return test_loader_for_all_datasets
+
+
+def compute_kernel(x, y, sigma):
+    x_size = x.shape[0]
+    y_size = y.shape[0]
+    dim = x.shape[1]
+    
+    x = x.unsqueeze(1)  # Make it into a column tensor
+    y = y.unsqueeze(0)  # Make it into a row tensor
+    
+    tiled_x = x.expand(x_size, y_size, dim)
+    tiled_y = y.expand(x_size, y_size, dim)
+    
+    return torch.exp(-torch.mean((tiled_x - tiled_y) ** 2, dim=2) / (4 * sigma * sigma))
+
+def compute_mmd(x, y, sigma):
+    x_kernel = compute_kernel(x, x, sigma)
+    y_kernel = compute_kernel(y, y, sigma)
+    xy_kernel = compute_kernel(x, y, sigma)
+    mmd = x_kernel.mean() + y_kernel.mean() - 2*xy_kernel.mean()
+    return mmd
+
+if __name__ == '__main__':
+    source_data = torch.rand(256, 128)
+    target_data = torch.rand(256, 128)
+    sigma=16
+    mmd_distance = compute_mmd(source_data, target_data, sigma)
+    print(mmd_distance)

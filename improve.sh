@@ -3,9 +3,9 @@ version="shot"
 slr=0.7
 shot=10
 
-for r in 0.30 0.70
+for r in 0.70 0.90
 do
-    store="hard_v5_cl_r${r}_"
+    store="hard_v5_crt_cl_r${r}_"
     for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
     do
         python main.py -g 0 -hard True -last_ratio ${r} -label_type 0 -slr ${slr} -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &

@@ -643,6 +643,7 @@ class MoCo_v1(nn.Module):
         device = (torch.device('cuda')
             if sen_q.is_cuda
             else torch.device('cpu'))
+        similarity_across_domains = 0
 
         q, d_q = self.encoder_q(sen_q)  # queries: NxC
         q = F.normalize(q, dim=1)
@@ -662,27 +663,37 @@ class MoCo_v1(nn.Module):
         # Einstein sum is more intuitive
         # positive logits: Nx1
         l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)
+        l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  ## we further improve this step
+        
         # negative logits: NxK
         if self.hard_sample:
             #### v5 no domain-wise but semi-hard
             mask = torch.eq(domain_label[0].contiguous().view(-1, 1), self.queue_labels.T).bool().to(device)  # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
-            num_mask = torch.sum(~mask, dim=1)
+            sample_mask = torch.zeros(l_neg.shape).bool().to(device)
+            sample_mask[mask] = True
 
-            l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  ## we further improve this step
-
-            sim_wih_other_domain = l_neg.clone().detach()
-            sim_wih_other_domain[mask] = -torch.inf  # then sample within the same domain would be -inf
-
-            sim_sorted, indices = torch.sort(sim_wih_other_domain, dim=1, descending=True)
-            dim_wise_len = (num_mask * self.last_ratio).int()
             num_eliminate = int(l_neg.shape[1] * self.sample_ratio)
 
+            sim_wih_other_domain = l_neg.clone().detach()
+            _, indices = torch.sort(sim_wih_other_domain, dim=1, descending=True)
+
+            rows = torch.arange(l_neg.shape[0]).unsqueeze(-1)
+            sample_mask[rows, indices[:, :num_eliminate]] = False  ## eliminate the hardest
+            mask[rows, indices[:, :num_eliminate]] = True ## when eliminate simple in the other domains, those should not be considered.
+
+            num_mask = torch.sum(~mask, dim=1)
+            domain_wise_len = (num_mask * self.last_ratio).int()
+
+            sim_wih_other_domain[mask] = -torch.inf  # then sample within the same domain would be -inf
+
+            _, indices = torch.sort(sim_wih_other_domain, dim=1, descending=True)
+    
             for i in range(indices.shape[0]):
-                mask[i, indices[i, num_eliminate:dim_wise_len[i]]] = True
+                sample_mask[i, indices[i, :domain_wise_len[i]]] = True  ## in this case, the hardest sample from the self domain will not be eliminated!!!
+            
+            l_neg[~sample_mask] = -torch.inf
 
-            l_neg[~mask] = -torch.inf
-
-            similarity_across_domains = 0
+            
 
             #### v4 lets further add the hard sampling
             # l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  ## we further improve this step            
@@ -763,8 +774,7 @@ class MoCo_v1(nn.Module):
             # mask = torch.eq(domain_label[0].contiguous().view(-1, 1), self.queue_labels.T).bool().to(device)  # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
             # l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  ## we further improve this step
             # l_neg[~mask] = -torch.inf
-        else:
-            l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])
+
         
         feature = torch.concat([q, self.queue.clone().detach().T], dim=0)  # the overall features rather than the dot product of features.  
 
