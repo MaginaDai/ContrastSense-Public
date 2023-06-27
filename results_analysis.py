@@ -4,7 +4,7 @@ from sys import implementation
 import numpy as np
 import re
 import pdb
-
+import matplotlib.pyplot as plt
 from xml.sax import default_parser_list
 
 
@@ -224,9 +224,54 @@ def avg_result_for_cross_domains(name, ft, modal, shot, cross="preliminary"):
     print("Test std is: {}".format(np.around(np.std(test), 2)))
     return test_mean
 
+
+def analysis_semi_hard_sampling():
+    dir1 = f'runs/semi_hard_explore_r0.01/HHAR/training.log'
+    dir3 = f'runs/semi_hard_explore_r0.10/HHAR/training.log'
+    dir5 = f'runs/semi_hard_explore_r0.05/HHAR/training.log'
+
+    mslr_pattern = r'mslr+:\s+\(*(\d+\.+\d*)'
+
+    with open(dir1, "r") as f:  # 打开文件
+        content = f.read()
+        mslr1 = np.float64(re.findall(mslr_pattern, content))
+
+    f.close()
+
+    with open(dir3, "r") as f:  # 打开文件
+        content = f.read()
+        mslr3 = np.float64(re.findall(mslr_pattern, content))
+
+    with open(dir5, "r") as f:  # 打开文件
+        content = f.read()
+        mslr5 = np.float64(re.findall(mslr_pattern, content))
+
+
+
+    x_mslr1 = np.sort(mslr1)
+    x_mslr3 = np.sort(mslr3)
+    x_mslr5 = np.sort(mslr5)
+
+    y1 = 1. * np.arange(len(mslr1)) / (len(mslr1) - 1)
+    y3 = 1. * np.arange(len(mslr3)) / (len(mslr3) - 1)
+    y5 = 1. * np.arange(len(mslr5)) / (len(mslr5) - 1)
+
+    plt.figure()
+    plt.plot(x_mslr1, y1)
+    plt.plot(x_mslr3, y3)
+    plt.plot(x_mslr5, y5)
+    plt.axvline(x=16.6, color='r')
+    plt.legend(['Top 1%', 'Top 10%', 'Top 5%', 'random'])
+    plt.savefig('explain semi_hard.png')
+    
+    return
+
+
 if __name__ == '__main__':
-    args = parser.parse_args()
-    avg_result(args.name, ft=args.ft, modal=args.modal, shot=args.shot)
+    # args = parser.parse_args()
+    # avg_result(args.name, ft=args.ft, modal=args.modal, shot=args.shot)
+
+    analysis_semi_hard_sampling()
     # avg_result_for_limited_labels(args.name)
     # results_for_each_file(args.name)
     # avg_result(name=args.name, ft=args.ft)

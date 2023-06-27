@@ -346,6 +346,9 @@ def preprocess_hhar(path, path_save, version, window_time=50, seq_len=40, jump=0
     window_num = 0
     data_temp = []
     num = 0
+    old_user = 0
+    current_user = 0
+    time_idx = 0
     while time_index[0] < len(accs) and time_index[1] < len(gyros):
         acc, time_index_new_acc = extract_sensor(accs, time_index[0], time_tag, window_time=window_time * pow(10, 6))
         gyro, time_index_new_gyro = extract_sensor(gyros, time_index[1], time_tag, window_time=window_time * pow(10, 6))
@@ -357,7 +360,17 @@ def preprocess_hhar(path, path_save, version, window_time=50, seq_len=40, jump=0
             if window_num == seq_len:
                 data_raw = np.array(data_temp)
                 add_infor=data_raw[0, 6:] # [users, devices, motion]
-                add_infor=np.array([movement.index(add_infor[-1]), users.index(add_infor[-3]), devices.index(add_infor[-2])]) # [motion, users, devices]
+                if num == 0:
+                    old_user = users.index(add_infor[-3])
+                current_user = users.index(add_infor[-3])
+                if current_user == old_user:
+                    time_idx += 1
+                else:
+                    print(old_user)
+                    print(current_user)
+                    time_idx += 1e3
+                    old_user = current_user
+                add_infor=np.array([movement.index(add_infor[-1]), users.index(add_infor[-3]), devices.index(add_infor[-2]), time_idx]) # [motion, users, devices]
                 if num % 100 == 0:
                     print(num)
                 # if num > 23980:
@@ -398,7 +411,7 @@ def label_translate(source_dir, target_dir):
 DATASET_PATH = r'./original_dataset/hhar/'
 if __name__ == '__main__':
     # 50 refer to 20 Hz. 20 refer to 50 Hz
-    path_save = r'./datasets/HHAR_test/'
+    path_save = r'./datasets/HHAR_time/'
     if not os.path.exists(path_save):
         os.makedirs(path_save)
     num = preprocess_hhar(DATASET_PATH, path_save, version='test', window_time=20, seq_len=200)  # use jump to control overlap.

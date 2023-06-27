@@ -487,6 +487,7 @@ class MoCo_v1(nn.Module):
         self.hard_sample = args.hard
         self.sample_ratio = args.sample_ratio
         self.last_ratio = args.last_ratio
+        self.hard_record = args.hard_record
 
         # create the encoders
         # num_classes is the output fc dimension
@@ -644,6 +645,11 @@ class MoCo_v1(nn.Module):
             if sen_q.is_cuda
             else torch.device('cpu'))
         similarity_across_domains = 0
+        
+        hardest_related_info = [0, 0, 0]
+        mean_same_class_ratio = 0
+        mean_same_domain_ratio = 0
+        mean_same_class_same_domain = 0
 
         q, d_q = self.encoder_q(sen_q)  # queries: NxC
         q = F.normalize(q, dim=1)
@@ -664,6 +670,28 @@ class MoCo_v1(nn.Module):
         # positive logits: Nx1
         l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)
         l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  ## we further improve this step
+
+        if self.hard_record:
+            sim_wih_other_domain = l_neg.clone().detach()
+            _, indices = torch.sort(sim_wih_other_domain, dim=1, descending=True)
+            num_eliminate = int(l_neg.shape[1] * self.sample_ratio)
+
+            rows = torch.arange(l_neg.shape[0]).unsqueeze(-1)
+            que_labels = self.queue_gt.T.expand(l_neg.shape[0], l_neg.shape[1])
+            labels_of_eliminated = que_labels[rows, indices[:, :num_eliminate]]
+            mask_same_class = torch.eq(gt[0].contiguous().view(-1, 1), labels_of_eliminated)
+            same_class_ratio = mask_same_class.sum(dim=1)/num_eliminate * 100
+
+            que_domain_labels = self.queue_labels.T.expand(l_neg.shape[0], l_neg.shape[1])
+            domain_labels_of_eliminated = que_domain_labels[rows, indices[:, :num_eliminate]]
+            mask_same_domain = torch.eq(domain_label[0].contiguous().view(-1, 1), domain_labels_of_eliminated)
+            same_domain_ratio = mask_same_domain.sum(dim=1)/num_eliminate * 100
+            same_class_same_domain = torch.logical_and(mask_same_class, mask_same_domain).sum(dim=1) / num_eliminate * 100
+            
+            mean_same_class_ratio = same_class_ratio.mean()
+            mean_same_domain_ratio = same_domain_ratio.mean()
+            mean_same_class_same_domain = same_class_same_domain.mean()
+            hardest_related_info = [mean_same_class_ratio, mean_same_domain_ratio, mean_same_class_same_domain]
         
         # negative logits: NxK
         if self.hard_sample:
@@ -743,21 +771,17 @@ class MoCo_v1(nn.Module):
 
 
             #### v3 is proved to be effective + 2% F1 on average
-            # l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  ## we further improve this step
             # sim_wih_other_domain = l_neg.clone().detach()
             # _, indices = torch.sort(sim_wih_other_domain, dim=1, descending=True)
             # mask = torch.ones(l_neg.shape).bool().to(device)
             # num_eliminate = int(l_neg.shape[1] * self.sample_ratio)
-            # for i in range(indices.shape[0]):
-            #     mask[i, indices[i, :num_eliminate]] = False ## Top r% are eliminated. They are from the same class.
-
+            # rows = torch.arange(l_neg.shape[0]).unsqueeze(-1)
+            # mask[rows, indices[:, :num_eliminate]] = False ## Top r% are eliminated.
             # l_neg[~mask] = -torch.inf
 
             #### v2 
             # mask = torch.eq(domain_label[0].contiguous().view(-1, 1), self.queue_labels.T).bool().to(device)  # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
             # num_mask = torch.sum(~mask, dim=1)
-
-            # l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  ## we further improve this step
 
             # sim_wih_other_domain = l_neg.clone().detach()
             # sim_wih_other_domain[mask] = -torch.inf  # then sample within the same domain would be -inf
@@ -772,7 +796,6 @@ class MoCo_v1(nn.Module):
 
             #### v1
             # mask = torch.eq(domain_label[0].contiguous().view(-1, 1), self.queue_labels.T).bool().to(device)  # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
-            # l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  ## we further improve this step
             # l_neg[~mask] = -torch.inf
 
         
@@ -827,7 +850,7 @@ class MoCo_v1(nn.Module):
         #         t_SNE_view(h_trans, gt_all, n_iter)
                 
         
-        return logits, targets, logits_labels, cluster_eval, cluster_loss, similarity_across_domains, feature
+        return logits, targets, logits_labels, hardest_related_info, cluster_loss, similarity_across_domains, feature
     
     
     def supervised_CL(self, logits_labels=None, labels=None):
@@ -884,11 +907,15 @@ class MoCo(object):
         not_best_counter = 0
         best_loss = 1e6
         see_cluster_effect = False
+        cluster_eval=None
 
         for epoch_counter in tqdm(range(self.args.epochs)):
             acc_batch = AverageMeter('acc_batch', ':6.2f')
             chs = AverageMeter('chs', ':6.2f')
             loss_batch = AverageMeter('loss_batch', ':6.5f')
+            mscr_batch = AverageMeter('mslr_batch', ':6.3f')
+            msdr_batch = AverageMeter('msdr_batch', ':6.3f')
+            mscsdr_batch = AverageMeter('mscsdr_batch', ':6.3f')
 
             for sensor, labels in train_loader:
 
@@ -910,7 +937,7 @@ class MoCo(object):
                 else:
                     domain_label = None
                 with autocast(enabled=self.args.fp16_precision):
-                    output, target, logits_labels, cluster_eval, cluster_loss, similarity_across_domains, feature = self.model(sensor[0], sensor[1], domain_label=domain_label, 
+                    output, target, logits_labels, hardest_related_info, cluster_loss, similarity_across_domains, feature = self.model(sensor[0], sensor[1], domain_label=domain_label, 
                                                                                                                                 num_clusters=self.args.num_clusters, 
                                                                                                                                 iter_tol=self.args.iter_tol,
                                                                                                                                 gt=class_label, if_plot=see_cluster_effect,
@@ -942,12 +969,17 @@ class MoCo(object):
 
                 acc_batch.update(acc, sensor[0].size(0))
                 loss_batch.update(loss, sensor[0].size(0))
+
+                mscr_batch.update(hardest_related_info[0], sensor[0].size(0))
+                msdr_batch.update(hardest_related_info[1], sensor[0].size(0))
+                mscsdr_batch.update(hardest_related_info[2], sensor[0].size(0))
                 if cluster_eval is not None:
                     chs.update(cluster_eval, sensor[0].size(0))
                 
                 if n_iter % self.args.log_every_n_steps == 0 and n_iter != 0:
                     self.writer.add_scalar('loss', loss, global_step=n_iter)
                     self.writer.add_scalar('acc', acc, global_step=n_iter)
+                    self.writer.add_scalar('mslr', hardest_related_info[0], global_step=n_iter)
                     self.writer.add_scalar('lr', self.optimizer.state_dict()['param_groups'][0]['lr'], global_step=n_iter)
                     if sup_loss is not None:
                         self.writer.add_scalar('ori_loss_{}'.format(i), ori_loss, global_step=n_iter)
@@ -988,6 +1020,8 @@ class MoCo(object):
             log_str = f"Epoch: {epoch_counter} Loss: {loss_batch.avg} accuracy: {acc_batch.avg} "
             if self.args.hard:
                 log_str += f"sim: {similarity_across_domains} "
+            if self.args.hard_record:
+                log_str += f"mscr: {mscr_batch.avg} msdr: {msdr_batch.avg} mscsdr: {mscsdr_batch.avg}"
             if sup_loss is not None:
                 log_str += f"ori_Loss :{ori_loss} "
                 for i in range(len(sup_loss)):
