@@ -723,8 +723,7 @@ class MoCo_v1(nn.Module):
 
             
 
-            #### v4 lets further add the hard sampling
-            # l_neg = torch.einsum('nc,ck->nk', [q, self.queue.clone().detach()])  ## we further improve this step            
+            ## v4 lets further add the hard sampling     
 
             # ## eliminate simplest by domains
             # num_of_sampled = int(self.queue.shape[1] * self.last_ratio)
@@ -732,8 +731,8 @@ class MoCo_v1(nn.Module):
             # domains = torch.unique(self.queue_labels.clone().detach()).contiguous().view(-1, 1)
             # num_domains = len(domains)
 
-            # domain_queues = torch.eq(domains, self.queue_labels.T).bool().to(device)
-            # domain_representations = torch.vstack([torch.sum(self.queue[:, domain_queues[i]], dim=1)/torch.sum(domain_queues[i]) for i in range(num_domains)]).to(device)
+            # domain_queues_mask = torch.eq(domains, self.queue_labels.T).bool().to(device)
+            # domain_representations = torch.vstack([torch.sum(self.queue[:, domain_queues_mask[i]], dim=1)/torch.sum(domain_queues_mask[i]) for i in range(num_domains)]).to(device)
             # domain_representations /= torch.norm(domain_representations, dim=1).view(-1, 1)
             # similarity_across_domains = torch.matmul(domain_representations, domain_representations.T)
             # mask = torch.diag(torch.ones(num_domains)).bool()
@@ -748,12 +747,12 @@ class MoCo_v1(nn.Module):
             #     for j, domain_for_compare in enumerate(domains):
             #         if i == j or 0 in query_in_domain_i.size():
             #             continue
-            #         key_in_domain_j = domain_queues[j].view(1, -1).repeat(query_in_domain_i.shape[0], 1)
+            #         key_in_domain_j = domain_queues_mask[j].view(1, -1).repeat(query_in_domain_i.shape[0], 1)
             #         domain_queue_j = query_in_domain_i[key_in_domain_j].view(sum(idx_query_in_domain_i), -1)
             #         _, indices = torch.sort(domain_queue_j, dim=1, descending=True)
             #         idx_to_eliminate = indices[:, preserved_samples_per_domain[i, j]:]
 
-            #         position = torch.where(domain_queues[j] == True)[0].repeat(indices.shape[0], 1)
+            #         position = torch.where(domain_queues_mask[j] == True)[0].repeat(indices.shape[0], 1)
             #         idx = torch.where(idx_query_in_domain_i)[0]
                     
             #         rows = torch.arange(position.shape[0]).unsqueeze(-1)
