@@ -194,11 +194,9 @@ def calculateFisher(args, model, optimizer, train_loader, save_dir):
                     domain_label = [labels[:, 2].to(args.device)] 
                 else:
                     NotADirectoryError
-            
-            _, _, logits_labels, _, _, _, _ = model(sensor[0], sensor[1], domain_label=domain_label, num_clusters=args.num_clusters, 
-                                                                                            iter_tol=args.iter_tol,
-                                                                                            gt=gt_label, if_plot=False,
-                                                                                            n_iter=0)
+                    
+            time_label = labels[:, -1].to(args.device) # the last dim is time labels
+            _, _, logits_labels, _, _, _ = model(sensor[0], sensor[1], domain_label=domain_label, gt=gt_label, time_label=time_label)
             sup_loss = model.supervised_CL(logits_labels=logits_labels, labels=domain_label)
             loss = - args.slr[0] * sup_loss
             loss /= len(train_loader)

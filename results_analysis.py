@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 from xml.sax import default_parser_list
 
 
-# dataset_imu = ['HASC', 'HHAR', 'MotionSense', 'Shoaib']
-dataset_imu=['HASC', 'MotionSense']
+dataset_imu = ['HASC', 'HHAR', 'MotionSense', 'Shoaib']
+# dataset_imu=['MotionSense']
 dataset_emg = ['Myo', 'NinaPro']
 
 # dataset = ['HHAR']
@@ -268,10 +268,10 @@ def analysis_semi_hard_sampling():
 
 
 if __name__ == '__main__':
-    # args = parser.parse_args()
-    # avg_result(args.name, ft=args.ft, modal=args.modal, shot=args.shot)
+    args = parser.parse_args()
+    avg_result(args.name, ft=args.ft, modal=args.modal, shot=args.shot)
 
-    analysis_semi_hard_sampling()
+    # analysis_semi_hard_sampling()
     # avg_result_for_limited_labels(args.name)
     # results_for_each_file(args.name)
     # avg_result(name=args.name, ft=args.ft)

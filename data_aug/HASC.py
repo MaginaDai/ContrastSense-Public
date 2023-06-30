@@ -102,19 +102,19 @@ def translate_label(label):
 
 # def translate_device(device):
 
-def read_acc_and_gyro(root, file, period, infor, seq_len, target_freq, num, path_save):
+def read_acc_and_gyro(root, file, period, infor, seq_len, target_freq, num, path_save, time_idx):
     try:
         file_name = os.path.join(root, file+ '-acc.csv')
         data_acc=np.loadtxt(file_name, delimiter=',')
     except:
-        return num
+        return num, time_idx
 
 
     try:
         file_name = os.path.join(root, file+ '-gyro.csv')
         data_gyro=np.loadtxt(file_name, delimiter=',')
     except:
-        return num
+        return num, time_idx
     
     freq = infor[-1]
     for i in range(len(period)):
@@ -142,15 +142,17 @@ def read_acc_and_gyro(root, file, period, infor, seq_len, target_freq, num, path
         if exp_data.shape[0] > seq_len:
             exp_data = exp_data[:exp_data.shape[0] // seq_len * seq_len, :]
             exp_data = exp_data.reshape(exp_data.shape[0] // seq_len, seq_len, exp_data.shape[1])
-            exp_label = np.array([add_infor[-1], add_infor[0], add_infor[1]]) # [motions, user_id, device_id]
             for m in range(exp_data.shape[0]):
                 acc_new = exp_data[m][:, 0:3]
                 gyro_new = exp_data[m][:, 3:6]
                 loc = path_save + str(num) + '.npz'
-                np.savez(loc, acc=acc_new, gyro=gyro_new, add_infor=exp_label)
+                np.savez(loc, acc=acc_new, gyro=gyro_new, add_infor=np.array([add_infor[-1], add_infor[0], add_infor[1], time_idx])) # [motions, user_id, device_id]
                 num += 1
+                time_idx +=1
         
-    return num
+    time_idx += 1000
+        
+    return num, time_idx
 
 
 def main(seq_len, target_freq, path_save):
@@ -158,6 +160,7 @@ def main(seq_len, target_freq, path_save):
     users_count = 0
     InOut_count = 0
     num = 0
+    time_idx = 0 
     user_name = []
     device_name = []
     InOut_list = []
@@ -194,7 +197,7 @@ def main(seq_len, target_freq, path_save):
                     label_list.append(period[i][2])
                     if period[i][2] == 'movingWalkway;stay' or period[i][2] is None:
                         print('now')
-                num = read_acc_and_gyro(root, user_exp_id, period, add_infor, seq_len, target_freq, num, path_save)
+                num, time_idx = read_acc_and_gyro(root, user_exp_id, period, add_infor, seq_len, target_freq, num, path_save, time_idx)
 
 
         users_count += 1
@@ -214,7 +217,7 @@ def main(seq_len, target_freq, path_save):
     return
 
 if __name__ == '__main__':
-    path_save = f'./datasets/HASC_50_200/'
+    path_save = f'./datasets/HASC_time/'
     if not os.path.exists(path_save):
         os.makedirs(path_save)
     main(seq_len=200, target_freq=50, path_save=path_save)

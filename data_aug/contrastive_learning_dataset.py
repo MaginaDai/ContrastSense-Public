@@ -27,9 +27,7 @@ from figure_plot.figure_plot import figure_cmp_transformation
 def fetch_dataset_root(dataset_name):
     root = {'HHAR': './datasets/HHAR',
             'MotionSense': './datasets/MotionSense',
-            'UCI': './datasets/UCI',
             'Shoaib': './datasets/Shoaib',
-            'ICHAR': './datasets/ICHAR',
             'HASC': './datasets/HASC',
             'Myo': './datasets/Myo',
             'Myo_cda': './datasets/Myo_cda',
@@ -213,8 +211,7 @@ class Dataset4Training(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        loc = os.path.join(self.root_dir,
-                           self.windows_frame[idx])
+        loc = os.path.join(self.root_dir, self.windows_frame[idx])
 
         sample = np.load(loc, allow_pickle=True)
 

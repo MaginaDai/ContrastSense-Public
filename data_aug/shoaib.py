@@ -61,6 +61,7 @@ def down_sample(data, window_target):
 
 def preprocess(path, path_save, target_window=20, seq_len=20, position_num=5):
     num = 0
+    time_idx = 0
     for root, dirs, files in os.walk(path):
         for f in range(len(files)):
             if 'Participant' in files[f]:
@@ -88,8 +89,11 @@ def preprocess(path, path_save, target_window=20, seq_len=20, position_num=5):
                                     acc_new = sensor_down[m][:, 0:3]
                                     gyro_new = sensor_down[m][:, 3:6]
                                     loc = path_save + str(num) + '.npz'
-                                    np.savez(loc, acc=acc_new, gyro=gyro_new, add_infor=sensor_label)
+                                    np.savez(loc, acc=acc_new, gyro=gyro_new, add_infor=np.array([a, int(files[f][-5]), i, time_idx]))
+                                    time_idx += 1
                                     num += 1
+                                    print(time_idx)
+                                time_idx += 1000
     # split_dataset(num=num - 1)  # num-1 for the last void one.
     # preprocessing_dataset_cross_person(dir=path_save, dataset='Shoaib')
     print("done")
@@ -147,7 +151,7 @@ def split_dataset(num):
 
 
 if __name__ == '__main__':
-    path_save = r'./datasets/Shoaib_50_200/'
+    path_save = r'./datasets/Shoaib_time/'
     if not os.path.exists(path_save):
         os.makedirs(path_save)
     preprocess(DATASET_PATH, path_save, seq_len=200)

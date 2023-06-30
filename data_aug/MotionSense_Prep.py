@@ -5,7 +5,7 @@ import pandas as pd
 from scipy.interpolate import interp1d
 from torch.utils.data import random_split
 
-PATH_SAVE = "./datasets/MotionSense_50_200/"
+PATH_SAVE = "./datasets/MotionSense_time/"
 ORI_PATH = "./original_dataset/MotionSense/"
 SEQ_LEN = 200
 TARGET_WINDOW = 20
@@ -93,6 +93,7 @@ def creat_time_series(dt_list, act_labels, trial_codes, mode="mag", labeled=True
 
     print("[INFO] -- Creating Time-Series")
     num = 0
+    time_idx = 0
     for sub_id in ds_list["code"]:
         for act_id, act in enumerate(act_labels):
             for trial in trial_codes[act_id]:
@@ -121,8 +122,11 @@ def creat_time_series(dt_list, act_labels, trial_codes, mode="mag", labeled=True
                         acc_new = acc[i]
                         gyro_new = gyro[i]
                         loc = PATH_SAVE + str(num) + '.npz'
-                        np.savez(loc, acc=acc_new, gyro=gyro_new, add_infor=add_info)
+                        np.savez(loc, acc=acc_new, gyro=gyro_new, add_infor=np.array([act_id, sub_id - 1, time_idx]))
+                        time_idx += 1
                         num += 1
+                        print(time_idx)
+        time_idx += 1000
     # split_dataset(num=num-1)  # num-1 for the last void one.
     return dataset
 
