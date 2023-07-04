@@ -487,6 +487,7 @@ class MoCo_v1(nn.Module):
         self.last_ratio = args.last_ratio
         self.hard_record = args.hard_record
         self.time_window = args.time_window
+        self.scale_ratio = args.scale_ratio 
         
 
         # create the encoders
@@ -691,49 +692,178 @@ class MoCo_v1(nn.Module):
         
         # negative logits: NxK
         if self.hard_sample:
-            #### v7 time idx information + domain-wise easiest elimination
-            num_of_sampled = int(self.queue.shape[1] * self.last_ratio)
-            # measure similarity across domains
-            domains = torch.unique(self.queue_labels.clone().detach()).contiguous().view(-1, 1)
-            num_domains = len(domains)
+            #### v10 domain-wise sorting + time window
+            domains_in_queues = torch.unique(self.queue_labels.clone().detach()).contiguous().view(-1, 1)
+            domain_queues_mask = torch.eq(domains_in_queues, self.queue_labels.T).bool().to(device)
+            neg_for_sampling = l_neg.clone().detach()
 
-            domain_queues_mask = torch.eq(domains, self.queue_labels.T).bool().to(device)
-            domain_representations = torch.vstack([torch.sum(self.queue[:, domain_queues_mask[i]], dim=1)/torch.sum(domain_queues_mask[i]) for i in range(num_domains)]).to(device)
-            domain_representations /= torch.norm(domain_representations, dim=1).view(-1, 1)
-            similarity_across_domains = torch.matmul(domain_representations, domain_representations.T)
-            mask = torch.diag(torch.ones(num_domains)).bool()
-            similarity_across_domains[mask] = -torch.inf
-            similarity_across_domains = torch.exp(similarity_across_domains)/torch.exp(similarity_across_domains).sum(dim=1)
-            preserved_samples_per_domain = similarity_across_domains.mul(num_of_sampled).int()
+            for j, domain_for_compare in enumerate(domains_in_queues):
+                key_in_domain_j = domain_queues_mask[j].repeat(neg_for_sampling.shape[0], 1)
+                domain_queue_j = neg_for_sampling[key_in_domain_j].view(neg_for_sampling.shape[0], -1)
+                _, indices = torch.sort(domain_queue_j, dim=1, descending=True)
+                idx_to_eliminate = indices[:, int(domain_queue_j.shape[1] * self.last_ratio):]
+                position = torch.where(domain_queues_mask[j] == True)[0].repeat(neg_for_sampling.shape[0], 1)
+
+                rows = torch.arange(neg_for_sampling.shape[0]).unsqueeze(-1)
+                masks_for_domain_j = torch.zeros(neg_for_sampling.shape).bool().to(device)
+                masks_for_domain_j[rows, position[rows, idx_to_eliminate]] = True
+                l_neg[masks_for_domain_j] = -torch.inf
+
+            if self.time_window != 0:
+                low_boundary = time_label[0].contiguous().view(-1, 1) - self.time_window
+                high_boundary = time_label[0].contiguous().view(-1, 1) + self.time_window
+                queue_time = self.queue_time_labels.T.expand(l_neg.shape[0], l_neg.shape[1])
+                mask_low = low_boundary < queue_time # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
+                mask_high = queue_time < high_boundary
+                mask = torch.logical_and(mask_low, mask_high)
+                l_neg[mask] = -torch.inf
+                hardest_related_info[0] = mask.sum(1).float().mean()
+
+            #### v9 domain-wise threshold + time window
+            # domains_in_queues = torch.unique(self.queue_labels.clone().detach()).contiguous().view(-1, 1)
+            # domain_of_quarys = torch.unique(domain_label[0]).contiguous().view(-1, 1)
+
+            # num_domains = len(domains_in_queues)
+            # num_domain_of_quarys = len(domain_of_quarys)
+
+            # domain_queues_mask = torch.eq(domains_in_queues, self.queue_labels.T).bool().to(device)
+            # domain_representations = torch.vstack([torch.sum(self.queue[:, domain_queues_mask[i]], dim=1)/torch.sum(domain_queues_mask[i]) for i in range(num_domains)]).to(device)
+            # domain_representations /= torch.norm(domain_representations, dim=1).view(-1, 1)
+            # similarity_across_domains = torch.matmul(domain_representations, domain_representations.T) / self.scale_ratio
+            # mask = torch.diag(torch.ones(num_domains)).bool()
+            # similarity_across_domains[mask] = -torch.inf
+            # similarity_across_domains = torch.exp(similarity_across_domains)/torch.exp(similarity_across_domains).sum(dim=1)
+            # similarity_across_domains[mask] = torch.inf # don't eliminate samples in the own domains. 
+            
+            # domain_not_included_in_queues = [i for i in domain_of_quarys if i not in domains_in_queues]  # find the domains not included in the domain queues
+            # if len(domain_not_included_in_queues) != 0:
+            #     domain_not_included_in_queues = torch.vstack(domain_not_included_in_queues)
+            #     append_similarity = torch.ones(len(domain_not_included_in_queues), num_domains).to(device) * 1 / num_domains  # the new domains share the same similarity across all domains
+            #     similarity_across_domains = torch.vstack([similarity_across_domains, append_similarity])  ## combine both matrix  
+            #     all_domains_considered = torch.vstack([domains_in_queues, domain_not_included_in_queues])
+            # else:
+            #     all_domains_considered = domains_in_queues
+
+            # scaling_for_each_domain = 1./(1 + similarity_across_domains)  # calculate the scaling factor
+            # # scaling_for_each_domain[torch.ones(num_domains).long(), torch.ones(num_domains).long()] = 0  
+            # neg_for_sampling = l_neg.clone().detach()
+
+            # for j, domain_for_compare in enumerate(domains_in_queues):
+            #     key_in_domain_j = domain_queues_mask[j].repeat(neg_for_sampling.shape[0], 1)
+            #     domain_queue_j = neg_for_sampling[key_in_domain_j].view(neg_for_sampling.shape[0], -1)
+            #     avg_similarity = torch.mean(domain_queue_j, dim=1)
+
+            #     idx_for_domains = torch.nonzero(torch.eq(all_domains_considered.view(1, -1), domain_label[0].unsqueeze(1)))
+            #     threshold_for_domain_j = avg_similarity * scaling_for_each_domain[idx_for_domains[:, 1].long(), j * torch.ones(len(idx_for_domains)).long()]
+                
+            #     idx_to_eliminate = domain_queue_j < threshold_for_domain_j.unsqueeze(-1)
+            #     position = torch.where(domain_queues_mask[j] == True)[0].repeat(neg_for_sampling.shape[0], 1)
+
+            #     rows = torch.arange(neg_for_sampling.shape[0]).unsqueeze(-1)
+            #     masks_for_domain_j = torch.zeros(neg_for_sampling.shape).bool().to(device)
+            #     masks_for_domain_j[rows, position] = idx_to_eliminate
+            #     l_neg[masks_for_domain_j] = -torch.inf
+            
+            # low_boundary = time_label[0].contiguous().view(-1, 1) - self.time_window
+            # high_boundary = time_label[0].contiguous().view(-1, 1) + self.time_window
+            # queue_time = self.queue_time_labels.T.expand(l_neg.shape[0], l_neg.shape[1])
+            # mask_low = low_boundary < queue_time # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
+            # mask_high = queue_time < high_boundary
+            # mask = torch.logical_and(mask_low, mask_high)
+            # l_neg[mask] = -torch.inf
+
+            # hardest_related_info[0] = mask.sum(1).float().mean()
+
+
+            #### v8 domain-wise threshold
+            # measure similarity across domains
+            # domains_in_queues = torch.unique(self.queue_labels.clone().detach()).contiguous().view(-1, 1)
+            # domain_of_quarys = torch.unique(domain_label[0]).contiguous().view(-1, 1)
+
+            # num_domains = len(domains_in_queues)
+            # num_domain_of_quarys = len(domain_of_quarys)
+
+            # domain_queues_mask = torch.eq(domains_in_queues, self.queue_labels.T).bool().to(device)
+            # domain_representations = torch.vstack([torch.sum(self.queue[:, domain_queues_mask[i]], dim=1)/torch.sum(domain_queues_mask[i]) for i in range(num_domains)]).to(device)
+            # domain_representations /= torch.norm(domain_representations, dim=1).view(-1, 1)
+            # similarity_across_domains = torch.matmul(domain_representations, domain_representations.T)
+            # mask = torch.diag(torch.ones(num_domains)).bool()
+            # similarity_across_domains[mask] = -torch.inf
+            # similarity_across_domains = torch.exp(similarity_across_domains)/torch.exp(similarity_across_domains).sum(dim=1)
+            # similarity_across_domains[mask] = torch.inf # don't eliminate samples in the own domains. 
+            
+            # domain_not_included_in_queues = [i for i in domain_of_quarys if i not in domains_in_queues]  # find the domains not included in the domain queues
+            # if len(domain_not_included_in_queues) != 0:
+            #     domain_not_included_in_queues = torch.vstack(domain_not_included_in_queues)
+            #     append_similarity = torch.ones(len(domain_not_included_in_queues), num_domains).to(device) * 1 / num_domains  # the new domains share the same similarity across all domains
+            #     similarity_across_domains = torch.vstack([similarity_across_domains, append_similarity])  ## combine both matrix  
+            #     all_domains_considered = torch.vstack([domains_in_queues, domain_not_included_in_queues])
+            # else:
+            #     all_domains_considered = domains_in_queues
+
+            # scaling_for_each_domain = 1./(1 + self.scale_ratio * similarity_across_domains)  # calculate the scaling factor
+            # # scaling_for_each_domain[torch.ones(num_domains).long(), torch.ones(num_domains).long()] = 0  
+            # neg_for_sampling = l_neg.clone().detach()
+
+            # for j, domain_for_compare in enumerate(domains_in_queues):
+            #     key_in_domain_j = domain_queues_mask[j].repeat(neg_for_sampling.shape[0], 1)
+            #     domain_queue_j = neg_for_sampling[key_in_domain_j].view(neg_for_sampling.shape[0], -1)
+            #     avg_similarity = torch.mean(domain_queue_j, dim=1)
+
+            #     idx_for_domains = torch.nonzero(torch.eq(all_domains_considered.view(1, -1), domain_label[0].unsqueeze(1)))
+            #     threshold_for_domain_j = avg_similarity * scaling_for_each_domain[idx_for_domains[:, 1].long(), j * torch.ones(len(idx_for_domains)).long()]
+                
+            #     idx_to_eliminate = domain_queue_j < threshold_for_domain_j.unsqueeze(-1)
+            #     position = torch.where(domain_queues_mask[j] == True)[0].repeat(neg_for_sampling.shape[0], 1)
+
+            #     rows = torch.arange(neg_for_sampling.shape[0]).unsqueeze(-1)
+            #     masks_for_domain_j = torch.zeros(neg_for_sampling.shape).bool().to(device)
+            #     masks_for_domain_j[rows, position] = idx_to_eliminate
+            #     l_neg[masks_for_domain_j] = -torch.inf
+
+            #### v7 time idx information + domain-wise easiest elimination
+            # num_of_sampled = int(self.queue.shape[1] * self.last_ratio)
+            # # measure similarity across domains
+            # domains = torch.unique(self.queue_labels.clone().detach()).contiguous().view(-1, 1)
+            # num_domains = len(domains)
+
+            # domain_queues_mask = torch.eq(domains, self.queue_labels.T).bool().to(device)
+            # domain_representations = torch.vstack([torch.sum(self.queue[:, domain_queues_mask[i]], dim=1)/torch.sum(domain_queues_mask[i]) for i in range(num_domains)]).to(device)
+            # domain_representations /= torch.norm(domain_representations, dim=1).view(-1, 1)
+            # similarity_across_domains = torch.matmul(domain_representations, domain_representations.T)
+            # mask = torch.diag(torch.ones(num_domains)).bool()
+            # similarity_across_domains[mask] = -torch.inf
+            # similarity_across_domains = torch.exp(similarity_across_domains)/torch.exp(similarity_across_domains).sum(dim=1)
+            # preserved_samples_per_domain = similarity_across_domains.mul(num_of_sampled).int()
             
             # sampled based on domains
-            for i, domain in enumerate(domains):
-                idx_query_in_domain_i = torch.eq(domain_label[0].contiguous(), domain)
-                query_in_domain_i = l_neg[idx_query_in_domain_i]
-                for j, domain_for_compare in enumerate(domains):
-                    if i == j or 0 in query_in_domain_i.size():
-                        continue
-                    key_in_domain_j = domain_queues_mask[j].view(1, -1).repeat(query_in_domain_i.shape[0], 1)
-                    domain_queue_j = query_in_domain_i[key_in_domain_j].view(sum(idx_query_in_domain_i), -1)
-                    _, indices = torch.sort(domain_queue_j, dim=1, descending=True)
-                    idx_to_eliminate = indices[:, preserved_samples_per_domain[i, j]:]
+            # for i, domain in enumerate(domains):
+            #     idx_query_in_domain_i = torch.eq(domain_label[0].contiguous(), domain)
+            #     query_in_domain_i = l_neg[idx_query_in_domain_i]
+            #     for j, domain_for_compare in enumerate(domains):
+            #         if i == j or 0 in query_in_domain_i.size():
+            #             continue
+            #         key_in_domain_j = domain_queues_mask[j].view(1, -1).repeat(query_in_domain_i.shape[0], 1)
+            #         domain_queue_j = query_in_domain_i[key_in_domain_j].view(sum(idx_query_in_domain_i), -1)
+            #         _, indices = torch.sort(domain_queue_j, dim=1, descending=True)
+            #         idx_to_eliminate = indices[:, preserved_samples_per_domain[i, j]:]
 
-                    position = torch.where(domain_queues_mask[j] == True)[0].repeat(indices.shape[0], 1)
-                    idx = torch.where(idx_query_in_domain_i)[0]
+            #         position = torch.where(domain_queues_mask[j] == True)[0].repeat(indices.shape[0], 1)
+            #         idx = torch.where(idx_query_in_domain_i)[0]
                     
-                    rows = torch.arange(position.shape[0]).unsqueeze(-1)
-                    l_neg[idx[rows], position[rows, idx_to_eliminate]] = -torch.inf
+            #         rows = torch.arange(position.shape[0]).unsqueeze(-1)
+            #         l_neg[idx[rows], position[rows, idx_to_eliminate]] = -torch.inf
 
 
-            low_boundary = time_label[0].contiguous().view(-1, 1) - self.time_window
-            high_boundary = time_label[0].contiguous().view(-1, 1) + self.time_window
-            queue_time = self.queue_time_labels.T.expand(l_neg.shape[0], l_neg.shape[1])
-            mask_low = low_boundary < queue_time # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
-            mask_high = queue_time < high_boundary
-            mask_both = torch.logical_and(mask_low, mask_high)
-            l_neg[mask_both] = -torch.inf
+            # low_boundary = time_label[0].contiguous().view(-1, 1) - self.time_window
+            # high_boundary = time_label[0].contiguous().view(-1, 1) + self.time_window
+            # queue_time = self.queue_time_labels.T.expand(l_neg.shape[0], l_neg.shape[1])
+            # mask_low = low_boundary < queue_time # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
+            # mask_high = queue_time < high_boundary
+            # mask_both = torch.logical_and(mask_low, mask_high)
+            # l_neg[mask_both] = -torch.inf
 
-            hardest_related_info[0] = mask_both.sum(1).float().mean()
+            # hardest_related_info[0] = mask_both.sum(1).float().mean()
 
 
             #### v6 eliminate using time idx information

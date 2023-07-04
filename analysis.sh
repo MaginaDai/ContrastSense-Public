@@ -1,7 +1,7 @@
 #!/bin/bash
 key="v1"
 lr=0.001
-name="runs/hard_v7_cl_t60_"
+name="runs/hard_v10_cl_r0.8_"
 # name="runs/hard_v1_cl_"
 # name="baseline/CDA/runs/CDA_lr5e-4_v"
 python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4" -modal "imu"

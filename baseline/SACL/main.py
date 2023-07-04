@@ -5,22 +5,18 @@ from os.path import dirname
 
 sys.path.append(dirname(dirname(sys.path[0])))
 sys.path.append(dirname(sys.path[0]))
-from baseline.CDA.model import STCN
-from baseline.CDA.ConSSL import ConSSL
-from baseline.Mixup.myo_dataload import Myo_Dataset
 from data_aug.preprocessing import ClassesNum, UsersNum
-
+from SACL.SACL import SACL
+from SACL.model import SACL_model, SACLAdversary
 from utils import seed_torch
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Domain Adaptation')
-
-#----------- paper related -----------------
 
 parser.add_argument('-lr', '--learning-rate', default=1e-3, type=float, metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('-b', '--batch-size', default=32, type=int, metavar='N')
 parser.add_argument('-e', '--epochs', default=100, type=int, metavar='N', help='number of total epochs to run')
 parser.add_argument('-t', '--temperature', default=0.5, type=float, help='softmax temperature (default: 0.1)')
-parser.add_argument('-name', default='NinaPro', help='datasets name', choices=['NinaPro', 'Myo'])
+parser.add_argument('-name', default='NinaPro', help='EEG datasets name', choices=['NinaPro', 'Myo'])
 
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
@@ -33,7 +29,6 @@ parser.add_argument('--disable-cuda', action='store_true', help='Disable CUDA')
 parser.add_argument('-j', '--workers', default=10, type=int, metavar='N', help='number of data loading workers (default: 5)')
 parser.add_argument('--store', default='lr', type=str, help='define the name head for model storing')
 parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
-
 
 def main():
     args = parser.parse_args()
@@ -48,7 +43,7 @@ def main():
         args.device = torch.device('cpu')
         args.gpu_index = -1
 
-    dataset = Myo_Dataset(transfer=False, version=args.version, datasets_name=args.name)
+    dataset = SEED_Dataset(transfer=False, version=args.version, datasets_name=args.name)
 
     train_dataset = dataset.get_dataset(split='train')
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
@@ -58,16 +53,19 @@ def main():
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=True,
                     num_workers=args.workers, pin_memory=False, drop_last=True)
     
-    model = STCN(num_class=ClassesNum[args.name], transfer=False)
+    model = SACL_model(num_class=ClassesNum[args.name], transfer=False)
     
-    optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=1e-6)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)  # keep aline with SimCLR
+    
+    optimizer = torch.optim.Adam(model.model.parameters(), betas=(0.9, 0.999), lr=5e-4, weight_decay=1e-3)
+    adversarial_optimizer = torch.optim.Adam(model.adversary.parameters(), betas=(0.9, 0.999), lr=5e-4, weight_decay=1e-3)
 
+
+    
     with torch.cuda.device(args.gpu_index):
-        cda = ConSSL(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
+        cda = SACL(model=model, optimizer=optimizer, adversarial_optimizer=adversarial_optimizer, args=args)
         cda.train(train_loader, val_loader)
+    return
 
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     main()
