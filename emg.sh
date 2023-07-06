@@ -3,10 +3,10 @@ slr=0.3
 lr=1e-3
 max=0.001
 lam=5e3
-t=30
+t=40
 for r in 0.6 0.7 0.8 0.9
 do
-    store="emg_model_v2_hard_t30_r${r}_"
+    store="emg_model_v2_hard_t${t}_r${r}_"
     for dataset in "Myo" "NinaPro"
     do
         python main.py -g 0 -hard True -last_ratio ${r} -time_window ${t} -lr ${lr} -slr ${slr} -label_type 0 -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
@@ -18,7 +18,7 @@ do
         wait
     done
 
-    store_ft="emg_model_v2_hard_t30_r${r}_"
+    store_ft="emg_model_v2_hard_t${t}_r${r}_"
     for dataset in "Myo" "NinaPro"
     do
         python main_trans_ewc.py -fishermax ${max} -ewc_lambda ${lam} -lr 1e-3 -g 0 -ft True -version "${version}0" -shot 10 -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store_ft}0" &

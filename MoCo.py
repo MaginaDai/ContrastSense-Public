@@ -709,6 +709,9 @@ class MoCo_v1(nn.Module):
                     masks_for_domain_j = torch.zeros(neg_for_sampling.shape).bool().to(device)
                     masks_for_domain_j[rows, position[rows, idx_to_eliminate]] = True
                     l_neg[masks_for_domain_j] = -torch.inf
+                    hardest_related_info[1] += idx_to_eliminate.shape[1]
+                
+                hardest_related_info[1]  /= len(domains_in_queues)  ## record the avg number of eliminated samples
 
             if self.time_window != 0:
                 low_boundary = time_label[0].contiguous().view(-1, 1) - self.time_window
@@ -1159,7 +1162,7 @@ class MoCo(object):
                 continue  # the first epoch would not have record.
             log_str = f"Epoch: {epoch_counter} Loss: {loss_batch.avg} accuracy: {acc_batch.avg} "
             if self.args.hard:
-                log_str += f"sim: {similarity_across_domains} mscr: {mscr_batch.avg}"
+                log_str += f"sim: {similarity_across_domains} mscr: {mscr_batch.avg} nes: {msdr_batch.avg}"
             if self.args.hard_record:
                 log_str += f"mscr: {mscr_batch.avg} msdr: {msdr_batch.avg} mscsdr: {mscsdr_batch.avg}"
             if sup_loss is not None:
