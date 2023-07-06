@@ -1,6 +1,7 @@
 import zipfile
 import scipy.io
 import numpy as np
+import os
 
 
 subject_num = 10
@@ -40,9 +41,14 @@ class_labels = [
 ]
 
 def get_data():
+    dir_name = './datasets/NinaPro_time/'
+    if not os.path.isdir(dir_name):
+        os.makedirs(dir_name)
+
     data = []
     label = []
-    
+    num = 0
+    time_label = 0
     for i in range(10):
         data_i, label_i = get_data_for_one_user(i+1)
         data_i = np.expand_dims(data_i, axis=1)
@@ -52,11 +58,20 @@ def get_data():
         data.append(data_i)
         label.append(label_i)
 
-    data = np.vstack(data)
-    label = np.hstack(label)
+        for j in range(len(data_i)):
+            np.savez(dir_name + str(num) + '.npz', emg = data_i[j], add_infor=np.array([label_i[0, j], label_i[1, j], time_label]))
+            num+=1
+            time_label+=1
+            print(time_label)
+        
+        time_label += 1000
+        
 
-    for i in range(len(data)):
-        np.savez('./datasets/NinaPro/' + str(i) + '.npz', emg = data[i], add_infor=label[:, i])
+    # data = np.vstack(data)
+    # label = np.hstack(label)
+
+    # for i in range(len(data)):
+    #     np.savez('./datasets/NinaPro/' + str(i) + '.npz', emg = data[i], add_infor=label[:, i])
     return
         
     
@@ -236,4 +251,5 @@ def get_data_for_CDA():
 
 
 if __name__ == '__main__':
-    get_data_for_CDA()
+    # get_data_for_CDA()
+    get_data()

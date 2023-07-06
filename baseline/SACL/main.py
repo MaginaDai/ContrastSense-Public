@@ -7,6 +7,7 @@ sys.path.append(dirname(dirname(sys.path[0])))
 sys.path.append(dirname(sys.path[0]))
 from data_aug.preprocessing import ClassesNum, UsersNum
 from SACL.SACL import SACL
+from SACL.dataloader import SADataset
 from SACL.model import SACL_model, SACLAdversary
 from utils import seed_torch
 
@@ -43,7 +44,7 @@ def main():
         args.device = torch.device('cpu')
         args.gpu_index = -1
 
-    dataset = SEED_Dataset(transfer=False, version=args.version, datasets_name=args.name)
+    dataset = SADataset(transfer=False, version=args.version, datasets_name=args.name)
 
     train_dataset = dataset.get_dataset(split='train')
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
@@ -58,12 +59,10 @@ def main():
     
     optimizer = torch.optim.Adam(model.model.parameters(), betas=(0.9, 0.999), lr=5e-4, weight_decay=1e-3)
     adversarial_optimizer = torch.optim.Adam(model.adversary.parameters(), betas=(0.9, 0.999), lr=5e-4, weight_decay=1e-3)
-
-
     
     with torch.cuda.device(args.gpu_index):
-        cda = SACL(model=model, optimizer=optimizer, adversarial_optimizer=adversarial_optimizer, args=args)
-        cda.train(train_loader, val_loader)
+        sacl = SACL(model=model, optimizer=optimizer, adversarial_optimizer=adversarial_optimizer, args=args)
+        sacl.train(train_loader, val_loader)
     return
 
 

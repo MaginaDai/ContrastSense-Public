@@ -361,16 +361,16 @@ version="shot"
 slr=0.7
 shot=10
 
-for r in 0.8
+for slr in 0.1 0.3 0.5 0.9
 do
-    store="hard_v10_cl_r${r}_"
-    for dataset in "HHAR" "MotionSense" "Shoaib"
+    store="hard_v10_cdl_hard_slr${slr}_"
+    for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
     do
-        python main.py -g 0 -hard True -last_ratio ${r} -label_type 0 -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
-        python main.py -g 0 -hard True -last_ratio ${r} -label_type 0 -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
-        python main.py -g 0 -hard True -last_ratio ${r} -label_type 0 -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
-        python main.py -g 1 -hard True -last_ratio ${r} -label_type 0 -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
-        python main.py -g 1 -hard True -last_ratio ${r} -label_type 0 -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
+        python main.py -g 0 -hard True -last_ratio 0.5 -label_type 1 -slr ${slr} -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
+        python main.py -g 0 -hard True -last_ratio 0.5 -label_type 1 -slr ${slr} -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
+        python main.py -g 0 -hard True -last_ratio 0.5 -label_type 1 -slr ${slr} -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
+        python main.py -g 1 -hard True -last_ratio 0.5 -label_type 1 -slr ${slr} -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
+        python main.py -g 1 -hard True -last_ratio 0.5 -label_type 1 -slr ${slr} -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
 
         wait
     done
@@ -390,34 +390,34 @@ do
 
 done
 
-for r in 0.9
-do
-    store="hard_v10_cl_r${r}_"
-    for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
-    do
-        python main.py -g 0 -hard True -last_ratio ${r} -label_type 0 -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
-        python main.py -g 0 -hard True -last_ratio ${r} -label_type 0 -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
-        python main.py -g 0 -hard True -last_ratio ${r} -label_type 0 -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
-        python main.py -g 1 -hard True -last_ratio ${r} -label_type 0 -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
-        python main.py -g 1 -hard True -last_ratio ${r} -label_type 0 -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
+# for r in 0.2
+# do
+#     store="hard_v10_cl_r${r}_"
+#     for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
+#     do
+#         python main.py -g 0 -hard True -last_ratio ${r} -label_type 0 -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
+#         python main.py -g 0 -hard True -last_ratio ${r} -label_type 0 -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
+#         python main.py -g 0 -hard True -last_ratio ${r} -label_type 0 -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
+#         python main.py -g 1 -hard True -last_ratio ${r} -label_type 0 -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
+#         python main.py -g 1 -hard True -last_ratio ${r} -label_type 0 -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
 
-        wait
-    done
+#         wait
+#     done
 
 
 
-    for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
-    do
-        python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}0" -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store}0" &
-        python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}1" -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store}1" &
-        python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}2" -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store}2" &
-        python main_trans_ewc.py -shot ${shot} -g 1 -version "${version}3" -name ${dataset} --pretrained "${store}3/${dataset}" --store "${store}3" &
-        python main_trans_ewc.py -shot ${shot} -g 1 -version "${version}4" -name ${dataset} --pretrained "${store}4/${dataset}" --store "${store}4"
+#     for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
+#     do
+#         python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}0" -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store}0" &
+#         python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}1" -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store}1" &
+#         python main_trans_ewc.py -shot ${shot} -g 0 -version "${version}2" -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store}2" &
+#         python main_trans_ewc.py -shot ${shot} -g 1 -version "${version}3" -name ${dataset} --pretrained "${store}3/${dataset}" --store "${store}3" &
+#         python main_trans_ewc.py -shot ${shot} -g 1 -version "${version}4" -name ${dataset} --pretrained "${store}4/${dataset}" --store "${store}4"
         
-        wait
-    done
+#         wait
+#     done
 
-done
+# done
 
 # wait
 

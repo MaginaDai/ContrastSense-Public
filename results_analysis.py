@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 from xml.sax import default_parser_list
 
 
-# dataset_imu = ['HASC', 'HHAR', 'MotionSense', 'Shoaib']
-dataset_imu=['HHAR']
+dataset_imu = ['HASC', 'HHAR', 'MotionSense', 'Shoaib']
+# dataset_imu=['Shoaib']
 dataset_emg = ['Myo', 'NinaPro']
 
 # dataset = ['HHAR']
