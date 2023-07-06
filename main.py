@@ -24,7 +24,7 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 
-parser.add_argument('-name', default='HASC', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro'])
+parser.add_argument('-name', default='NinaPro', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro'])
 parser.add_argument('-version', default="shot1", type=str, help='control the version of the setting')
 parser.add_argument('-cross', default='users', type=str, help='decide to use which kind of labels')
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
@@ -70,9 +70,9 @@ parser.add_argument('-p6', default=0.8, type=float, help='possibility for one au
 parser.add_argument('-hard', default=True, type=bool, help='hard sampling or not')  # we sample hard ones from the data.
 parser.add_argument('-hard_record', default=False, type=bool, help='record hardest samples related information or not')  # we sample hard ones from the data.
 parser.add_argument('-sample_ratio', default=0.05, type=float, help='hard sampling or not')  # we eliminate hardest ones from the data.
-parser.add_argument('-last_ratio', default=0.50, type=float, help='ratio of hard sample to preserve')  # we sample hard ones from the other domains.
-parser.add_argument('-scale_ratio', default=1.0, type=float, help='ratio of hard sample to preserve')  # we sample hard ones from the other domains.
-parser.add_argument('-time_window', default=60, type=float, help='[time_label-t, time_label + t]')  # how much time idx labels are included.
+parser.add_argument('-last_ratio', default=1.0, type=float, help='ratio of hard sample to preserve')  # we sample hard ones from the other domains.
+parser.add_argument('-scale_ratio', default=1.0, type=float, help='to scale the similarity between domains')  # to scale the similarity between domains
+parser.add_argument('-time_window', default=10, type=float, help='[time_label-t, time_label + t]')  # how much time idx labels are included.
 
 
 def main():

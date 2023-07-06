@@ -693,21 +693,22 @@ class MoCo_v1(nn.Module):
         # negative logits: NxK
         if self.hard_sample:
             #### v10 domain-wise sorting + time window
-            domains_in_queues = torch.unique(self.queue_labels.clone().detach()).contiguous().view(-1, 1)
-            domain_queues_mask = torch.eq(domains_in_queues, self.queue_labels.T).bool().to(device)
-            neg_for_sampling = l_neg.clone().detach()
+            if self.last_ratio < 1.0:  ## if last_ratio >= 1, then we dont apple this simplist elimination. 
+                domains_in_queues = torch.unique(self.queue_labels.clone().detach()).contiguous().view(-1, 1)
+                domain_queues_mask = torch.eq(domains_in_queues, self.queue_labels.T).bool().to(device)
+                neg_for_sampling = l_neg.clone().detach()
 
-            for j, domain_for_compare in enumerate(domains_in_queues):
-                key_in_domain_j = domain_queues_mask[j].repeat(neg_for_sampling.shape[0], 1)
-                domain_queue_j = neg_for_sampling[key_in_domain_j].view(neg_for_sampling.shape[0], -1)
-                _, indices = torch.sort(domain_queue_j, dim=1, descending=True)
-                idx_to_eliminate = indices[:, int(domain_queue_j.shape[1] * self.last_ratio):]
-                position = torch.where(domain_queues_mask[j] == True)[0].repeat(neg_for_sampling.shape[0], 1)
+                for j, domain_for_compare in enumerate(domains_in_queues):
+                    key_in_domain_j = domain_queues_mask[j].repeat(neg_for_sampling.shape[0], 1)
+                    domain_queue_j = neg_for_sampling[key_in_domain_j].view(neg_for_sampling.shape[0], -1)
+                    _, indices = torch.sort(domain_queue_j, dim=1, descending=True)
+                    idx_to_eliminate = indices[:, int(domain_queue_j.shape[1] * self.last_ratio):]
+                    position = torch.where(domain_queues_mask[j] == True)[0].repeat(neg_for_sampling.shape[0], 1)
 
-                rows = torch.arange(neg_for_sampling.shape[0]).unsqueeze(-1)
-                masks_for_domain_j = torch.zeros(neg_for_sampling.shape).bool().to(device)
-                masks_for_domain_j[rows, position[rows, idx_to_eliminate]] = True
-                l_neg[masks_for_domain_j] = -torch.inf
+                    rows = torch.arange(neg_for_sampling.shape[0]).unsqueeze(-1)
+                    masks_for_domain_j = torch.zeros(neg_for_sampling.shape).bool().to(device)
+                    masks_for_domain_j[rows, position[rows, idx_to_eliminate]] = True
+                    l_neg[masks_for_domain_j] = -torch.inf
 
             if self.time_window != 0:
                 low_boundary = time_label[0].contiguous().view(-1, 1) - self.time_window
