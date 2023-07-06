@@ -91,6 +91,16 @@ def main():
         args.modal = 'emg'
     else:
         args.modal = 'imu'
+    
+    if args.last_ratio != 1.0:
+        if args.name == 'HHAR':
+            args.last_ratio = 0.5
+        elif args.name == 'Motion' or args.name == 'Shoaib':
+            args.last_ratio = 0.8
+        elif args.name == 'HASC':
+            args.last_ratio = 0.7
+        else:
+            pass  # the other datasets just use the input parameter. 
 
     dataset = ContrastiveLearningDataset(transfer=False, version=args.version, datasets_name=args.name, modal=args.modal)
 

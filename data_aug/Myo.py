@@ -184,7 +184,8 @@ def read_data():
 def translate_to_contrastSense_format():
     list_dataset, list_labels, list_domain_labels = read_data()
     idx = 0
-    dir_name = 'datasets/Myo'
+    time_label = 0
+    dir_name = 'datasets/Myo_time'
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
     for i, subject in enumerate(list_dataset):
@@ -193,10 +194,13 @@ def translate_to_contrastSense_format():
                 sample = np.transpose(sample, [0, 2, 1])
                 label = list_labels[i][j][k]
                 domain_label = list_domain_labels[i][j][k]
-                
                 file_name = f"{dir_name}/{idx}.npz"
-                np.savez(file_name, emg=sample, add_infor=np.array([label, domain_label]))
+                np.savez(file_name, emg=sample, add_infor=np.array([label, domain_label, time_label]))
+                time_label += 1
                 idx = idx + 1
+                print(time_label)
+
+        time_label += 1000
 
 def translate_to_CDA_format():
     list_dataset, list_labels, list_domain_labels = read_data()
@@ -236,5 +240,5 @@ if __name__ == '__main__':
     # list_dataset, list_labels, list_domain_labels = read_data('PreTrainingDataset')
     # print(len(list_dataset[0]))
     # print(len(list_labels))
-    # translate_to_contrastSense_format()
-    translate_to_CDA_format()
+    translate_to_contrastSense_format()
+    # translate_to_CDA_format()

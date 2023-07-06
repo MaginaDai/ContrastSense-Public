@@ -113,7 +113,7 @@ def getFisherDiagonal_pretrain(args, train_loader, save_dir):
     #                 final_dim=args.final_dim, momentum=args.mo, drop=args.drop, DAL=args.DAL, if_cross_entropy=args.CE)
 
     model = MoCo_v1(args)
-    optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=1e-4)
 
     fisher, fisher_infoNCE = calculateFisher(args, model, optimizer, train_loader, save_dir)
     for n, p in fisher.items():
@@ -210,7 +210,8 @@ def calculateFisher(args, model, optimizer, train_loader, save_dir):
         for sensor, labels in train_loader:
             sensor = [t.to(args.device) for t in sensor]
             gt_label = labels[:, 0].to(args.device) # the first dim is motion labels
-            if args.label_type:
+            if args.label_type or args.hard:
+                time_label = [labels[:, -1].to(args.device)] # the last dim is time labels
                 if args.cross == 'users': # use domain labels
                     domain_label = [labels[:, 1].to(args.device)] 
                 elif args.cross == 'positions' or args.cross == 'devices' :
@@ -218,10 +219,7 @@ def calculateFisher(args, model, optimizer, train_loader, save_dir):
                 else:
                     NotADirectoryError
             
-            output, target, _, _, _, _, _ = model(sensor[0], sensor[1], domain_label=domain_label, num_clusters=args.num_clusters, 
-                                                                                            iter_tol=args.iter_tol,
-                                                                                            gt=gt_label, if_plot=False,
-                                                                                            n_iter=0)
+            output, target,  _, _, _, _ = model(sensor[0], sensor[1], domain_label=domain_label, gt=gt_label, time_label=time_label)
             loss = criterion(output, target)
             loss /= len(train_loader)
             loss.backward()
