@@ -95,10 +95,10 @@ def main():
     if args.last_ratio != 1.0:
         if args.name == 'HHAR':
             args.last_ratio = 0.5
-        elif args.name == 'Motion' or args.name == 'Shoaib':
+        elif args.name == 'MotionSense' or args.name == 'Shoaib':
             args.last_ratio = 0.8
         elif args.name == 'HASC':
-            args.last_ratio = 0.7
+            args.last_ratio = 0.8  # change to 0.8?
         else:
             pass  # the other datasets just use the input parameter. 
 

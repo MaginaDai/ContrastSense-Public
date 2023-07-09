@@ -361,16 +361,17 @@ version="shot"
 slr=0.7
 shot=10
 
-for slr in 0.1 0.3 0.5 0.9
+
+for tem in 0.05 0.15
 do
-    store="hard_v10_cdl_hard_slr${slr}_"
+    store="hard_v10_cdl_hard_slr${slr}_tem${tem}"
     for dataset in "HASC" "HHAR" "MotionSense" "Shoaib"
     do
-        python main.py -g 0 -hard True -last_ratio 0.5 -label_type 1 -slr ${slr} -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
-        python main.py -g 0 -hard True -last_ratio 0.5 -label_type 1 -slr ${slr} -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
-        python main.py -g 0 -hard True -last_ratio 0.5 -label_type 1 -slr ${slr} -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
-        python main.py -g 1 -hard True -last_ratio 0.5 -label_type 1 -slr ${slr} -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
-        python main.py -g 1 -hard True -last_ratio 0.5 -label_type 1 -slr ${slr} -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
+        python main.py -g 0 -hard True -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
+        python main.py -g 0 -hard True -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
+        python main.py -g 0 -hard True -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
+        python main.py -g 1 -hard True -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
+        python main.py -g 1 -hard True -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
 
         wait
     done
