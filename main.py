@@ -24,7 +24,7 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 
-parser.add_argument('-name', default='NinaPro', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro'])
+parser.add_argument('-name', default='HASC', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro'])
 parser.add_argument('-version', default="shot1", type=str, help='control the version of the setting')
 parser.add_argument('-cross', default='users', type=str, help='decide to use which kind of labels')
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
@@ -98,10 +98,16 @@ def main():
         elif args.name == 'MotionSense' or args.name == 'Shoaib':
             args.last_ratio = 0.8
         elif args.name == 'HASC':
-            args.last_ratio = 0.8  # change to 0.8?
+            args.last_ratio = 0.7
         else:
             pass  # the other datasets just use the input parameter. 
 
+    if args.label_type == 1:
+        if args.name == 'NinaPro':
+            args.slr=0.1
+        if args.name == 'HASC':
+            args.tem_labels = [0.08,]
+            
     dataset = ContrastiveLearningDataset(transfer=False, version=args.version, datasets_name=args.name, modal=args.modal)
 
     train_dataset = dataset.get_dataset(split='train')
