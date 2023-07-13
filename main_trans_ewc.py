@@ -159,7 +159,7 @@ def main(args, fisher=None):
     model = MoCo_model(transfer=True, classes=ClassesNum[args.name], dims=args.d, 
                        classifier_dim=args.classifer_dims, final_dim=args.final_dim, 
                        momentum=args.mo, drop=args.drop, DAL=args.DAL, users_class=user_num, modal=args.modal)
-
+    
     classifier_name = []
     # load pre-trained model
     for name, param in model.named_parameters():

@@ -48,7 +48,8 @@ def seed_preprocess(dir_name):
                 trial = int(keys.split('_')[1][3:]) - 1
                 data_i = data_i.transpose()
                 data_i -= np.mean(data_i, axis=0)
-                data_i /= np.linalg.norm(data_i, axis=0)  # L2 normalization
+                data_i /= np.linalg.norm(data_i, axis=0)
+                
                 data_i = data_i[:data_i.shape[0] // window_len * window_len, :]
                 reshaped_data = data_i.reshape(-1, window_len, data_i.shape[1])
                 for i in range(reshaped_data.shape[0]):

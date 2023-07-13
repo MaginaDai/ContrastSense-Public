@@ -100,13 +100,14 @@ class STCN(nn.Module):
         self.l4 = TCN_GCN_unit(8, num_class, A)
 
         self.transfer = transfer
+        self.GAP = nn.AdaptiveAvgPool2d(1)
         if self.transfer:
             self.Classifier = nn.Sequential(
-                nn.Linear(2912, num_class)
+                nn.Linear(num_class, num_class)
             )
         else:
             self.sim_head = nn.Sequential(
-                nn.Linear(2912, 512),
+                nn.Linear(num_class, 512),
                 nn.Linear(512, 128)
             )
 
@@ -116,7 +117,7 @@ class STCN(nn.Module):
         x = self.l2(x)
         x = self.l3(x)
         x = self.l4(x)
-        
+        x = self.GAP(x)
         x = x.reshape(x.shape[0], -1)
 
         if self.transfer:

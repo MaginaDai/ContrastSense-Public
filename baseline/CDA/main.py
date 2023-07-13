@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(description='PyTorch Contrastive Domain Adaptat
 parser.add_argument('-lr', '--learning-rate', default=1e-3, type=float, metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('-b', '--batch-size', default=32, type=int, metavar='N')
 parser.add_argument('-e', '--epochs', default=100, type=int, metavar='N', help='number of total epochs to run')
-parser.add_argument('-t', '--temperature', default=0.5, type=float, help='softmax temperature (default: 0.1)')
+parser.add_argument('-t', '--temperature', default=0.5, type=float, help='softmax temperature (default: 0.5)')
 parser.add_argument('-name', default='NinaPro', help='datasets name', choices=['NinaPro', 'Myo'])
 
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
@@ -61,7 +61,7 @@ def main():
     model = STCN(num_class=ClassesNum[args.name], transfer=False)
     
     optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=1e-6)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)  # keep aline with SimCLR
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)  # keep aline with ours
 
     with torch.cuda.device(args.gpu_index):
         cda = ConSSL(model=model, optimizer=optimizer, scheduler=scheduler, args=args)

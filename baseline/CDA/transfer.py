@@ -103,7 +103,8 @@ def main():
             print("=> no checkpoint found at '{}'".format(args.pretrained))
 
     optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=1e-6)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)  # keep aline with SimCLR
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5, 10, 25])
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)  # keep aline with ours
 
     #  It’s a no-op if the 'gpu_index' argument is a negative integer or None.
     with torch.cuda.device(args.gpu_index):

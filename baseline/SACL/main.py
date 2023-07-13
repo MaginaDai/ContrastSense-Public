@@ -2,6 +2,7 @@ import argparse
 import sys
 import torch
 from os.path import dirname
+from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 
 sys.path.append(dirname(dirname(sys.path[0])))
 sys.path.append(dirname(sys.path[0]))
@@ -44,7 +45,7 @@ def main():
         args.device = torch.device('cpu')
         args.gpu_index = -1
 
-    dataset = SADataset(transfer=False, version=args.version, datasets_name=args.name)
+    dataset = ContrastiveLearningDataset(transfer=False, version=args.version, datasets_name=args.name)
 
     train_dataset = dataset.get_dataset(split='train')
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,

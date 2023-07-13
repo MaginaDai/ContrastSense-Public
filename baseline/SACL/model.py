@@ -7,7 +7,7 @@ from os.path import dirname
 sys.path.append(dirname(dirname(sys.path[0])))
 sys.path.append(dirname(sys.path[0]))
 
-from SACL.SCAL import SAAdversarialLoss, SAContrastiveAdversarialLoss, momentum_model_parameter_update
+from SACL import SAAdversarialLoss, SAContrastiveAdversarialLoss, momentum_model_parameter_update
 import pickle as pkl
 
 class SACLResBlock(torch.nn.Module):

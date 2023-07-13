@@ -8,7 +8,7 @@ sys.path.append(dirname(sys.path[0]))
 from baseline.Mixup.myo_dataload import Myo_Dataset
 from baseline.CALDA.model import CALDA_encoder, CALDA
 from baseline.CPCHAR.dataload import CPCHAR_Dataset
-from data_aug.preprocessing import ClassesNum
+from data_aug.preprocessing import ClassesNum, UsersNum
 
 import torch
 from utils import seed_torch
