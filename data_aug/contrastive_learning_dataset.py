@@ -33,6 +33,8 @@ def fetch_dataset_root(dataset_name):
             'Myo_cda': './datasets/Myo_cda',
             'NinaPro': './datasets/NinaPro',
             'NinaPro_cda': './datasets/NinaPro_cda',
+            'SEED': './datasets/SEED',
+            'SEED_IV': './datasets/SEED_IV',
             }
     try:
         root_dir = root[dataset_name]
@@ -43,12 +45,13 @@ def fetch_dataset_root(dataset_name):
     
 
 class ContrastiveLearningDataset:
-    def __init__(self, transfer, version, datasets_name=None, cross_dataset=False, modal='imu', p=0.8, p2=0.4, p3=0.2, p4=0.4, p5=0.8, p6=0.8):
+    def __init__(self, transfer, version, datasets_name=None, cross_dataset=False, modal='imu', p=0.8, p2=0.4, p3=0.2, p4=0.4, p5=0.8, p6=0.8, if_baseline=False):
         self.transfer = transfer
         self.datasets_name = datasets_name
         self.version = version
         self.cross_dataset = cross_dataset
         self.modal = modal
+        self.if_baseline = if_baseline
 
         self.p = p
         self.p2=p2
@@ -122,6 +125,22 @@ class ContrastiveLearningDataset:
                                               emg_toTensor])
         return data_transforms
 
+    def get_eeg_pipeline_transform(self):
+        emg_noise = emg_transforms.EMGNoise(var=0.05, p=self.p5)
+        emg_scale = emg_transforms.EMGScale(scale=[0.9, 1.1], p=self.p6)
+        emg_flip = emg_transforms.EMGHorizontalFlip(p=self.p3)
+        emg_negate = emg_transforms.EMGNegated(p=self.p2)
+        emg_warp = emg_transforms.EMGTimeWarp(p=self.p4)
+        emg_toTensor = emg_transforms.EMGToTensor()
+
+        data_transforms = transforms.Compose([emg_scale,
+                                              emg_negate,
+                                              emg_flip,
+                                              emg_warp,
+                                              emg_noise,
+                                              emg_toTensor])
+        return data_transforms
+
 
     def get_dataset(self, split, n_views=2, percent=20, shot=None):
         if not self.transfer or split == 'train' or split == 'tune':
@@ -129,12 +148,16 @@ class ContrastiveLearningDataset:
                 transformation = self.get_simclr_pipeline_transform()
             elif self.modal == 'emg':
                 transformation = self.get_emg_pipeline_transform()
+            elif self.modal == 'eeg':
+                transformation = self.get_eeg_pipeline_transform()
             else:
                 NotADirectoryError
         else:
             if self.modal == 'imu':
                 transformation = transforms.Compose([imu_transforms.ToTensor()])
             elif self.modal == 'emg':
+                transformation = transforms.Compose([emg_transforms.EMGToTensor()])
+            elif self.modal == 'eeg':
                 transformation = transforms.Compose([emg_transforms.EMGToTensor()])
             else:
                 NotADirectoryError
@@ -145,21 +168,21 @@ class ContrastiveLearningDataset:
                                     transform=ContrastiveLearningViewGenerator(
                                         transformation, n_views),
                                     split=split, transfer=self.transfer, percent=percent, 
-                                    shot=shot, cross_dataset=self.cross_dataset, modal=self.modal)
+                                    shot=shot, cross_dataset=self.cross_dataset, modal=self.modal, if_baseline=self.if_baseline)
         elif split == 'train' or split == 'tune':
             # here it is for data augmentation, make it more challenging.
             return Dataset4Training(self.datasets_name, self.version, n_views, transformation, 
                                     split=split, transfer=self.transfer, percent=percent, 
-                                    shot=shot, cross_dataset=self.cross_dataset, modal=self.modal)
+                                    shot=shot, cross_dataset=self.cross_dataset, modal=self.modal, if_baseline=self.if_baseline)
         else:  # val or test
             return Dataset4Training(self.datasets_name, self.version, n_views, transformation,
                                     split=split, transfer=self.transfer, percent=percent,
-                                      shot=shot, cross_dataset=self.cross_dataset, modal=self.modal)
+                                      shot=shot, cross_dataset=self.cross_dataset, modal=self.modal, if_baseline=self.if_baseline)
 
 
 class Dataset4Training(Dataset):
 
-    def __init__(self, datasets_name, version, n_views=2, transform=None, split='train', transfer=True, percent=20, shot=None, cross_dataset=False, modal='imu'):
+    def __init__(self, datasets_name, version, n_views=2, transform=None, split='train', transfer=True, percent=20, shot=None, cross_dataset=False, modal='imu', if_baseline=False):
         """
         Args:
             datasets_name (string): dataset name.
@@ -169,7 +192,9 @@ class Dataset4Training(Dataset):
             split: to specify train set or test set.
         """
         root_dir = fetch_dataset_root(datasets_name)
-
+        if if_baseline:
+            root_dir = '../../' + root_dir
+        
         train_dir = root_dir + '_' + version + '/train_set.npz'
         val_dir = root_dir + '_' + version + '/val_set.npz'
         test_dir = root_dir + '_' + version + '/test_set.npz'
@@ -231,6 +256,8 @@ class Dataset4Training(Dataset):
                 label = label_alignment(label, self.datasets_name)
         elif self.modal == 'emg':
             sensor, label = sample['emg'], sample['add_infor']
+        elif self.modal == 'eeg':
+            sensor, label = sample['eeg'], sample['add_infor']
 
         return sensor, torch.from_numpy(label).long()
 

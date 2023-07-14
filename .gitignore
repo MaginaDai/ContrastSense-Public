@@ -40,6 +40,9 @@
 /baseline/CDA/runs
 /baseline/CDA/__pycache__
 
+/baseline/CLISA/runs
+/baseline/CLISA/__pycache__
+
 
 /data_aug/__pycache__
 

@@ -166,6 +166,18 @@ class SACL_model(nn.Module):
         x_t1_initial_subject_preds = self.adversary(x_t1_initial_reps)
         return x_t1_initial_subject_preds
     
+
+class SACL_ft_model(nn.Module):
+    def __init__(self, transfer=True, num_class=7):
+        self.model = SACLEncoder(62, 200, dropout_rate=0.5, embed_dim=100)
+        self.classifier = nn.Linear(100, num_class)
+
+    def forward(self, x):
+        x = self.model(x)
+        h = self.classifier(x)
+        return h
+
+
 def train_SA_model(save_dir_for_model, model_file_name="final_SA_model.bin", batch_size=256, shuffle=True, # hyper parameters for training loop
                     max_epochs=100, learning_rate=5e-4, beta_vals=(0.9, 0.999), weight_decay=0.001, #num_workers=4, 
                     max_evals_after_saving=6, save_freq=20, former_state_dict_file=None, ct_dim=None, h_dim=None, 

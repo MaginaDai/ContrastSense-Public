@@ -40,13 +40,8 @@ parser.add_argument('-version', default="shot0", type=str, help='control the ver
 
 def main():
     args = parser.parse_args()
-    if args.lr is None:
-        if args.ft:
-            args.lr = 0.001
-        else:
-            args.lr = 0.03
-
     seed_torch(seed=args.seed)
+    
     args.modal = 'eeg'
     args.transfer = True
 
