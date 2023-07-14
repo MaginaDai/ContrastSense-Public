@@ -80,6 +80,7 @@ class CLISA(object):
         acc = 0
         best_epoch = 0
         best_acc = 0
+        not_best_counter=0
 
         subject_list = np.arange(len(train_loader))
         combinations_list = list(combinations(subject_list, 2))
@@ -120,10 +121,13 @@ class CLISA(object):
                         self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter)
 
                     n_iter += 1
+                    # break  ## based on the paper, they only sample one time from both subject and then move the next subject.
             
             self.scheduler.step()
-            is_best = True # Always save the latest model
+            is_best = acc_batch.avg > best_acc
             if is_best:
+                best_acc = acc_batch.avg
+                not_best_counter = 0
                 best_epoch = epoch_counter
                 checkpoint_name = 'model_best.pth.tar'
                 save_checkpoint({
@@ -132,9 +136,15 @@ class CLISA(object):
                     'best_acc': best_acc,
                     'optimizer': self.optimizer.state_dict(),
                 }, is_best, filename=os.path.join(self.writer.log_dir, checkpoint_name), path_dir=self.writer.log_dir)
+            else:
+                not_best_counter += 1
 
             log_str = f"Epoch: {epoch_counter} Loss: {loss_batch.avg} accuracy: {acc_batch.avg}"
             logging.debug(log_str)
+
+            if not_best_counter >= 30:  # early stop
+                break
+            
             
         logging.info("Training has finished.")
         logging.info(f"Model of Epoch {best_epoch} checkpoint and metadata has been saved at {self.writer.log_dir}.")
@@ -155,7 +165,7 @@ class CLISA(object):
         best_epoch = 0
         best_acc = 0
         best_f1 = 0
-
+        not_best_counter = 0
         for epoch_counter in tqdm(range(self.args.epochs)):
             acc_batch = AverageMeter('acc_batch', ':6.2f')
 
@@ -169,7 +179,6 @@ class CLISA(object):
                 self.model.Classifier.train()
 
             for sensor, target in tune_loader:
-
                 sensor = sensor.to(self.args.device)
                 target = target[:, 0].to(self.args.device)
 
@@ -194,7 +203,6 @@ class CLISA(object):
                     self.writer.add_scalar('loss', loss, global_step=n_iter_train)
                     self.writer.add_scalar('acc', acc, global_step=n_iter_train)
                     self.writer.add_scalar('f1', f1, global_step=n_iter_train)
-                    self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter_train)
 
                 n_iter_train += 1
 
@@ -205,6 +213,7 @@ class CLISA(object):
             best_f1 = max(val_f1, best_f1)
             best_acc = max(val_acc, best_acc)
             if is_best:
+                not_best_counter = 0
                 best_epoch = epoch_counter
                 checkpoint_name = 'model_best.pth.tar'
                 save_checkpoint({
@@ -213,10 +222,11 @@ class CLISA(object):
                     'best_f1': best_f1,
                     'optimizer': self.optimizer.state_dict(),
                 }, is_best, filename=os.path.join(self.writer.log_dir, checkpoint_name), path_dir=self.writer.log_dir)
+            else:
+                not_best_counter += 1
 
             self.writer.add_scalar('eval acc', val_acc, global_step=epoch_counter)
             self.writer.add_scalar('eval f1', val_f1, global_step=epoch_counter)
-            self.scheduler.step()
             logging.debug(f"Epoch: {epoch_counter} Loss: {loss} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch: .3f}/{val_f1: .3f}")
         
         logging.info("Fine-tuning has finished.")

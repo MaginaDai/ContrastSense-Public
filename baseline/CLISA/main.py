@@ -29,7 +29,7 @@ parser.add_argument('-t', '--temperature', default=0.1, type=float, help='softma
 
 parser.add_argument('--disable-cuda', action='store_true', help='Disable CUDA')
 parser.add_argument('-j', '--workers', default=10, type=int, metavar='N', help='number of data loading workers (default: 5)')
-parser.add_argument('--store', default='lr', type=str, help='define the name head for model storing')
+parser.add_argument('--store', default='CLISA', type=str, help='define the name head for model storing')
 parser.add_argument('-e', '--epochs', default=100, type=int, metavar='N', help='number of total epochs to run')
 parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
 
