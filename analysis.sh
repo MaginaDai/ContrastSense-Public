@@ -1,7 +1,7 @@
 #!/bin/bash
 key="v1"
 lr=0.001
-name="baseline/CDA/runs/ConSSL_lr1e-3_co_ft_1e-3_v"
+name="runs/emg_best_pt_ewc4e3_"
 # name="runs/hard_v1_cl_"
 # name="baseline/CDA/runs/CDA_lr5e-4_v"
 python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4" -modal "emg"

@@ -258,6 +258,7 @@ class Dataset4Training(Dataset):
             sensor, label = sample['emg'], sample['add_infor']
         elif self.modal == 'eeg':
             sensor, label = sample['eeg'], sample['add_infor']
+            # sensor = np.expand_dims(sensor, axis=0)
 
         return sensor, torch.from_numpy(label).long()
 
