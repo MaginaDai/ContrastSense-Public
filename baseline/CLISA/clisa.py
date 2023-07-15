@@ -94,13 +94,14 @@ class CLISA(object):
                 train_loader_b = train_loader[subject_b]
                 
                 for (sensor_a, _, _, _), (sensor_b, _, _, _) in zip(train_loader_a, train_loader_b):
-                    sensor_a = sensor_a.squeeze(0)
-                    sensor_b = sensor_b.squeeze(0)
-                    sensor = torch.cat([sensor_a, sensor_b], dim=0)
-                    sensor = sensor.to(self.args.device)
+                    sensor_a = sensor_a.squeeze(0).to(self.args.device)
+                    sensor_b = sensor_b.squeeze(0).to(self.args.device)
 
                     with autocast(enabled=self.args.fp16_precision):
-                        features = self.model(sensor)
+                        features_a = self.model(sensor_a)  # we process them one by one for stratified normalization according to the paper
+                        features_b = self.model(sensor_b)
+                        features = torch.cat([features_a, features_b], dim=0)
+
                         logits, labels = self.info_nce_loss(features)
                         loss = self.criterion(logits, labels)
 
@@ -112,8 +113,8 @@ class CLISA(object):
                     scaler.update()
                     
                     acc = accuracy(logits, labels, topk=(1,))
-                    acc_batch.update(acc, sensor[0].size(0))
-                    loss_batch.update(loss, sensor[0].size(0))
+                    acc_batch.update(acc, features[0].size(0))
+                    loss_batch.update(loss, features[0].size(0))
 
                     if n_iter % self.args.log_every_n_steps == 0:
                         self.writer.add_scalar('loss', loss, global_step=n_iter)
@@ -224,6 +225,9 @@ class CLISA(object):
                 }, is_best, filename=os.path.join(self.writer.log_dir, checkpoint_name), path_dir=self.writer.log_dir)
             else:
                 not_best_counter += 1
+
+            if not_best_counter >= 30: # early stop
+                break
 
             self.writer.add_scalar('eval acc', val_acc, global_step=epoch_counter)
             self.writer.add_scalar('eval f1', val_f1, global_step=epoch_counter)

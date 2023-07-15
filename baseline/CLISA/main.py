@@ -29,9 +29,9 @@ parser.add_argument('-t', '--temperature', default=0.1, type=float, help='softma
 
 parser.add_argument('--disable-cuda', action='store_true', help='Disable CUDA')
 parser.add_argument('-j', '--workers', default=10, type=int, metavar='N', help='number of data loading workers (default: 5)')
-parser.add_argument('--store', default='CLISA', type=str, help='define the name head for model storing')
+parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 parser.add_argument('-e', '--epochs', default=100, type=int, metavar='N', help='number of total epochs to run')
-parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
+parser.add_argument('-version', default="shot1", type=str, help='control the version of the setting')
 
 def main():
     args = parser.parse_args()
@@ -48,7 +48,7 @@ def main():
 
     model = CLISA_model(transfer=False, num_class=-1)
     optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=0.015)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=33, last_epoch=-1)
     
     with torch.cuda.device(args.gpu_index):
         clisa = CLISA(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
