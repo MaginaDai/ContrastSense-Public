@@ -5,7 +5,7 @@ import torch
 import os
 import pdb
 
-from data_aug import imu_transforms, emg_transforms
+from data_aug import imu_transforms, emg_transforms, eeg_transforms
 from torch.utils.data import Dataset
 from torchvision.transforms import transforms
 from torchvision import transforms, datasets
@@ -126,18 +126,16 @@ class ContrastiveLearningDataset:
         return data_transforms
 
     def get_eeg_pipeline_transform(self):
-        emg_noise = emg_transforms.EMGNoise(var=0.05, p=self.p5)
-        emg_scale = emg_transforms.EMGScale(scale=[0.9, 1.1], p=self.p6)
-        emg_flip = emg_transforms.EMGHorizontalFlip(p=self.p3)
-        emg_negate = emg_transforms.EMGNegated(p=self.p2)
-        emg_warp = emg_transforms.EMGTimeWarp(p=self.p4)
+        eeg_noise = eeg_transforms.EEG_Noise(var=5e-3, p=self.p5)
+        eeg_cutout = eeg_transforms.EEG_cutout(p=0.5)
+        eeg_delay = eeg_transforms.EEG_delay(p=0.5)
+        eeg_dropout = eeg_transforms.EEG_delay(p=0.2)
         emg_toTensor = emg_transforms.EMGToTensor()
 
-        data_transforms = transforms.Compose([emg_scale,
-                                              emg_negate,
-                                              emg_flip,
-                                              emg_warp,
-                                              emg_noise,
+        data_transforms = transforms.Compose([eeg_cutout,
+                                              eeg_delay,
+                                              eeg_dropout,
+                                              eeg_noise,
                                               emg_toTensor])
         return data_transforms
 

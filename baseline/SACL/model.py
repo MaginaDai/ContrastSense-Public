@@ -61,7 +61,7 @@ class SACLEncoder(torch.nn.Module):
     NOTE: IF YOU ARE GETTING SHAPE ERRORS, CHANGE THE SHAPE OF THE FINAL LINEAR LAYER IN THE EMBEDDER FIRST (BY CHANGING THE INTEGER-DIVISION DENOMINATOR)
     see  appendix Figure A.2 in arxiv.org/pdf/2007.04871.pdf for diagram
     """
-    def __init__(self, num_channels, temporal_len, dropout_rate=0.5, embed_dim=100):
+    def __init__(self, num_channels, temporal_len, dropout_rate=0.5, embed_dim=256):
         super(SACLEncoder, self).__init__()
         self.sequential_process = torch.nn.Sequential(torch.nn.Conv1d(num_channels, num_channels//2, temporal_len//32), 
                                                SACLResBlock(num_channels//2, num_channels//2, temporal_len//16), 
@@ -88,19 +88,10 @@ class SACLNet(torch.nn.Module):
     NOTE: IF YOU ARE GETTING SHAPE ERRORS, CHANGE THE SHAPE OF THE FINAL LINEAR LAYER IN THE EMBEDDER FIRST (BY CHANGING THE INTEGER-DIVISION DENOMINATOR)
     see  appendix Figure A.2 in arxiv.org/pdf/2007.04871.pdf for diagram
     """
-    def __init__(self, num_channels, temporal_len, dropout_rate=0.5, embed_dim=100, num_upstream_decode_features=20):
+    def __init__(self, num_channels, temporal_len, dropout_rate=0.5, embed_dim=256, num_upstream_decode_features=64):
         super(SACLNet, self).__init__()
-        self.embed_model = SACLEncoder(num_channels, temporal_len, dropout_rate=0.5, embed_dim=100)
-        # self.embed_model = torch.nn.Sequential(torch.nn.Conv1d(num_channels, num_channels//2, temporal_len//32), 
-        #                                        SACLResBlock(num_channels//2, num_channels//2, temporal_len//16), 
-        #                                        torch.nn.MaxPool1d(4),  
-        #                                        SACLResBlock(num_channels//2, num_channels, temporal_len//16), 
-        #                                        torch.nn.MaxPool1d(4),  
-        #                                        SACLResBlock(num_channels, num_channels*2, temporal_len//32), 
-        #                                        torch.nn.ELU(), 
-        #                                        SACLFlatten(), # see https://stackoverflow.com/questions/53953460/how-to-flatten-input-in-nn-sequential-in-pytorch
-        #                                        torch.nn.Linear(num_channels*(2**1)*(int(temporal_len/16.5)), embed_dim) # added to make it easier for different data sets with different shapes to be run through model
-        # )
+        self.embed_model = SACLEncoder(num_channels, temporal_len, dropout_rate=0.5, embed_dim=embed_dim)
+
         self.decode_model = torch.nn.Sequential(torch.nn.Linear(embed_dim, embed_dim//2), 
                                                 torch.nn.ReLU(), 
                                                 torch.nn.Linear(embed_dim//2, embed_dim//2), 
@@ -146,13 +137,13 @@ class SACLAdversary(torch.nn.Module):
     
 
 class SACL_model(nn.Module):
-    def __init__(self, args, num_subjects=12, channels=11, temporal_len=3000, dropout_rate=0.5, embed_dim=100, num_upstream_decode_features=32, ):
+    def __init__(self, device, num_subjects=15, channels=62, temporal_len=200, dropout_rate=0.5, embed_dim=256, num_upstream_decode_features=64):
         super(SACL_model, self).__init__()
         
         self.model = SACLNet(channels, temporal_len, dropout_rate=dropout_rate, embed_dim=embed_dim, num_upstream_decode_features=num_upstream_decode_features)
         self.momentum_model = copy.deepcopy(self.model) # see https://discuss.pytorch.org/t/copying-weights-from-one-net-to-another/1492 and https://www.geeksforgeeks.org/copy-python-deep-copy-shallow-copy/
     
-        self.adversary = SACLAdversary(embed_dim, num_subjects, dropout_rate=dropout_rate).to(args.device)
+        self.adversary = SACLAdversary(embed_dim, num_subjects, dropout_rate=dropout_rate).to(device)
 
     def forward(self, x_q, x_k):
         x1_rep = self.model(x_q)
@@ -169,11 +160,12 @@ class SACL_model(nn.Module):
 
 class SACL_ft_model(nn.Module):
     def __init__(self, transfer=True, num_class=7):
-        self.model = SACLEncoder(62, 200, dropout_rate=0.5, embed_dim=100)
-        self.classifier = nn.Linear(100, num_class)
+        super(SACL_ft_model, self).__init__()
+        self.embed_model = SACLEncoder(62, 200, dropout_rate=0.5, embed_dim=256)
+        self.classifier = nn.Linear(256, num_class)
 
     def forward(self, x):
-        x = self.model(x)
+        x = self.embed_model(x)
         h = self.classifier(x)
         return h
 

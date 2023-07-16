@@ -2,23 +2,24 @@ import argparse
 import sys
 import torch
 from os.path import dirname
-from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 
 sys.path.append(dirname(dirname(sys.path[0])))
 sys.path.append(dirname(sys.path[0]))
+
+from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 from data_aug.preprocessing import ClassesNum, UsersNum
-from SACL.SACL import SACL
-from SACL.dataloader import SADataset
-from SACL.model import SACL_model, SACLAdversary
+from SACL import SACL
+from dataloader import SADataset
+from model import SACL_model, SACLAdversary
 from utils import seed_torch
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Domain Adaptation')
 
-parser.add_argument('-lr', '--learning-rate', default=1e-3, type=float, metavar='LR', help='initial learning rate', dest='lr')
-parser.add_argument('-b', '--batch-size', default=32, type=int, metavar='N')
-parser.add_argument('-e', '--epochs', default=100, type=int, metavar='N', help='number of total epochs to run')
+parser.add_argument('-lr', '--learning-rate', default=5e-4, type=float, metavar='LR', help='initial learning rate', dest='lr')
+parser.add_argument('-b', '--batch-size', default=128, type=int, metavar='N')
+parser.add_argument('-e', '--epochs', default=1000, type=int, metavar='N', help='number of total epochs to run')
 parser.add_argument('-t', '--temperature', default=0.5, type=float, help='softmax temperature (default: 0.1)')
-parser.add_argument('-name', default='NinaPro', help='EEG datasets name', choices=['NinaPro', 'Myo'])
+parser.add_argument('-name', default='SEED', help='EEG datasets name', choices=['SEED', 'SEED_IV'])
 
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
@@ -36,7 +37,8 @@ def main():
     args = parser.parse_args()
     seed_torch(seed=args.seed)
 
-    args.name = args.name + '_cda'
+    args.name = args.name
+    args.modal = 'eeg'
 
     # check if gpu training is available
     if not args.disable_cuda and torch.cuda.is_available():
@@ -45,7 +47,7 @@ def main():
         args.device = torch.device('cpu')
         args.gpu_index = -1
 
-    dataset = ContrastiveLearningDataset(transfer=False, version=args.version, datasets_name=args.name)
+    dataset = ContrastiveLearningDataset(transfer=False, version=args.version, datasets_name=args.name, if_baseline=True, modal='eeg')
 
     train_dataset = dataset.get_dataset(split='train')
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
@@ -55,11 +57,10 @@ def main():
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=True,
                     num_workers=args.workers, pin_memory=False, drop_last=True)
     
-    model = SACL_model(num_class=ClassesNum[args.name], transfer=False)
+    model = SACL_model(device=args.device)
     
-    
-    optimizer = torch.optim.Adam(model.model.parameters(), betas=(0.9, 0.999), lr=5e-4, weight_decay=1e-3)
-    adversarial_optimizer = torch.optim.Adam(model.adversary.parameters(), betas=(0.9, 0.999), lr=5e-4, weight_decay=1e-3)
+    optimizer = torch.optim.Adam(model.model.parameters(), lr=args.lr)
+    adversarial_optimizer = torch.optim.Adam(model.adversary.parameters(), lr=args.lr)
     
     with torch.cuda.device(args.gpu_index):
         sacl = SACL(model=model, optimizer=optimizer, adversarial_optimizer=adversarial_optimizer, args=args)

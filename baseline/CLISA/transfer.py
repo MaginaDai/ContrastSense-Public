@@ -41,7 +41,7 @@ parser.add_argument('-shot', default=10, type=int, help='how many shots of label
 
 parser.add_argument('--evaluate', default=False, type=bool, help='decide whether to evaluate')
 parser.add_argument('-ft', '--if-fine-tune', default=True, type=bool, help='to decide whether tune all the layers')
-parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
+parser.add_argument('-version', default="shot1", type=str, help='control the version of the setting')
 
 
 def main():

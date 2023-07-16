@@ -11,7 +11,7 @@ from xml.sax import default_parser_list
 dataset_imu = ['HHAR', 'MotionSense', 'Shoaib', 'HASC']
 # dataset_imu=['HASC']
 dataset_emg = ['Myo', 'NinaPro']
-
+dataset_eeg = ['SEED', 'SEED_IV']
 # dataset = ['HHAR']
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
@@ -26,6 +26,8 @@ def avg_result(name, ft, modal, shot=10):
         dataset = dataset_imu
     elif modal == 'emg':
         dataset = dataset_emg
+    elif modal == 'eeg':
+        dataset = dataset_eeg
     else:
         NotImplementedError
     

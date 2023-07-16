@@ -1,0 +1,21 @@
+!!python/object:argparse.Namespace
+batch_size: 128
+device: !!python/object/apply:torch.device
+- cuda
+- 1
+disable_cuda: false
+epochs: 1000
+fp16_precision: false
+gpu_index: 1
+log_every_n_steps: 5
+lr: 0.0005
+modal: eeg
+name: SEED
+pretrained: ''
+resume: ''
+seed: 0
+store: SACL_4
+temperature: 0.5
+transfer: false
+version: shot4
+workers: 10

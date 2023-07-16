@@ -14,22 +14,21 @@ from data_aug.preprocessing import ClassesNum
 from utils import evaluate, seed_torch
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
-parser.add_argument('-lr', '--learning-rate', default=0.001, type=float, metavar='LR', help='initial learning rate', dest='lr')
+parser.add_argument('-lr', '--learning-rate', default=1e-5, type=float, metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--transfer', default=False, type=str, help='to tell whether we are doing transfer learning')
 parser.add_argument('--pretrained', default='lr/SEED', type=str, help='path to pretrained checkpoint')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
-parser.add_argument('-b', '--batch-size', default=200, type=int, metavar='N')
+parser.add_argument('-b', '--batch-size', default=256, type=int, metavar='N')
 parser.add_argument('-name', default='SEED', help='datasets name', choices=['SEED', 'SEED_IV'])
 
 parser.add_argument('--log-every-n-steps', default=5, type=int, help='Log every n steps')
 parser.add_argument('-g', '--gpu-index', default=1, type=int, help='Gpu index.')
 parser.add_argument('--fp16-precision', action='store_true', help='Whether or not to use 16-bit precision GPU training.')
-parser.add_argument('-t', '--temperature', default=0.1, type=float, help='softmax temperature (default: 0.1)')
 
 parser.add_argument('--disable-cuda', action='store_true', help='Disable CUDA')
 parser.add_argument('--store', default=None, type=str, help='define the name head for model storing')
-parser.add_argument('-e', '--epochs', default=50, type=int, metavar='N', help='number of total epochs to run')
+parser.add_argument('-e', '--epochs', default=200, type=int, metavar='N', help='number of total epochs to run')
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 

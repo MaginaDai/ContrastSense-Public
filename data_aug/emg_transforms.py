@@ -76,7 +76,7 @@ class EMGHorizontalFlip(object):
         return sensor
 
 class EMGTimeWarp(object):
-    """ locally prolong the IMU sensors reading
+    """ locally prolong the EMG sensors reading
 
     Args:
         p: transformation possibility
