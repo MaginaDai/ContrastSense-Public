@@ -1,17 +1,17 @@
 version="shot"
 
 store="SACL_"
-store_ft="SACL_"
-for dataset in "SEED" "SEED_IV"
-do
-    python main.py -g 0 -version "${version}0" -name ${dataset} --store "${store}0" &
-    python main.py -g 0 -version "${version}1" -name ${dataset} --store "${store}1" &
-    python main.py -g 0 -version "${version}2" -name ${dataset} --store "${store}2" &
-    python main.py -g 1 -version "${version}3" -name ${dataset} --store "${store}3" &
-    python main.py -g 1 -version "${version}4" -name ${dataset} --store "${store}4"
+store_ft="SACL_wo_aug_"
+# for dataset in "SEED" "SEED_IV"
+# do
+#     python main.py -g 0 -version "${version}0" -name ${dataset} --store "${store}0" &
+#     python main.py -g 0 -version "${version}1" -name ${dataset} --store "${store}1" &
+#     python main.py -g 0 -version "${version}2" -name ${dataset} --store "${store}2" &
+#     python main.py -g 1 -version "${version}3" -name ${dataset} --store "${store}3" &
+#     python main.py -g 1 -version "${version}4" -name ${dataset} --store "${store}4"
 
-    wait
-done
+#     wait
+# done
 
 for dataset in "SEED" "SEED_IV"
 do

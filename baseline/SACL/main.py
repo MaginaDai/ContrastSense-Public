@@ -2,6 +2,7 @@ import argparse
 import sys
 import torch
 from os.path import dirname
+import numpy as np
 
 sys.path.append(dirname(dirname(sys.path[0])))
 sys.path.append(dirname(sys.path[0]))
@@ -53,19 +54,34 @@ def main():
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
                     num_workers=args.workers, pin_memory=False, drop_last=True)
     
-    val_dataset = dataset.get_dataset(split='val')
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=True,
-                    num_workers=args.workers, pin_memory=False, drop_last=True)
-    
-    model = SACL_model(device=args.device)
+    # val_dataset = dataset.get_dataset(split='val')
+    # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=True,
+    #                 num_workers=args.workers, pin_memory=False, drop_last=True)
+    num_subject, map_subject_to_idx = mapping_subject_id(train_loader)
+
+    model = SACL_model(device=args.device, num_subjects=num_subject)
     
     optimizer = torch.optim.Adam(model.model.parameters(), lr=args.lr)
     adversarial_optimizer = torch.optim.Adam(model.adversary.parameters(), lr=args.lr)
     
     with torch.cuda.device(args.gpu_index):
         sacl = SACL(model=model, optimizer=optimizer, adversarial_optimizer=adversarial_optimizer, args=args)
-        sacl.train(train_loader, val_loader)
+        sacl.train(train_loader, map_subject_to_idx)
     return
+
+def mapping_subject_id(train_loader):
+    subject_id = torch.empty(0)
+    for _, label in train_loader:
+        domain_label = label[:, 1]
+        subject_id = torch.cat([domain_label, subject_id])
+    
+    subject_id = torch.unique(subject_id).long()
+    num_subject = len(subject_id)
+    map_subject_to_idx = (-1) * torch.ones(15).long()
+    map_subject_to_idx[subject_id] = torch.arange(num_subject).long()
+    return num_subject, map_subject_to_idx
+
+    
 
 
 if __name__ == '__main__':

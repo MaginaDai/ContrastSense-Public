@@ -129,7 +129,7 @@ class SACL(object):
         self.adversarial_loss_fn = SAAdversarialLoss(self.args.device)
         self.criterion = torch.nn.CrossEntropyLoss().to(self.args.device)
 
-    def train(self, train_loader, val_loader):
+    def train(self, train_loader, map_subject_to_idx):
         scaler_ad = GradScaler(enabled=self.args.fp16_precision)
         scaler = GradScaler(enabled=self.args.fp16_precision)
 
@@ -156,7 +156,9 @@ class SACL(object):
             for sensor, label in train_loader:
                 x1 = sensor[0].to(self.args.device)
                 x2 = sensor[1].to(self.args.device)
-                domain_label = label[:, 1].to(self.args.device)
+                domain_label = label[:, 1]
+                domain_label = torch.tensor([map_subject_to_idx[domain_label[j]] for j in range(len(domain_label))])
+                domain_label = domain_label.to(self.args.device)
 
                 ## adversarial training for domain-invariant features
                 for p in self.model.model.parameters():
@@ -331,9 +333,6 @@ class SACL(object):
                 }, is_best, filename=os.path.join(self.writer.log_dir, checkpoint_name), path_dir=self.writer.log_dir)
             else:
                 not_best_counter += 1
-
-            if not_best_counter >= 30: # early stop
-                break
 
             self.writer.add_scalar('eval acc', val_acc, global_step=epoch_counter)
             self.writer.add_scalar('eval f1', val_f1, global_step=epoch_counter)

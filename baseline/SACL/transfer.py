@@ -9,9 +9,11 @@ sys.path.append(dirname(sys.path[0]))
 
 from SACL import SACL
 from model import SACL_ft_model, SACL_model
-from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
+from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset, Dataset4Training
 from data_aug.preprocessing import ClassesNum
 from utils import evaluate, seed_torch
+from torchvision.transforms import transforms
+from data_aug import eeg_transforms
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 parser.add_argument('-lr', '--learning-rate', default=1e-5, type=float, metavar='LR', help='initial learning rate', dest='lr')
@@ -34,6 +36,7 @@ parser.add_argument('-shot', default=10, type=int, help='how many shots of label
 
 parser.add_argument('--evaluate', default=False, type=bool, help='decide whether to evaluate')
 parser.add_argument('-ft', '--if-fine-tune', default=False, type=bool, help='to decide whether tune all the layers')
+parser.add_argument('-aug', default=False, type=bool, help='to decide whether use augmentation')
 parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
 
 
@@ -57,10 +60,16 @@ def main():
     args.pretrained = './runs/' + args.pretrained + '/model_best.pth.tar'
 
     dataset = ContrastiveLearningDataset(transfer=args.transfer, version=args.version, datasets_name=args.name, modal=args.modal, if_baseline=True)
-    tune_dataset = dataset.get_dataset('tune', percent=args.percent, shot=args.shot)
+
+    if args.aug:
+        tune_dataset = dataset.get_dataset('tune', percent=args.percent, shot=args.shot)
+    elif args.modal == 'eeg':
+        tune_dataset = Dataset4Training(args.name, args.version, transform=transforms.Compose([eeg_transforms.EEGToTensor()]), 
+                                        split='tune', transfer=True, shot=args.shot, modal=args.modal, if_baseline=True)
     val_dataset = dataset.get_dataset('val')
     test_dataset = dataset.get_dataset('test')
 
+    
     tune_loader = torch.utils.data.DataLoader(
         tune_dataset, batch_size=args.batch_size, shuffle=True, pin_memory=False, drop_last=False)
 
