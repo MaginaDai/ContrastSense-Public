@@ -43,6 +43,9 @@
 /baseline/CLISA/runs
 /baseline/CLISA/__pycache__
 
+/baseline/SACL/runs
+/baseline/SACL/__pycache__
+
 
 /data_aug/__pycache__
 

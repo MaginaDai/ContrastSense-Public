@@ -137,22 +137,22 @@
 #     done
 # done
 
-# name='CPCHAR_cu'
-# g=2
-# for shot in 100
-# do  
-#     version="shot"
-#     for v in 0 1 2 3 4
-#     do
-#         store="CPCHAR_cu_tune_portion_${portion}_${v}"
-#         python transfer.py -g ${g} -ft True -version "${version}${v}" -shot ${shot} -name HASC --pretrained "${name}${v}/HASC" --store "${store}" &
-#         python transfer.py -g ${g} -ft True -version "${version}${v}" -shot ${shot} -name HHAR --pretrained "${name}${v}/HHAR" --store "${store}" &
-#         python transfer.py -g ${g} -ft True -version "${version}${v}" -shot ${shot} -name MotionSense --pretrained "${name}${v}/MotionSense" --store "${store}" &
-#         python transfer.py -g ${g} -ft True -version "${version}${v}" -shot ${shot} -name Shoaib --pretrained "${name}${v}/Shoaib" --store "${store}" 
+name='CPCHAR_cu'
+g=2
+for shot in 1
+do  
+    version="shot"
+    for v in 0 1 2 3 4
+    do
+        store="CPCHAR_cu_tune_portion_${portion}_${v}"
+        python transfer.py -g ${g} -ft True -version "${version}${v}" -shot ${shot} -name HASC --pretrained "${name}${v}/HASC" --store "${store}" &
+        python transfer.py -g ${g} -ft True -version "${version}${v}" -shot ${shot} -name HHAR --pretrained "${name}${v}/HHAR" --store "${store}" &
+        python transfer.py -g ${g} -ft True -version "${version}${v}" -shot ${shot} -name MotionSense --pretrained "${name}${v}/MotionSense" --store "${store}" &
+        python transfer.py -g ${g} -ft True -version "${version}${v}" -shot ${shot} -name Shoaib --pretrained "${name}${v}/Shoaib" --store "${store}" 
 
-#         wait
-#     done
-# done
+        wait
+    done
+done
 
 # g=2
 # version="train25_supervised_label"
@@ -169,10 +169,10 @@
 # python transfer.py -g ${g} -ft True -version "${version}" -shot 100 -name HHAR --pretrained "${name}/HHAR" --store "${store}" 
 
 
-g=2
-version="train25_supervised_label"
-name="CPCHAR_preliminary"
-store="CPCHAR_preliminary"
+# g=2
+# version="train25_supervised_label"
+# name="CPCHAR_preliminary"
+# store="CPCHAR_preliminary"
 
 # python main.py -g 2 -version "train25_supervised_random" -name HHAR --store "25_random" &
 # python main.py -g 2 -version "train45_supervised_random" -name HHAR --store "45_random" &
@@ -190,9 +190,9 @@ store="CPCHAR_preliminary"
 # python transfer.py -g 3 -ft True -version "train45_supervised_label" -shot 50 -name HHAR --pretrained "45_label/HHAR" --store "45_label" &
 # python transfer.py -g 3 -ft True -version "train65_supervised_label" -shot 50 -name HHAR --pretrained "65_label/HHAR" --store "65_label" 
 
-python transfer.py -g 2 -ft True -version "train25_supervised_random" -shot 50 -name HHAR --pretrained "random/HHAR" --store "25_random_sup" &
-python transfer.py -g 2 -ft True -version "train45_supervised_random" -shot 50 -name HHAR --pretrained "random/HHAR" --store "45_random_sup" &
-python transfer.py -g 2 -ft True -version "train65_supervised_random" -shot 50 -name HHAR --pretrained "random/HHAR" --store "65_random_sup" &
-python transfer.py -g 3 -ft True -version "train25_supervised_label" -shot 50 -name HHAR --pretrained "random/HHAR" --store "25_label_sup" &
-python transfer.py -g 3 -ft True -version "train45_supervised_label" -shot 50 -name HHAR --pretrained "random/HHAR" --store "45_label_sup" &
-python transfer.py -g 3 -ft True -version "train65_supervised_label" -shot 50 -name HHAR --pretrained "random/HHAR" --store "65_label_sup" 
+# python transfer.py -g 2 -ft True -version "train25_supervised_random" -shot 50 -name HHAR --pretrained "random/HHAR" --store "25_random_sup" &
+# python transfer.py -g 2 -ft True -version "train45_supervised_random" -shot 50 -name HHAR --pretrained "random/HHAR" --store "45_random_sup" &
+# python transfer.py -g 2 -ft True -version "train65_supervised_random" -shot 50 -name HHAR --pretrained "random/HHAR" --store "65_random_sup" &
+# python transfer.py -g 3 -ft True -version "train25_supervised_label" -shot 50 -name HHAR --pretrained "random/HHAR" --store "25_label_sup" &
+# python transfer.py -g 3 -ft True -version "train45_supervised_label" -shot 50 -name HHAR --pretrained "random/HHAR" --store "45_label_sup" &
+# python transfer.py -g 3 -ft True -version "train65_supervised_label" -shot 50 -name HHAR --pretrained "random/HHAR" --store "65_label_sup" 

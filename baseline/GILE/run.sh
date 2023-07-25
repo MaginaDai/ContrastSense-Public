@@ -85,27 +85,30 @@
 #     done
 # done
 
-# name="GILE_cu"
-# version="shot"
-# g=2
-# shot=100
+name="GILE_cu"
+version="shot"
+g=3
+shot=1
 # for v in 0 1 2 3 4
 # do
-#     python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name HASC &
-#     python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name HHAR &
-#     python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name MotionSense &
-#     python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name Shoaib 
+#     python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name HASC &
+#     python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name HHAR &
+#     python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name MotionSense &
+#     python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name Shoaib 
 #     wait
 
 # done
 
+python main.py -g ${g} -version "${version}1" -shot ${shot} -cross "users" --store "${name}1" -name HHAR & 
+python main.py -g ${g} -version "${version}0" -shot ${shot} -cross "users" --store "${name}0" -name Shoaib &
+python main.py -g ${g} -version "${version}2" -shot ${shot} -cross "users" --store "${name}2" -name Shoaib 
 
 ##################
-version="train25_supervised_cross"
-store="preliminary_25_across"
-g=1
-python main.py -g ${g} -version "${version}" --setting 'full' -shot 0 -name HHAR -cross "users" --store "${store}" &
-python main.py -g ${g} -version "${version}" -shot 5 -name HHAR -cross "users" --store "${store}" &
-python main.py -g ${g} -version "${version}" -shot 10 -name HHAR -cross "users" --store "${store}" &
-python main.py -g ${g} -version "${version}" -shot 50 -name HHAR -cross "users" --store "${store}" &
-python main.py -g ${g} -version "${version}" -shot 100 -name HHAR -cross "users" --store "${store}"
+# version="train25_supervised_cross"
+# store="preliminary_25_across"
+# g=1
+# python main.py -g ${g} -version "${version}" --setting 'full' -shot 0 -name HHAR -cross "users" --store "${store}" &
+# python main.py -g ${g} -version "${version}" -shot 5 -name HHAR -cross "users" --store "${store}" &
+# python main.py -g ${g} -version "${version}" -shot 10 -name HHAR -cross "users" --store "${store}" &
+# python main.py -g ${g} -version "${version}" -shot 50 -name HHAR -cross "users" --store "${store}" &
+# python main.py -g ${g} -version "${version}" -shot 100 -name HHAR -cross "users" --store "${store}"

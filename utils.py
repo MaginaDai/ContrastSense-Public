@@ -306,7 +306,7 @@ class Preprocess4Tensor(Pipeline):
         instance, label = sample
         instance = instance.astype(np.float64)
         if self.data_type == 'float':
-            return torch.from_numpy(instance).float(), torch.from_numpy(label).squeeze()
+            return torch.from_numpy(instance).float(), torch.from_numpy(label).long().squeeze()
         else:
             raise NotImplementedError
 

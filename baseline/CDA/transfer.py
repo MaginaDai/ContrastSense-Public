@@ -19,7 +19,7 @@ import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
-parser.add_argument('-lr', '--learning-rate', default=1e-4, type=float, metavar='LR', help='initial learning rate', dest='lr')
+parser.add_argument('-lr', '--learning-rate', default=1e-2, type=float, metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--transfer', default=True, type=str, help='to tell whether we are doing transfer learning')
 parser.add_argument('--pretrained', default='CDA_lr1e-3_v0/Myo', type=str, help='path to pretrained checkpoint')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')

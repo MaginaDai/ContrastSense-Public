@@ -16,13 +16,13 @@ from torchvision.transforms import transforms
 from data_aug import eeg_transforms
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
-parser.add_argument('-lr', '--learning-rate', default=1e-5, type=float, metavar='LR', help='initial learning rate', dest='lr')
+parser.add_argument('-lr', '--learning-rate', default=5e-5, type=float, metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--transfer', default=False, type=str, help='to tell whether we are doing transfer learning')
-parser.add_argument('--pretrained', default='lr/SEED', type=str, help='path to pretrained checkpoint')
+parser.add_argument('--pretrained', default='SACL_test25_0/SEED_IV', type=str, help='path to pretrained checkpoint')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
 parser.add_argument('-b', '--batch-size', default=256, type=int, metavar='N')
-parser.add_argument('-name', default='SEED', help='datasets name', choices=['SEED', 'SEED_IV'])
+parser.add_argument('-name', default='SEED_IV', help='datasets name', choices=['SEED', 'SEED_IV'])
 
 parser.add_argument('--log-every-n-steps', default=5, type=int, help='Log every n steps')
 parser.add_argument('-g', '--gpu-index', default=1, type=int, help='Gpu index.')
@@ -37,7 +37,7 @@ parser.add_argument('-shot', default=10, type=int, help='how many shots of label
 parser.add_argument('--evaluate', default=False, type=bool, help='decide whether to evaluate')
 parser.add_argument('-ft', '--if-fine-tune', default=False, type=bool, help='to decide whether tune all the layers')
 parser.add_argument('-aug', default=False, type=bool, help='to decide whether use augmentation')
-parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
+parser.add_argument('-version', default="test0", type=str, help='control the version of the setting')
 
 
 def main():
@@ -83,10 +83,12 @@ def main():
 
     # model.to(args.device)
 
-    classifier_name = []
+    classifier_name = ['BN.weight', 'BN.bias', 'BN.running_mean', 'BN.running_var']
     for name, param in model.named_parameters():
         if "classifier" in name:
             classifier_name.append(name)
+            
+    
     # load pre-trained model
     if args.pretrained:
         if os.path.isfile(args.pretrained):
@@ -98,7 +100,8 @@ def main():
                     # remove prefix
                     state_dict[k[len("model."):]] = state_dict[k]
                 # delete renamed or unused k
-                del state_dict[k]
+                if not args.evaluate:
+                    del state_dict[k]
 
             args.start_epoch = 0
             log = model.load_state_dict(state_dict, strict=False)

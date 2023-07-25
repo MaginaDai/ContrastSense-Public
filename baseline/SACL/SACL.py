@@ -280,6 +280,8 @@ class SACL(object):
         best_acc = 0
         best_f1 = 0
         not_best_counter = 0
+        is_best = False
+
         for epoch_counter in tqdm(range(self.args.epochs)):
             acc_batch = AverageMeter('acc_batch', ':6.2f')
 
@@ -318,9 +320,10 @@ class SACL(object):
             f1_batch = f1_score(label_batch.cpu().numpy(), pred_batch.cpu().numpy(), average='macro') * 100
             val_acc, val_f1 = evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
 
-            is_best = val_f1 > best_f1
-            best_f1 = max(val_f1, best_f1)
-            best_acc = max(val_acc, best_acc)
+            if epoch_counter > 10:
+                is_best = val_f1 > best_f1
+                best_f1 = max(val_f1, best_f1)
+                best_acc = max(val_acc, best_acc)
             if is_best:
                 not_best_counter = 0
                 best_epoch = epoch_counter

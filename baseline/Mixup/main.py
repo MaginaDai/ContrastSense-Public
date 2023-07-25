@@ -26,7 +26,7 @@ parser.add_argument('--store', default='test_Ninapro', type=str, help='define th
 parser.add_argument('-lr', '--learning-rate', default=5e-3, type=float, metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
 parser.add_argument('-b', '--batch-size', default=100, type=int, metavar='N')
-parser.add_argument('-g', '--gpu-index', default=2, type=int, help='Gpu index.')
+parser.add_argument('-g', '--gpu-index', default=1, type=int, help='Gpu index.')
 parser.add_argument('--disable-cuda', action='store_true', help='Disable CUDA')
   
 parser.add_argument('-e', '--epochs', default=200, type=int, metavar='N', help='number of total epochs to run')

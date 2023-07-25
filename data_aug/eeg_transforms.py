@@ -70,3 +70,9 @@ class EEG_dropout(object):
         idx = pos < self.p
         sensor[:, :, idx] = 0
         return sensor
+
+class EEGToTensor(object):
+    """Convert ndarrays in sample to Tensors."""
+
+    def __call__(self, sensor):
+        return torch.from_numpy(sensor.copy().astype('float32'))

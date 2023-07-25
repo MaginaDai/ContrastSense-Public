@@ -161,11 +161,21 @@ class SACL_model(nn.Module):
 class SACL_ft_model(nn.Module):
     def __init__(self, transfer=True, num_class=7):
         super(SACL_ft_model, self).__init__()
+        # self.BN_0 = nn.BatchNorm1d(62)
         self.embed_model = SACLEncoder(62, 200, dropout_rate=0.5, embed_dim=256)
-        self.classifier = nn.Linear(256, num_class)
+        self.BN = nn.BatchNorm1d(62)
+        self.classifier = nn.Sequential(
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, num_class))
 
     def forward(self, x):
+        # x = self.BN_0(x)
+        x = x.permute(0, 2, 1)
+        x = self.BN(x)
+        x = x.permute(0, 2, 1)
         x = self.embed_model(x)
+        
         h = self.classifier(x)
         return h
 

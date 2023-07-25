@@ -4,6 +4,8 @@ import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt
 
+from SEED_IV import eeg_preprocessing
+
 SOURCE_DIR = 'original_dataset/SEED'
 prefix = 'ww_eeg'
 SAMPLING_FREQ=200
@@ -53,26 +55,14 @@ def seed_preprocess(dir_name):
                 if 'eeg' not in keys:
                     continue
                 trial = int(keys.split('_')[1][3:]) - 1
-                data_i = data_i.transpose()
-                ## normalization
-                data_i -= np.mean(data_i, axis=0)
-                data_i /= np.std(data_i, axis=0)
-                ## filter
-                for j in range(data_i.shape[1]):
-                    # plt.figure()
-                    # Y = np.fft.fft(data_i[:, j])
-                    # freqs = np.fft.fftfreq(len(data_i))
-                    # plt.plot(freqs[:int(Y.shape[0]/2)] * SAMPLING_FREQ, np.abs(Y)[:int(Y.shape[0]/2)], 'b')
-                    
-                    data_i[:, j] = signal.filtfilt(b, a, data_i[:, j])
+                eeg_max = np.max(data_i, 1)
+                eeg_min = np.min(data_i, 1)
 
-                    # Y_after = np.fft.fft(data_i[:, j])
-                    # plt.plot(freqs[:int(Y.shape[0]/2)] * SAMPLING_FREQ, np.abs(Y_after)[:int(Y.shape[0]/2)], 'r')
-                    # plt.savefig('filter effect.png')
-                    pass
-                
-                ## downsample to 100 Hz
-                data_i = data_i[::2, :]
+                for i in range(62):
+                    data_i[i] = (data_i[i] - eeg_min[i]) / (eeg_max[i] - eeg_min[i])
+
+                data_i = eeg_preprocessing(data_i)
+                data_i = data_i.transpose()
                 
                 data_i = data_i[:data_i.shape[0] // window_len * window_len, :]
                 reshaped_data = data_i.reshape(-1, window_len, data_i.shape[1])

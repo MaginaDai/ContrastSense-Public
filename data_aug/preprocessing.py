@@ -202,7 +202,7 @@ def fetch_instance_number_of_dataset(dir):
     return len(file_name_list)
 
 
-def preprocessing_dataset_cross_domain_val(dir, target_dir, dataset, test_portion=0.6, val_portion=0.15, tune_domain_portion=0.4, cross='users'):
+def preprocessing_dataset_cross_domain_val(dir, target_dir, dataset, test_portion=0.60, val_portion=0.15, tune_domain_portion=0.40, cross='users'):
     print(dataset)
     
     num = fetch_instance_number_of_dataset(dir)
@@ -534,7 +534,7 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
-    dataset_name = ["SEED"]
+    dataset_name = ["SEED_IV"]
     # dataset_name = ["Shoaib"]
     for i in range(seg_types):
         for dataset in dataset_name:
@@ -602,13 +602,13 @@ def new_tune_segmentation_with_different_portion(seed=940, seg_type=1):
     random.seed(seed)
     np.random.seed(seed)
     # dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
-    dataset_name = ["HASC"]
+    dataset_name = ["Myo", "NinaPro"]
     # dataset_name = ["HHAR"]
     tune_portion = [0.6, 0.8, 1.0]
     for i in range(seg_type):
         for portion in tune_portion:
             for dataset in dataset_name:
-                write_balance_tune_set(ori_dir=f'datasets/{dataset}/', train_dir=f'datasets/{dataset}_cd{i}/', target_dir=f'datasets/{dataset}_cd_tune_portion_{int(portion*100)}_shot{i}/', dataset=dataset, tune_domain_portion=portion, cross='devices')
+                write_balance_tune_set(ori_dir=f'datasets/{dataset}/', train_dir=f'datasets/{dataset}_shot{i}/', target_dir=f'datasets/{dataset}_cu_tune_portion_{int(portion*100)}_shot{i}/', dataset=dataset, tune_domain_portion=portion, cross='users')
     return
 
 def random_split(dir, cross_domain_dir, target_dir):
@@ -725,9 +725,9 @@ if __name__ == '__main__':
     # datasets_shot_record(datasets='HASC', version='s1', shot=100)
     # new_segmentation_for_positions(seg_types=5)
     # new_segmentation_for_devices(seg_types=1)
-    new_segmentation_for_user(seg_types=5)
-    # generate_split_for_cda_based_on_previous_split()
-    # cmp_split()
+    # new_segmentation_for_user(seg_types=5)
+    generate_split_for_cda_based_on_previous_split()
+    cmp_split()
     # new_tune_segmentation_with_different_portion(seed=940, seg_type=5)
     # dataset='Myo'
     # preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot0/", test_portion=0.6, val_portion=0.15, tune_domain_portion=0.4, dataset=dataset, cross='users')
