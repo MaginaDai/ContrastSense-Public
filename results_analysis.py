@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 from xml.sax import default_parser_list
 
 
-dataset_imu = ['HHAR', 'MotionSense', 'Shoaib', 'HASC']
-# dataset_imu=['HASC']
+# dataset_imu = ['HHAR', 'MotionSense', 'Shoaib', 'HASC']
+dataset_imu=['Shoaib']
 dataset_emg = ['Myo', 'NinaPro']
 
 # dataset = ['HHAR']
@@ -36,7 +36,7 @@ def avg_result(name, ft, modal, shot=10):
         for j, data in enumerate(dataset):
             print(n, j)
             if ft:
-                dir = f'{n}/{data}_ft_shot_{shot}/training.log'
+                dir = f'{n}/{data}_shot_{shot}/training.log'
             else:
                 dir = f'{n}/{data}_shot_{shot}/training.log'
             eval_pattern = r'best\seval\sf1\sis\s+\(*(\d+\.+\d*)'

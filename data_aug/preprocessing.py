@@ -724,7 +724,7 @@ if __name__ == '__main__':
     # new_segmentation_for_positions(seg_types=5)
     # new_segmentation_for_devices(seg_types=1)
     # new_segmentation_for_user(seg_types=5)
-    generate_split_for_cda_based_on_previous_split()
+    # generate_split_for_cda_based_on_previous_split()
     cmp_split()
     # new_tune_segmentation_with_different_portion(seed=940, seg_type=5)
     # dataset='Myo'

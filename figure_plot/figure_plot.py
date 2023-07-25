@@ -367,7 +367,7 @@ def fig_batch_size_result():
 
 def fig_label_domain_portion():
     portion=[40, 60, 80, 100]
-    portion=[33.3, 66.7, 100]
+    # portion=[33.3, 66.7, 100]
     
     HASC_result = [[25.57, 23.70, 27.46, 29.64],
                    [31.81, 33.04, 37.20, 37.10],
@@ -404,7 +404,7 @@ def fig_label_domain_portion():
     plt.ylabel("F1 Score (%)", fontsize=16)
     plt.legend(Methods, fontsize=10, loc=4, borderaxespad=0.)
     plt.tight_layout()
-    plt.savefig('./figure_plot/label_portion_domains.pdf')
+    plt.savefig('./figure_plot/label_portion_domains_test.png')
 
 def fig_queue_results():
     queue_size=[256, 512, 1024, 2048]
@@ -608,9 +608,9 @@ if __name__ == '__main__':
     # cmp_segmentation_performance()
     # figure_supervised_learning()
     # figure_domain_shift()
-    figure_limited_labels()
+    # figure_limited_labels()
     # figure_cross_domain(cross='positions')
-    # fig_label_domain_portion()
+    fig_label_domain_portion()
     # fig_batch_size_result()
     # fig_aug_effect()
     # fig_queue_results()

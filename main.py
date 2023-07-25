@@ -70,9 +70,9 @@ parser.add_argument('-p6', default=0.8, type=float, help='possibility for one au
 parser.add_argument('-hard', default=True, type=bool, help='hard sampling or not')  # we sample hard ones from the data.
 parser.add_argument('-hard_record', default=False, type=bool, help='record hardest samples related information or not')  # we sample hard ones from the data.
 parser.add_argument('-sample_ratio', default=0.05, type=float, help='hard sampling or not')  # we eliminate hardest ones from the data.
-parser.add_argument('-last_ratio', default=0.5, type=float, help='ratio of hard sample to preserve')  # we sample hard ones from the other domains.
+parser.add_argument('-last_ratio', default=1.0, type=float, help='ratio of hard sample to preserve')  # we sample hard ones from the other domains.
 parser.add_argument('-scale_ratio', default=1.0, type=float, help='to scale the similarity between domains')  # to scale the similarity between domains
-parser.add_argument('-time_window', default=10, type=float, help='[time_label-t, time_label + t]')  # how much time idx labels are included.
+parser.add_argument('-time_window', default=0, type=float, help='[time_label-t, time_label + t]')  # how much time idx labels are included.
 
 
 def main():

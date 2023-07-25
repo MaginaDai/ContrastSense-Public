@@ -127,6 +127,10 @@ def main(args, fisher=None):
         args.store = deepcopy(args.pretrained)
 
     args.pretrained = './runs/' + args.pretrained + '/model_best.pth.tar'
+    
+    if args.ewc:
+        if args.name == 'HHAR':
+            args.fishermax = 1e-4
 
 
     dataset = ContrastiveLearningDataset(transfer=True, version=args.version, datasets_name=args.name, modal=args.modal)

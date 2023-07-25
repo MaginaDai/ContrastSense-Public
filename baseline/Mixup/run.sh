@@ -64,17 +64,20 @@
 #     done
 # done
 
-# version="cp"
-# store="mixup_cp"
-# for shot in 5 50 100
-# do
-#     python main.py -g 3 -version "${version}0" --store "${store}0" -shot ${shot} -name 'Shoaib' &
-#     python main.py -g 3 -version "${version}1" --store "${store}1" -shot ${shot} -name 'Shoaib' &
-#     python main.py -g 3 -version "${version}2" --store "${store}2" -shot ${shot} -name 'Shoaib' &
-#     python main.py -g 3 -version "${version}3" --store "${store}3" -shot ${shot} -name 'Shoaib' &
-#     python main.py -g 3 -version "${version}4" --store "${store}4" -shot ${shot} -name 'Shoaib'
-#     wait
-# done
+version="shot"
+store="mixup_cu"
+for shot in 1
+do
+    for dataset in "HASC" "HHAR" "MotionSense" "Shoaib" 
+    do
+        python main.py -g 3 -version "${version}0" --store "${store}0" -shot ${shot} -name ${dataset} &
+        python main.py -g 3 -version "${version}1" --store "${store}1" -shot ${shot} -name ${dataset} &
+        python main.py -g 3 -version "${version}2" --store "${store}2" -shot ${shot} -name ${dataset} &
+        python main.py -g 3 -version "${version}3" --store "${store}3" -shot ${shot} -name ${dataset} &
+        python main.py -g 3 -version "${version}4" --store "${store}4" -shot ${shot} -name ${dataset}
+    done
+    wait
+done
 
 # for portion in 60 80 100
 # do
@@ -115,22 +118,22 @@
 # python main.py -g 2 -version "${version}" --store "${store}" -shot 100 -name 'HHAR' &
 # python main.py -g 2 -version "${version}" --store "${store}" -shot 0 -name 'HHAR'
 
-version='shot'
-lr=0.0001
+# version='shot'
+# lr=0.0001
 
-for e in 600 800
-do
-    store="mixup_EMG_lr${lr}_e${e}_v"
+# for e in 600 800
+# do
+#     store="mixup_EMG_lr${lr}_e${e}_v"
 
-    for dataset in "Myo" "NinaPro"
-    do
-        python main.py -lr ${lr} -e ${e} -g 3 -version "${version}0" --store "${store}0" -shot 10 -name ${dataset} &
-        python main.py -lr ${lr} -e ${e} -g 3 -version "${version}1" --store "${store}1" -shot 10 -name ${dataset} &
-        python main.py -lr ${lr} -e ${e} -g 3 -version "${version}2" --store "${store}2" -shot 10 -name ${dataset} &
-        python main.py -lr ${lr} -e ${e} -g 3 -version "${version}3" --store "${store}3" -shot 10 -name ${dataset} &
-        python main.py -lr ${lr} -e ${e} -g 3 -version "${version}4" --store "${store}4" -shot 10 -name ${dataset} 
+#     for dataset in "Myo" "NinaPro"
+#     do
+#         python main.py -lr ${lr} -e ${e} -g 3 -version "${version}0" --store "${store}0" -shot 10 -name ${dataset} &
+#         python main.py -lr ${lr} -e ${e} -g 3 -version "${version}1" --store "${store}1" -shot 10 -name ${dataset} &
+#         python main.py -lr ${lr} -e ${e} -g 3 -version "${version}2" --store "${store}2" -shot 10 -name ${dataset} &
+#         python main.py -lr ${lr} -e ${e} -g 3 -version "${version}3" --store "${store}3" -shot 10 -name ${dataset} &
+#         python main.py -lr ${lr} -e ${e} -g 3 -version "${version}4" --store "${store}4" -shot 10 -name ${dataset} 
 
-        wait
-    done
+#         wait
+#     done
 
-done
+# done
