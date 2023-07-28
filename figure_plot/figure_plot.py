@@ -407,9 +407,9 @@ def fig_label_domain_portion():
     plt.savefig('./figure_plot/label_portion_domains_test.png')
 
 def fig_queue_results():
-    queue_size=[256, 512, 1024, 2048]
-    queue_result = [59.49, 60.38, 62.59, 61.29]
-    err=[2.39, 2.53, 2.53, 2.49]
+    queue_size=[256, 512, 1024, 1536, 2048]
+    queue_result = [57.64, 58.62, 61.92, 60.46, 60.12]
+    err=[2.28, 1.45, 2.88, 2.18, 1.14]
     x=np.arange(len(queue_size))
     # plt.subplot(131)
     plt.grid(axis='y')
@@ -418,7 +418,7 @@ def fig_queue_results():
     plt.yticks(fontsize=22)
     plt.xlabel(r"$|Q|$", fontsize=22)
     plt.ylabel("F1 Score (%)", fontsize=22)
-    plt.ylim(55, 67)
+    plt.ylim(53, 67)
     plt.tight_layout()
     plt.savefig('./figure_plot/Queue_size_sensativity.pdf')
     
@@ -666,7 +666,7 @@ if __name__ == '__main__':
     # fig_label_domain_portion()
     # fig_batch_size_result()
     # fig_aug_effect()
-    # fig_queue_results()
+    fig_queue_results()
     # fig_slr_results()
     # fig_ewc_results()
     # fig_sensativity_analysis()
