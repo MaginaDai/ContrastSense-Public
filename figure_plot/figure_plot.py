@@ -425,8 +425,8 @@ def fig_queue_results():
 
 def fig_slr_results():
     slr=[0.1, 0.3, 0.5, 0.7, 0.9]
-    slr_result = [59.75, 60.71, 60.50, 62.59, 60.16]
-    err=[3.28, 2.10, 2.63, 2.52, 1.65]
+    slr_result = [58.80, 59.04, 58.66, 61.92, 59.74]
+    err=[1.31, 2.55, 2.76, 2.88, 2.42]
     x=np.arange(len(slr))
     plt.grid(axis='y')
     plt.errorbar(x, slr_result, fmt='--', color=color_blue, linewidth=6, yerr=err, capsize=10, capthick=3, elinewidth=3, ecolor='black')
@@ -437,6 +437,59 @@ def fig_slr_results():
     plt.ylim(55, 66)
     plt.tight_layout()
     plt.savefig('./figure_plot/Slr_sensativity.pdf')
+
+
+def fig_time_window_result():
+    window=[10, 30, 60, 120]
+    window_result = [57.11, 57.34, 57.66, 57.03]
+    err=[1.11, 1.82, 1.35, 2.78]
+    x=np.arange(len(window))
+    plt.grid(axis='y')
+    plt.errorbar(x, window_result, fmt='--', color=color_blue, linewidth=6, yerr=err, capsize=10, capthick=3, elinewidth=3, ecolor='black')
+    plt.xticks(x, labels=window, fontsize=22)
+    plt.yticks(np.arange(54, 61, 1), fontsize=22)
+    plt.xlabel("$T$", fontsize=22)
+    plt.ylabel("F1 Score (%)", fontsize=22)
+    plt.ylim(54, 61)
+    plt.tight_layout()
+    plt.savefig('./figure_plot/time_window.pdf')
+
+
+def fig_negative_sampling_result():
+    ratio=[0.4, 0.5, 0.6, 0.7, 0.8]
+    HHAR_per=[57.87, 60.79, 59.47, 56.74, 54.89]
+    HASC_per=[31.89, 31.31, 30.85, 33.85, 32.98]
+
+    x=np.arange(len(ratio))
+    fig, ax1 = plt.subplots()
+    
+    ax1.plot(x, HHAR_per, '^-', color=color_blue, linewidth=4, markersize=10)
+    # ax1.set_xlabel('X-axis', fontsize=22)
+    ax1.set_ylabel('HHAR dataset', color=color_blue, fontsize=16)
+    ax1.set_xticks(x, labels=ratio, fontsize=16)
+    # ax1.set_yticks(np.arange(50, 64, 2), fontsize=22)
+    ax1.set_yticks(np.arange(52, 64, 2), )
+    ax1.tick_params(axis='y', colors=color_blue, labelsize=16)
+
+    ax2 = ax1.twinx()
+    ax2.plot(x, HASC_per, 'o-', color=color_red, linewidth=4, markersize=10)
+    ax2.set_ylabel('HASC dataset', color=color_red, fontsize=16)
+    ax2.set_yticks(np.arange(29, 38, 2), )
+    ax2.tick_params(axis='y', colors=color_red, labelsize=16)
+
+    # plt.show()
+
+    # plt.plot(x, HHAR_per, color=color_blue, linewidth=6,)
+    # plt.plot(x, HASC_per, color=color_red, linewidth=6,)
+    # plt.xticks(x, labels=ratio, fontsize=22)
+    # plt.yticks(np.arange(30, 65, 2), fontsize=22)
+    # plt.xlabel("$\lambda_1$", fontsize=22)
+    # plt.ylabel("F1 Score (%)", fontsize=22)
+    # plt.ylim(30, 65)
+    # plt.legend(["HHAR", "HASC"])
+    plt.tight_layout()
+    plt.savefig('./figure_plot/ratio of similarity sampling.pdf')
+
 
 def fig_ewc_results():
     ewc=[0.5, 5, 50, 100, 500]
@@ -610,7 +663,7 @@ if __name__ == '__main__':
     # figure_domain_shift()
     # figure_limited_labels()
     # figure_cross_domain(cross='positions')
-    fig_label_domain_portion()
+    # fig_label_domain_portion()
     # fig_batch_size_result()
     # fig_aug_effect()
     # fig_queue_results()
@@ -618,3 +671,6 @@ if __name__ == '__main__':
     # fig_ewc_results()
     # fig_sensativity_analysis()
     # figure_domain_shift_new()
+
+    # fig_negative_sampling_result()
+    fig_time_window_result()

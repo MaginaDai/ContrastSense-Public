@@ -71,6 +71,47 @@ class EEG_dropout(object):
         sensor[:, :, idx] = 0
         return sensor
 
+
+class EEG_Scale(object):
+    """ Rescale the EEG sensors reading
+
+    Args:
+        scale: the scaling range for all axis
+        p: transformation possibility
+    """
+
+    def __init__(self, scale, p):
+        self.scale = scale
+        self.p = p
+
+    def __call__(self, sensor):
+        if np.random.random() < self.p:
+            K = np.diag(np.random.uniform(low=self.scale[0], high=self.scale[1], size=sensor.shape[-1]))
+            sensor = np.dot(sensor, K)
+        return sensor
+
+
+class EEG_Negated(object):
+    """ Negate the EEG sensors reading
+
+    Args:
+        p: transformation possibility
+    """
+
+    def __init__(self, p):
+        self.p = p
+
+    def __call__(self, sensor):
+        if np.random.random() < self.p:
+            R = np.eye(sensor.shape[-1])
+            for i in range(sensor.shape[-1]):
+                if np.random.random() < 0.5:
+                    R[i, i] = -1
+            sensor = np.dot(sensor, R)
+        return sensor
+
+    
+
 class EEGToTensor(object):
     """Convert ndarrays in sample to Tensors."""
 

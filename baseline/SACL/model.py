@@ -7,7 +7,7 @@ from os.path import dirname
 sys.path.append(dirname(dirname(sys.path[0])))
 sys.path.append(dirname(sys.path[0]))
 
-from SACL import SAAdversarialLoss, SAContrastiveAdversarialLoss, momentum_model_parameter_update
+# from SACL import SAAdversarialLoss, SAContrastiveAdversarialLoss, momentum_model_parameter_update
 import pickle as pkl
 
 class SACLResBlock(torch.nn.Module):
@@ -55,6 +55,29 @@ class SACLFlatten(torch.nn.Module):
     
     def forward(self, x):
         return x.view(x.size(0), -1)
+    
+
+class SACLEncoder_CNN_block(torch.nn.Module):
+    def __init__(self, num_channels, temporal_len, dropout_rate=0.5, embed_dim=256):
+        super(SACLEncoder_CNN_block, self).__init__()  # num_channels = 1
+        self.sequential_process = torch.nn.Sequential(torch.nn.Conv1d(num_channels, num_channels * 4, 13), 
+                                               SACLResBlock(num_channels * 4, num_channels * 16, 11), 
+                                               torch.nn.MaxPool1d(4),  
+                                               SACLResBlock(num_channels * 16, num_channels * 8, 9), 
+                                               torch.nn.MaxPool1d(4),  
+                                               SACLResBlock(num_channels * 8, num_channels * 4, 7), 
+                                               torch.nn.ELU(), 
+                                               
+        )
+
+        self.dropout_rate = dropout_rate
+        self.embed_dim = embed_dim
+    
+    def forward(self, x):
+        x = x.permute(0, 2, 1)
+        out = self.sequential_process(x)
+        return out.permute(0, 2, 1)
+    
 
 class SACLEncoder(torch.nn.Module):
     """
@@ -62,25 +85,20 @@ class SACLEncoder(torch.nn.Module):
     see  appendix Figure A.2 in arxiv.org/pdf/2007.04871.pdf for diagram
     """
     def __init__(self, num_channels, temporal_len, dropout_rate=0.5, embed_dim=256):
-        super(SACLEncoder, self).__init__()
-        self.sequential_process = torch.nn.Sequential(torch.nn.Conv1d(num_channels, num_channels//2, temporal_len//32), 
-                                               SACLResBlock(num_channels//2, num_channels//2, temporal_len//16), 
-                                               torch.nn.MaxPool1d(4),  
-                                               SACLResBlock(num_channels//2, num_channels, temporal_len//16), 
-                                               torch.nn.MaxPool1d(4),  
-                                               SACLResBlock(num_channels, num_channels*2, temporal_len//32), 
-                                               torch.nn.ELU(), 
-                                               SACLFlatten(), # see https://stackoverflow.com/questions/53953460/how-to-flatten-input-in-nn-sequential-in-pytorch
-                                               torch.nn.Linear(num_channels*(2**1)*(int(temporal_len/16.5)), embed_dim) # added to make it easier for different data sets with different shapes to be run through model
-        )
+        super(SACLEncoder, self).__init__()  # num_channels = 1
+        self.encoder_cnn_block = SACLEncoder_CNN_block(num_channels, temporal_len, dropout_rate=0.5, embed_dim=256)
+
+        # self.flatten = SACLFlatten() # see https://stackoverflow.com/questions/53953460/how-to-flatten-input-in-nn-sequential-in-pytorch
+        self.linear = torch.nn.Linear(744, embed_dim) # added to make it easier for different data sets with different shapes to be run through model
 
         self.dropout_rate = dropout_rate
         self.embed_dim = embed_dim
         pass
     
     def forward(self, x):
-        x = x.permute(0, 2, 1)
-        out = self.sequential_process(x)
+        x = self.encoder_cnn_block(x)
+        x = x.reshape(x.shape[0], -1)
+        out = self.linear(x)
         return out
 
 class SACLNet(torch.nn.Module):
@@ -137,7 +155,7 @@ class SACLAdversary(torch.nn.Module):
     
 
 class SACL_model(nn.Module):
-    def __init__(self, device, num_subjects=15, channels=62, temporal_len=200, dropout_rate=0.5, embed_dim=256, num_upstream_decode_features=64):
+    def __init__(self, device, num_subjects=15, channels=1, temporal_len=3000, dropout_rate=0.5, embed_dim=256, num_upstream_decode_features=64):
         super(SACL_model, self).__init__()
         
         self.model = SACLNet(channels, temporal_len, dropout_rate=dropout_rate, embed_dim=embed_dim, num_upstream_decode_features=num_upstream_decode_features)
@@ -159,23 +177,17 @@ class SACL_model(nn.Module):
     
 
 class SACL_ft_model(nn.Module):
-    def __init__(self, transfer=True, num_class=7):
+    def __init__(self, transfer=True, num_class=5):
         super(SACL_ft_model, self).__init__()
-        # self.BN_0 = nn.BatchNorm1d(62)
-        self.embed_model = SACLEncoder(62, 200, dropout_rate=0.5, embed_dim=256)
-        self.BN = nn.BatchNorm1d(62)
+        self.embed_model = SACLEncoder(1, 3000, dropout_rate=0.5, embed_dim=256)
+
         self.classifier = nn.Sequential(
             nn.Linear(256, 128),
             nn.ReLU(),
             nn.Linear(128, num_class))
 
     def forward(self, x):
-        # x = self.BN_0(x)
-        x = x.permute(0, 2, 1)
-        x = self.BN(x)
-        x = x.permute(0, 2, 1)
         x = self.embed_model(x)
-        
         h = self.classifier(x)
         return h
 

@@ -35,6 +35,7 @@ def fetch_dataset_root(dataset_name):
             'NinaPro_cda': './datasets/NinaPro_cda',
             'SEED': './datasets/SEED',
             'SEED_IV': './datasets/SEED_IV',
+            'sleepEDF': './datasets/sleepEDF'
             }
     try:
         root_dir = root[dataset_name]
@@ -126,15 +127,17 @@ class ContrastiveLearningDataset:
         return data_transforms
 
     def get_eeg_pipeline_transform(self):
-        eeg_noise = eeg_transforms.EEG_Noise(var=5e-3, p=self.p5)
+        eeg_noise = eeg_transforms.EEG_Noise(var=5e-2, p=self.p5)
         eeg_cutout = eeg_transforms.EEG_cutout(p=0.5)
         eeg_delay = eeg_transforms.EEG_delay(p=0.5)
-        eeg_dropout = eeg_transforms.EEG_delay(p=0.2)
-        emg_toTensor = emg_transforms.EMGToTensor()
+        eeg_scale = eeg_transforms.EEG_Scale(scale=[0.9, 1.1], p=self.p6)
+        eeg_negate = eeg_transforms.EEG_Negated(p=self.p2)
+        emg_toTensor = eeg_transforms.EEGToTensor()
 
-        data_transforms = transforms.Compose([eeg_cutout,
+        data_transforms = transforms.Compose([eeg_scale,
+                                              eeg_negate,
+                                              eeg_cutout,
                                               eeg_delay,
-                                              eeg_dropout,
                                               eeg_noise,
                                               emg_toTensor])
         return data_transforms

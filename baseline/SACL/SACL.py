@@ -228,8 +228,8 @@ class SACL(object):
                 }, is_best, filename=os.path.join(self.writer.log_dir, checkpoint_name), path_dir=self.writer.log_dir)
             logging.debug(f"Epoch: {epoch_counter} loss: {loss_batch.avg} acc: {acc_batch.avg} ad_loss: {ad_loss_batch.avg} ad_acc: {ad_acc_batch.avg}")
 
-            if acc_batch.avg > 99:
-                break ## contrastive learning is good enough
+            # if acc_batch.avg > 99:
+            #     break ## contrastive learning is good enough
 
 
         logging.info("Training has finished.")

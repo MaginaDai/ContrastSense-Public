@@ -21,7 +21,7 @@ from getFisherDiagonal import getFisherDiagonal_initial, load_fisher_matrix
 from simclr import SimCLR, MyNet, LIMU_encoder
 from utils import MoCo_evaluate, evaluate, identify_users_number, load_model_config, CPC_evaluate
 from torchvision.transforms import transforms
-from data_aug import imu_transforms, emg_transforms
+from data_aug import imu_transforms, emg_transforms, eeg_transforms
 
 import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -37,10 +37,10 @@ parser.add_argument('-ft', '--if-fine-tune', default=True, type=bool, help='to d
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
-parser.add_argument('--pretrained', default='test/Myo', type=str,
+parser.add_argument('--pretrained', default='test/sleepEDF', type=str,
                     help='path to ContrastSense pretrained checkpoint')
-parser.add_argument('-name', default='Myo',
-                    help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro'])
+parser.add_argument('-name', default='sleepEDF',
+                    help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF'])
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 
 parser.add_argument('-e', '--epochs', default=400, type=int, metavar='N',
@@ -141,6 +141,9 @@ def main(args, fisher=None):
                                         split='tune', transfer=True, shot=args.shot, modal=args.modal)
     elif args.modal == 'emg':
         tune_dataset = Dataset4Training(args.name, args.version, transform=transforms.Compose([emg_transforms.EMGToTensor()]), 
+                                        split='tune', transfer=True, shot=args.shot, modal=args.modal)
+    elif args.modal == 'eeg':
+        tune_dataset = Dataset4Training(args.name, args.version, transform=transforms.Compose([eeg_transforms.EEGToTensor()]), 
                                         split='tune', transfer=True, shot=args.shot, modal=args.modal)
     else:
         NotADirectoryError
@@ -264,6 +267,8 @@ if __name__ == '__main__':
     
     if args.name in ['NinaPro', 'Myo']:
         args.modal = 'emg'
+    elif args.name in ['sleepEDF']:
+        args.modal = 'eeg'
     else:
         args.modal = 'imu'
 

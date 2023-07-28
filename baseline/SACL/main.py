@@ -19,8 +19,8 @@ parser = argparse.ArgumentParser(description='PyTorch Contrastive Domain Adaptat
 parser.add_argument('-lr', '--learning-rate', default=5e-4, type=float, metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('-b', '--batch-size', default=128, type=int, metavar='N')
 parser.add_argument('-e', '--epochs', default=1000, type=int, metavar='N', help='number of total epochs to run')
-parser.add_argument('-t', '--temperature', default=0.5, type=float, help='softmax temperature (default: 0.1)')
-parser.add_argument('-name', default='SEED', help='EEG datasets name', choices=['SEED', 'SEED_IV'])
+parser.add_argument('-t', '--temperature', default=0.5, type=float, help='softmax temperature (default: 0.5)')
+parser.add_argument('-name', default='sleepEDF', help='EEG datasets name', choices=['SEED', 'SEED_IV', 'sleepEDF'])
 
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
@@ -77,7 +77,7 @@ def mapping_subject_id(train_loader):
     
     subject_id = torch.unique(subject_id).long()
     num_subject = len(subject_id)
-    map_subject_to_idx = (-1) * torch.ones(15).long()
+    map_subject_to_idx = (-1) * torch.ones(20).long()
     map_subject_to_idx[subject_id] = torch.arange(num_subject).long()
     return num_subject, map_subject_to_idx
 

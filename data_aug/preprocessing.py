@@ -55,6 +55,7 @@ UsersNum = {
     'HASC': 80,  # actually we have 64 users in total. But the largest user id is 79, set it to 80. +1 since it starts from 0. 
     'Myo': 40,
     'NinaPro': 10,
+    'sleepEDF': 20,
 }
 
 LabelPosition = {
@@ -79,6 +80,7 @@ ClassesNum = {
     'NinaPro_cda': 7,
     'SEED': 3,
     'SEED_IV': 4,
+    'sleepEDF': 5,
 }
 
 DevicesNum = {
@@ -534,7 +536,7 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
-    dataset_name = ["SEED_IV"]
+    dataset_name = ["sleepEDF"]
     # dataset_name = ["Shoaib"]
     for i in range(seg_types):
         for dataset in dataset_name:
@@ -725,9 +727,9 @@ if __name__ == '__main__':
     # datasets_shot_record(datasets='HASC', version='s1', shot=100)
     # new_segmentation_for_positions(seg_types=5)
     # new_segmentation_for_devices(seg_types=1)
-    # new_segmentation_for_user(seg_types=5)
-    generate_split_for_cda_based_on_previous_split()
-    cmp_split()
+    new_segmentation_for_user(seg_types=5)
+    # generate_split_for_cda_based_on_previous_split()
+    # cmp_split()
     # new_tune_segmentation_with_different_portion(seed=940, seg_type=5)
     # dataset='Myo'
     # preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot0/", test_portion=0.6, val_portion=0.15, tune_domain_portion=0.4, dataset=dataset, cross='users')

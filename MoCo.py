@@ -21,6 +21,7 @@ from torch.cuda.amp import GradScaler, autocast
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from DeepSense import DeepSense_encoder
+from baseline.SACL.model import SACLEncoder_CNN_block
 
 from SupContrast import SupConLoss
 from baseline.CDA.model import TCN_GCN_unit
@@ -50,6 +51,8 @@ class MoCo_model(nn.Module):
             self.encoder = MoCo_encoder(dims=dims, momentum=momentum, drop=drop)
         elif self.modal == 'emg':
             self.encoder = MoCo_encoder_for_emg_v2(dims=dims, momentum=momentum, drop=drop)
+        elif self.modal == 'eeg':
+            self.encoder = SACLEncoder_CNN_block(num_channels=1, temporal_len=3000)
         else:
             NotADirectoryError
         
@@ -94,6 +97,10 @@ class MoCo_classifier(nn.Module):
             feature_num = 1024
             # feature_num = 832
             self.gru = torch.nn.GRU(16, final_dim, num_layers=1, batch_first=True, bidirectional=True)
+        elif modal == 'eeg':
+            feature_num = 2976
+            classifier_dim = 256
+            self.gru = torch.nn.GRU(4, final_dim, num_layers=1, batch_first=True, bidirectional=True)
         else:
             NotADirectoryError
     
@@ -180,6 +187,8 @@ class MoCo_projector(nn.Module):
         elif modal == 'emg':
             feature_num = 1024
             # feature_num = 2912
+        elif modal == 'eeg':
+            feature_num = 744
         else:
             NotADirectoryError
 
@@ -1174,9 +1183,10 @@ class MoCo(object):
             logging.debug(log_str)
 
             if best_acc > 99 and epoch_counter >= 50:
+                print(f"early stop at {epoch_counter}")
                 break  # early stop
 
-            if not_best_counter >= 200 or best_acc > 99:
+            if not_best_counter >= 200:
                 print(f"early stop at {epoch_counter}")
                 break
             

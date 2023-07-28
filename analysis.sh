@@ -1,9 +1,9 @@
 #!/bin/bash
 key="v1"
-name="baseline/CDA/runs/ConSSL_lr1e-3_co_v"
+name="runs/eeg/cdl_slr0.9_"
 # name="runs/hard_v1_cl_"
 # name="baseline/CDA/runs/CDA_lr5e-4_v"
-python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4" -modal "emg"
+python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4" -modal "eeg"
 
 # python results_analysis.py -name "runs/CDL_ewc_mixup_v0" 
 # python results_analysis.py -name "${name}0_${key}" "${name}0.2_${key}" "${name}0.8_${key}" "${name}1.0_${key}"
