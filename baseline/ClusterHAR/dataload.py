@@ -7,14 +7,11 @@ from scipy.interpolate import interp1d
 from os.path import dirname
 sys.path.append(dirname(dirname(sys.path[0])))
 
-from baseline.CLHAR.CL_dataload import CL_Rotate
 from torchvision.transforms import transforms
 from torch.utils.data import Dataset
-from data_aug.contrastive_learning_dataset import ACT_Translated_labels, HHAR_movement, fetch_dataset_root, users, devices
-from data_aug.preprocessing import UsersPosition
-from data_aug.view_generator import ContrastiveLearningViewGenerator, SingleViewGenerator
+from data_aug.contrastive_learning_dataset import fetch_dataset_root
+from data_aug.view_generator import SingleViewGenerator
 from data_aug import imu_transforms
-from exceptions.exceptions import InvalidDatasetSelection
 
 
 
@@ -47,9 +44,9 @@ class ClusterCLDataset:
     def get_simclr_pipeline_transform(self):
         """Return a set of data augmentation transformations as described in my presentation."""
         imu_toTensor = imu_transforms.ToTensor()
-        imu_rotate = CL_Rotate()
-        # imu_resample = Resampling()
-        data_transforms = transforms.Compose([imu_rotate,
+        # imu_rotate = CL_Rotate()
+        imu_resample = Resampling()
+        data_transforms = transforms.Compose([imu_resample,
                                               imu_toTensor])
         return data_transforms
 
@@ -62,7 +59,9 @@ class ClusterCLDataset:
         elif split == 'train' or split == 'tune':
                 # here it is for data augmentation, make it more challenging.
             return ClusterHARDataset4Training(self.datasets_name, self.version, n_views,
-                                    self.get_simclr_pipeline_transform(),
+                                    transform=transforms.Compose([
+                                        imu_transforms.ToTensor()
+                                        ]),
                                     split=split, transfer=self.transfer, percent=percent, shot=shot)
         else:  # val or test
             return ClusterHARDataset4Training(self.datasets_name, self.version, n_views,

@@ -10,6 +10,7 @@ from scipy.io import loadmat
 import pandas as pd
 from mpl_toolkits.mplot3d import Axes3D
 import re
+from matplotlib import rc
 import seaborn as sns
 
 # color_blue = '#A1A9D0'
@@ -416,7 +417,7 @@ def fig_queue_results():
     plt.bar(x, queue_result, align='center', color=color_blue, yerr=err, capsize=10, ecolor='black', error_kw=dict(elinewidth=3, capthick=3), edgecolor='black', zorder=100)
     plt.xticks(x, labels=queue_size, fontsize=22)
     plt.yticks(fontsize=22)
-    plt.xlabel(r"$|Q|$", fontsize=22)
+    plt.xlabel(r"$M$", fontsize=22)
     plt.ylabel("F1 Score (%)", fontsize=22)
     plt.ylim(53, 67)
     plt.tight_layout()
@@ -440,19 +441,20 @@ def fig_slr_results():
 
 
 def fig_time_window_result():
-    window=[10, 30, 60, 120]
-    window_result = [57.11, 57.34, 57.66, 57.03]
-    err=[1.11, 1.82, 1.35, 2.78]
+    window=[0, 60, 120, 180, 240]
+    window_result = [54.91, 57.34, 57.66, 57.41, 56.19]
+    err=[2.23, 1.82, 1.35, 1.06, 2.57]
     x=np.arange(len(window))
     plt.grid(axis='y')
-    plt.errorbar(x, window_result, fmt='--', color=color_blue, linewidth=6, yerr=err, capsize=10, capthick=3, elinewidth=3, ecolor='black')
+    plt.bar(x, window_result, align='center', color=color_blue, yerr=err, capsize=10, ecolor='black', error_kw=dict(elinewidth=3, capthick=3), edgecolor='black', zorder=100)
     plt.xticks(x, labels=window, fontsize=22)
-    plt.yticks(np.arange(54, 61, 1), fontsize=22)
+    plt.yticks(np.arange(52, 61, 1), fontsize=22)
     plt.xlabel("$T$", fontsize=22)
     plt.ylabel("F1 Score (%)", fontsize=22)
-    plt.ylim(54, 61)
+    plt.ylim(52, 61)
     plt.tight_layout()
     plt.savefig('./figure_plot/time_window.pdf')
+    plt.savefig('./figure_plot/time_window.png')
 
 
 def fig_negative_sampling_result():
@@ -492,19 +494,63 @@ def fig_negative_sampling_result():
 
 
 def fig_ewc_results():
-    ewc=[0.5, 5, 50, 100, 500]
-    ewc_result = [61.63, 62.06, 62.59, 61.60, 60.83]
-    err=[2.85, 2.63, 2.52, 2.55, 3.13]
+    # ewc=[0.5, 5, 50, 100, 500]
+    # ewc_result = [61.63, 62.06, 62.59, 61.60, 60.83]
+    # err=[2.85, 2.63, 2.52, 2.55, 3.13]
+
+    ewc=[1, 25, 50, 75, 100]
+    ewc_result=[61.98, 62.17, 62.85, 62.65, 61.17]
+    err=[2.34, 2.91, 2.17, 2.50, 1.86]
     x=np.arange(len(ewc))
     plt.grid(axis='y')
     plt.errorbar(x, ewc_result, fmt='--', color=color_blue, linewidth=6, yerr=err, capsize=10, capthick=3, elinewidth=3, ecolor='black')
     plt.xticks(x, labels=ewc, fontsize=22)
-    plt.yticks(np.arange(57, 66, 2), fontsize=22)
+    plt.yticks(np.arange(59, 66, 1), fontsize=22)
     plt.xlabel("$\lambda_2$", fontsize=22)
     plt.ylabel("F1 Score (%)", fontsize=22)
-    plt.ylim(57, 66)
+    plt.ylim(59, 66)
     plt.tight_layout()
     plt.savefig('./figure_plot/EWC_sensativity.pdf')
+
+def fig_time_analysis():
+    infoNCE=[1.544, 1.5558, 1.5713, 1.5768, 1.5829]
+    RInfo=[1.5809, 1.5936, 1.5950, 1.6061, 1.6052]
+    ours=[1.6087, 1.6286, 1.6274, 1.6286, 1.6259]
+    q = [256, 512, 1024, 1536, 2048]
+    x=np.arange(len(infoNCE))
+    width=0.2
+    # plt.grid(axis='y')
+    plt.bar(x-0.2, infoNCE, color=color_blue, width=width, edgecolor='black', )
+    plt.bar(x, RInfo, color=color_box[0], width=width, edgecolor='black', )
+    plt.bar(x+0.2, ours, color=color_red, width=width, edgecolor='black', )
+    plt.xticks(x, labels=q, fontsize=22)
+    plt.yticks(np.arange(1.2, 1.9, 0.2), fontsize=22)
+    plt.xlabel("Domain Queues Size $M$", fontsize=22)
+    plt.ylabel("Time (s)", fontsize=22)
+    plt.legend(['w/o NegSelet, w/o CDL', 'w/   NegSelet, w/o CDL', 'w/   NegSelet, w/   CDL '], fontsize=16)
+    plt.ylim([1.2, 1.9])
+    plt.tight_layout()
+    plt.savefig('./figure_plot/time_analysis.pdf')
+    plt.savefig('./figure_plot/time_analysis.png')
+
+def fig_memory_analysis():
+    q = [256, 512, 1024, 1536, 2048]
+    store_feature = [0.2539, 0.5078, 1.0156, 1.5234, 2.0313]
+    store_original_data = [1.1758, 2.3516, 4.7031, 7.0547, 9.4063]
+    x=np.arange(len(q))
+    # plt.subplot(132)
+    plt.grid(axis='y')
+    plt.plot(x, store_original_data, '-o', color=color_blue, linewidth=2, markersize=10)
+    plt.plot(x, store_feature, '-^', color=color_red, linewidth=2, markersize=10)
+    plt.legend(['store original samples', 'store features'], fontsize=16)
+    plt.xticks(x, labels=q, fontsize=22)
+    plt.yticks([0, 2, 4, 6, 8, 10], fontsize=22)
+    plt.xlabel("Domain Queues Size $M$", fontsize=22)
+    plt.ylabel("Memory (MB)", fontsize=22)
+    # plt.title('(b)', fontsize=16, y=-0.4)
+    # plt.ylim(57, 63)
+    plt.tight_layout()
+    plt.savefig('./figure_plot/memory_analysis.pdf')
 
 def fig_aug_effect():
     name = ['All', 'w/o Negate', 'w/o Scale', 'w/o Wrap', 'w/o Flip', 'w/o Noise', 'w/o Rotate']
@@ -644,7 +690,7 @@ def figure_domain_shift_new():
     ax[1].set_ylabel("F1 Score (%)", fontsize=16)
     ax[1].set_xticks(x, labels=[r"$\alpha=65$", r"$\alpha=45$", r"$\alpha=25$"], fontsize=16)
     ax[1].set_yticks(np.arange(40,120,20), fontsize=16)
-    ax[1].set_xlabel("LIMU", fontsize=16)
+    ax[1].set_xlabel("LIMU-BERT", fontsize=16)
     ax[1].legend(fontsize=14, loc='lower left', ncol=1)
     plt.tight_layout()
     plt.savefig('./figure_plot/preliminary_new.pdf')
@@ -671,6 +717,8 @@ if __name__ == '__main__':
     # fig_ewc_results()
     # fig_sensativity_analysis()
     # figure_domain_shift_new()
+    # fig_time_analysis()
+    # fig_memory_analysis()
 
     # fig_negative_sampling_result()
-    fig_time_window_result()
+    # fig_time_window_result()

@@ -5,7 +5,7 @@ from configparser import NoOptionError
 from copy import deepcopy
 from itertools import dropwhile
 import numbers
-import os
+import os, time
 import logging
 import pdb
 from re import I
@@ -652,13 +652,17 @@ class MoCo_v1(nn.Module):
             else torch.device('cpu'))
         similarity_across_domains = 0
         
-        hardest_related_info = [0, 0, 0]
+        hardest_related_info = [0, 0, 0, 0, 0]
         mean_same_class_ratio = 0
         mean_same_domain_ratio = 0
         mean_same_class_same_domain = 0
 
+        start_time = time.time()
         q, d_q = self.encoder_q(sen_q)  # queries: NxC
         q = F.normalize(q, dim=1)
+        end_time = time.time()
+        hardest_related_info[4] = end_time - start_time
+        
         # if d_q is not None:
         #     d_q = F.normalize(d_q, dim=1)
 
@@ -703,6 +707,7 @@ class MoCo_v1(nn.Module):
         if self.hard_sample:
             #### v10 domain-wise sorting + time window
             if self.last_ratio < 1.0:  ## if last_ratio >= 1, then we dont apple this simplist elimination. 
+                start_time = time.time()
                 domains_in_queues = torch.unique(self.queue_labels.clone().detach()).contiguous().view(-1, 1)
                 domain_queues_mask = torch.eq(domains_in_queues, self.queue_labels.T).bool().to(device)
                 neg_for_sampling = l_neg.clone().detach()
@@ -721,16 +726,25 @@ class MoCo_v1(nn.Module):
                     hardest_related_info[1] += idx_to_eliminate.shape[1]
                 
                 hardest_related_info[1]  /= len(domains_in_queues)  ## record the avg number of eliminated samples
+            
+                end_time = time.time()
+                hardest_related_info[2] = end_time - start_time
 
             if self.time_window != 0:
+                start_time = time.time()
                 low_boundary = time_label[0].contiguous().view(-1, 1) - self.time_window
                 high_boundary = time_label[0].contiguous().view(-1, 1) + self.time_window
                 queue_time = self.queue_time_labels.T.expand(l_neg.shape[0], l_neg.shape[1])
                 mask_low = low_boundary < queue_time # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
                 mask_high = queue_time < high_boundary
                 mask = torch.logical_and(mask_low, mask_high)
-                l_neg[mask] = -torch.inf
+                l_neg[mask] = -torch.inf    
                 hardest_related_info[0] = mask.sum(1).float().mean()
+                
+                end_time = time.time()
+                hardest_related_info[3] = end_time - start_time
+
+            
 
             #### v9 domain-wise threshold + time window
             # domains_in_queues = torch.unique(self.queue_labels.clone().detach()).contiguous().view(-1, 1)
@@ -1073,6 +1087,12 @@ class MoCo(object):
         not_best_counter = 0
         best_loss = 1e6
 
+        if self.args.time_analysis:
+            time_tw = AverageMeter('time_tw_avg', ':6.5f')
+            time_ss = AverageMeter('time_ss_avg', ':6.5f')
+            time_ef = AverageMeter('time_ef_avg', ':6.5f')
+            time_fw = AverageMeter('time_fw_avg', ':6.5f')
+
         for epoch_counter in tqdm(range(self.args.epochs)):
             acc_batch = AverageMeter('acc_batch', ':6.2f')
             loss_batch = AverageMeter('loss_batch', ':6.5f')
@@ -1080,6 +1100,7 @@ class MoCo(object):
             msdr_batch = AverageMeter('msdr_batch', ':6.3f')
             mscsdr_batch = AverageMeter('mscsdr_batch', ':6.3f')
 
+            start_time = time.time()
             for sensor, labels in train_loader:
                 
                 sensor = [t.to(self.args.device) for t in sensor]
@@ -1098,6 +1119,7 @@ class MoCo(object):
                     domain_label = None
                     time_label = None
                 with autocast(enabled=self.args.fp16_precision):
+                    
                     output, target, logits_labels, hardest_related_info, similarity_across_domains, feature = self.model(sensor[0], sensor[1], 
                                                                                                                         domain_label=domain_label, 
                                                                                                                         gt=class_label, 
@@ -1122,6 +1144,7 @@ class MoCo(object):
 
                 scaler.step(self.optimizer)
                 scaler.update()
+                end_time = time.time()
 
                 acc = accuracy(output, target, topk=(1,))
 
@@ -1143,6 +1166,21 @@ class MoCo(object):
                             self.writer.add_scalar('sup_loss_{}'.format(i), sup_loss[i], global_step=n_iter)
 
                 n_iter += 1
+
+                if self.args.time_analysis:
+                    time_sim_select = hardest_related_info[2]
+                    time_time_window = hardest_related_info[3]
+                    time_encode = hardest_related_info[4]
+                    time_full = end_time - start_time
+
+                    time_tw.update(time_time_window, 1)
+                    time_ss.update(time_sim_select, 1)
+                    time_ef.update(time_encode, 1)
+                    time_fw.update(time_full, 1)
+                    
+
+                    if n_iter > 5000:
+                        break
             
             is_best = loss_batch.avg <= best_loss
             if epoch_counter >= 10:  # only after the first 10 epochs, the best_acc is updated.
@@ -1190,6 +1228,18 @@ class MoCo(object):
                 print(f"early stop at {epoch_counter}")
                 break
             
+
+            if n_iter > 5000 and self.args.time_analysis:
+                print(f"time for time window selection: {time_tw.avg}")
+                print(f"time for similarity selection: {time_ss.avg}")
+                print(f"time for feature encoding: {time_ef.avg}")
+                print(f"time for forward process: {time_fw.avg}")
+
+                logging.info(f"time for time window selection: {time_tw.avg}")
+                logging.info(f"time for similarity selection: {time_ss.avg}")
+                logging.info(f"time for feature encoding: {time_ef.avg}")
+                logging.info(f"time for forward process: {time_fw.avg}")
+                break
         
         logging.info("Training has finished.")
         logging.info(f"Model of Epoch {best_epoch} checkpoint and metadata has been saved at {self.writer.log_dir}.")
@@ -1217,6 +1267,7 @@ class MoCo(object):
 
         for epoch_counter in tqdm(range(self.args.epochs)):
             acc_batch = AverageMeter('acc_batch', ':6.2f')
+            time_fw = AverageMeter('time_fw', ':6.5f')
 
             pred_batch = torch.empty(0).to(self.args.device)
             label_batch = torch.empty(0).to(self.args.device)
@@ -1233,7 +1284,8 @@ class MoCo(object):
                 """
                 self.model.eval()
                 self.model.classifier.train()
-                
+            
+            start_time = time.time()
             for sensor, target in tune_loader:
 
                 sensor = sensor.to(self.args.device)
@@ -1247,6 +1299,7 @@ class MoCo(object):
                 scaler.scale(loss).backward()
                 scaler.step(self.optimizer)
                 scaler.update()
+                end_time = time.time()
 
                 f1 = f1_cal(logits, target, topk=(1,))
                 acc = accuracy(logits, target, topk=(1,))
@@ -1263,6 +1316,12 @@ class MoCo(object):
                     self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter_train)
 
                 n_iter_train += 1
+
+                if self.args.time_analysis:
+                    time_fw.update(end_time - start_time, 1)
+                    if n_iter_train > 5000:
+                        break
+
 
             f1_batch = f1_score(label_batch.cpu().numpy(), pred_batch.cpu().numpy(), average='macro') * 100
             val_acc, val_f1 = MoCo_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
@@ -1287,6 +1346,10 @@ class MoCo(object):
             self.scheduler.step()
             
             logging.debug(f"Epoch: {epoch_counter} Loss: {loss} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch: .3f}/{val_f1: .3f}")
+            if self.args.time_analysis and n_iter_train > 5000:
+                logging.debug(f"time of one training round is {time_fw.avg}")
+                print(f"time of one training round is {time_fw.avg}")
+                break
 
         logging.info("Fine-tuning has finished.")
         logging.info(f"best eval f1 is {best_f1} at {best_epoch}.")
@@ -1570,6 +1633,7 @@ class MoCo(object):
 
         for epoch_counter in tqdm(range(self.args.epochs)):
             acc_batch = AverageMeter('acc_batch', ':6.2f')
+            time_fw = AverageMeter('time_fw', ':6.5f')
 
             pred_batch = torch.empty(0).to(self.args.device)
             label_batch = torch.empty(0).to(self.args.device)
@@ -1588,6 +1652,7 @@ class MoCo(object):
                 self.model.eval()
                 self.model.classifier.train()
                 
+            start_time = time.time()
             for sensor, target in tune_loader:
                 sensor = sensor.to(self.args.device)
                 target = target[:, 0].to(self.args.device)
@@ -1605,7 +1670,8 @@ class MoCo(object):
                 scaler.scale(loss).backward()
                 scaler.step(self.optimizer)
                 scaler.update()
-
+                end_time = time.time()
+                    
                 acc = accuracy(logits, target, topk=(1,))
                 _, pred = logits.topk(1, 1, True, True)
                 pred_batch = torch.cat((pred_batch, pred.reshape(-1)))
@@ -1622,6 +1688,11 @@ class MoCo(object):
                     self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter_train)
 
                 n_iter_train += 1
+
+                if self.args.time_analysis:
+                    time_fw.update(end_time - start_time, 1)
+                    if n_iter_train > 5000:
+                        break
 
             val_acc, val_f1 = MoCo_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
 
@@ -1646,6 +1717,11 @@ class MoCo(object):
 
             f1_batch = f1_score(label_batch.cpu().numpy(), pred_batch.cpu().numpy(), average='macro') * 100
             logging.debug(f"Epoch: {epoch_counter} Loss: {loss} Loss_EWC: {loss_ewc} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch: .3f}/{val_f1: .3f}")
+
+            if self.args.time_analysis and n_iter_train > 5000:
+                logging.debug(f"time of one training round is {time_fw.avg}")
+                print(f"time of one training round is {time_fw.avg}")
+                break
 
         logging.info("Fine-tuning has finished.")
         logging.info(f"best eval f1 is {best_f1} at {best_epoch}.")

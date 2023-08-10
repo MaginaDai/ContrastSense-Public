@@ -37,9 +37,9 @@ parser.add_argument('-ft', '--if-fine-tune', default=True, type=bool, help='to d
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
-parser.add_argument('--pretrained', default='test/sleepEDF', type=str,
+parser.add_argument('--pretrained', default='time_analysis_w_design_1024_0/HHAR', type=str,
                     help='path to ContrastSense pretrained checkpoint')
-parser.add_argument('-name', default='sleepEDF',
+parser.add_argument('-name', default='HHAR',
                     help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF'])
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 
@@ -82,7 +82,7 @@ parser.add_argument('-final_dim', default=8, type=int, help='the output dims of 
 parser.add_argument('-mo', default=0.9, type=float, help='the momentum for Batch Normalization')
 
 parser.add_argument('-drop', default=0.1, type=float, help='the dropout portion')
-parser.add_argument('-version', default="shot2", type=str, help='control the version of the setting')
+parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
 parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate')
 parser.add_argument('-dlr', default=0.5, type=float, help='DAL learning ratio')
@@ -108,6 +108,9 @@ parser.add_argument('-CE', default=False, type=bool, help='keys size')
 parser.add_argument('-hard', default=False, type=bool, help='keys size')
 parser.add_argument('-sample_ratio', default=0.05, type=float, help='keys size')
 parser.add_argument('-last_ratio', default=0.70, type=float, help='hard sampling or not')  # we sample hard ones from the data.
+
+parser.add_argument('-time_analysis', default=False, type=bool, help='decide whether to evaluate the time overhead')  
+parser.add_argument('-memory_analysis', default=False, type=bool, help='decide whether to evaluate the memory overhead')  
 
 def seed_torch(seed=0):
     random.seed(seed)
@@ -232,7 +235,13 @@ def main(args, fisher=None):
             assert len(parameters) == 2 
 
     #  It’s a no-op if the 'gpu_index' argument is a negative integer or None.
-    
+    if args.memory_analysis and args.ewc:
+        size=0
+        for n, p in model.named_parameters():
+            if n in fisher.keys():
+                size += fisher[n].element_size() * fisher[n].nelement()
+        
+        print(f"size of fisher matrix is {size}")
 
     with torch.cuda.device(args.gpu_index):
         moco = MoCo(model=model, optimizer=optimizer, scheduler=scheduler, args=args)

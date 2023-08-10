@@ -114,9 +114,12 @@ def tSNE_visualization(dir, dataset_name, version, model_type='CPC', shot=10, gp
     plt.figure()
 
     for i, u in enumerate(select_user):
-        pos = np.int32(np.argwhere(label_bank == u))
+        pos = np.int32(np.argwhere(label_bank == u)).reshape(-1)
+        select_pos_len = int(len(pos)*0.2)
+        select_pos = np.random.choice(pos, size=select_pos_len)
+
         # if i == 2:
-        plt.scatter(h_trans[pos, 0], h_trans[pos, 1], color=color_box[i], s=30, label=f"User {i}", marker=marker_box[i])
+        plt.scatter(h_trans[select_pos, 0], h_trans[select_pos, 1], color=color_box[i], s=20, label=f"User {i}", marker=marker_box[i])
         # else:
         #     plt.scatter(h_trans[pos, 0], h_trans[pos, 1], edgecolors=color_box[i], s=30, label=f"User {i}", marker=marker_box[i], c='white')
 
@@ -253,14 +256,14 @@ if __name__ == '__main__':
     # dir = f"baseline/CPCHAR/runs/CPCHAR_cu{v}/{dataset}_ft_shot_50"
     # model_dir = dir + '/model_best.pth.tar'
     # version=f"shot{v}"
-    dataset='MotionSense'
+    # dataset='MotionSense'
     # feature_extract(dataset, v=2)
-    compare_model_effect(dataset)
+    # compare_model_effect(dataset)
 
-    # dir = f"baseline/CPCHAR/runs/25_label/HHAR_ft_shot_50"
-    # model_dir = dir + '/model_best.pth.tar'
-    # version=f"domain_shift"
-    # dataset='HHAR'
-    # tSNE_visualization(model_dir, dataset, version, model_type='CPC', shot=0, gpu_idx=1)
+    dir = f"baseline/CPCHAR/runs/25_label/HHAR_ft_shot_50"
+    model_dir = dir + '/model_best.pth.tar'
+    version=f"domain_shift"
+    dataset='HHAR'
+    tSNE_visualization(model_dir, dataset, version, model_type='CPC', shot=0, gpu_idx=1)
 
     
