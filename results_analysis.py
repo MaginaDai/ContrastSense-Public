@@ -12,6 +12,7 @@ dataset_imu = ['HHAR', 'MotionSense', 'Shoaib', 'HASC']
 # dataset_imu=['MotionSense', 'Shoaib']
 dataset_emg = ['Myo', 'NinaPro']
 dataset_eeg = ['sleepEDF']
+# dataset_eeg = ['SEED', 'SEED_IV']
 # dataset = ['HHAR']
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')

@@ -1,6 +1,6 @@
 #!/bin/bash
 key="v1"
-name="runs/eeg/cdl_slr0.9_"
+name="runs/eeg/cl_r_0.9"
 # name="runs/hard_v1_cl_"
 # name="baseline/CDA/runs/CDA_lr5e-4_v"
 python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4" -modal "eeg"
