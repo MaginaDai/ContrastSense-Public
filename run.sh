@@ -423,58 +423,58 @@
 # done
 
 
-version="cp"
-slr=0.7
-tem=0.1
-ewc=50
-max=0.01
+# version="cp"
+# slr=0.7
+# tem=0.1
+# ewc=50
+# max=0.01
 
-for dataset in "Shoaib"
-do
-    store="cross_position/neg_cdl_ewc_p50_"
-    python main.py -g 0 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}0" -name ${dataset} --store "${store}0" -cross "positions" &
-    python main.py -g 0 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}1" -name ${dataset} --store "${store}1" -cross "positions" &
-    python main.py -g 0 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}2" -name ${dataset} --store "${store}2" -cross "positions" &
-    python main.py -g 1 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}3" -name ${dataset} --store "${store}3" -cross "positions" &
-    python main.py -g 1 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}4" -name ${dataset} --store "${store}4" -cross "positions" 
+# for dataset in "Shoaib"
+# do
+#     store="cross_position/neg_cdl_ewc_p50_"
+#     python main.py -g 0 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}0" -name ${dataset} --store "${store}0" -cross "positions" &
+#     python main.py -g 0 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}1" -name ${dataset} --store "${store}1" -cross "positions" &
+#     python main.py -g 0 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}2" -name ${dataset} --store "${store}2" -cross "positions" &
+#     python main.py -g 1 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}3" -name ${dataset} --store "${store}3" -cross "positions" &
+#     python main.py -g 1 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}4" -name ${dataset} --store "${store}4" -cross "positions" 
 
-    wait
-done
+#     wait
+# done
 
-for shot in 5 10 50 100
-do
-    version="cp"
-    store="cross_position/neg_cdl_ewc_p50_"
-    store_ft="cross_position/neg_cdl_ewc_p50_"
-    for dataset in "Shoaib"
-    do
-        python main_trans_ewc.py -shot ${shot} -g 0 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}0" -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store_ft}0" -cross "positions" &
-        python main_trans_ewc.py -shot ${shot} -g 0 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}1" -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store_ft}1" -cross "positions" &
-        python main_trans_ewc.py -shot ${shot} -g 0 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}2" -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store_ft}2" -cross "positions" &
-        python main_trans_ewc.py -shot ${shot} -g 1 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}3" -name ${dataset} --pretrained "${store}3/${dataset}" --store "${store_ft}3" -cross "positions" &
-        python main_trans_ewc.py -shot ${shot} -g 1 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}4" -name ${dataset} --pretrained "${store}4/${dataset}" --store "${store_ft}4" -cross "positions" 
+# for shot in 5 10 50 100
+# do
+#     version="cp"
+#     store="cross_position/neg_cdl_ewc_p50_"
+#     store_ft="cross_position/neg_cdl_ewc_p50_"
+#     for dataset in "Shoaib"
+#     do
+#         python main_trans_ewc.py -shot ${shot} -g 0 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}0" -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store_ft}0" -cross "positions" &
+#         python main_trans_ewc.py -shot ${shot} -g 0 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}1" -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store_ft}1" -cross "positions" &
+#         python main_trans_ewc.py -shot ${shot} -g 0 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}2" -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store_ft}2" -cross "positions" &
+#         python main_trans_ewc.py -shot ${shot} -g 1 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}3" -name ${dataset} --pretrained "${store}3/${dataset}" --store "${store_ft}3" -cross "positions" &
+#         python main_trans_ewc.py -shot ${shot} -g 1 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}4" -name ${dataset} --pretrained "${store}4/${dataset}" --store "${store_ft}4" -cross "positions" 
         
-        wait
-    done
-done
+#         wait
+#     done
+# done
 
-shot=50
-for p in 50 100
-do
-    version="cp_tune_portion_${p}_shot"
-    store="cross_position/neg_cdl_ewc_p50_"
-    store_ft="cross_position/neg_cdl_ewc_p${p}_"
-    for dataset in "Shoaib"
-    do
-        python main_trans_ewc.py -shot ${shot} -g 0 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}0" -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store_ft}0" -cross "positions" &
-        python main_trans_ewc.py -shot ${shot} -g 0 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}1" -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store_ft}1" -cross "positions" &
-        python main_trans_ewc.py -shot ${shot} -g 0 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}2" -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store_ft}2" -cross "positions" &
-        python main_trans_ewc.py -shot ${shot} -g 1 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}3" -name ${dataset} --pretrained "${store}3/${dataset}" --store "${store_ft}3" -cross "positions" &
-        python main_trans_ewc.py -shot ${shot} -g 1 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}4" -name ${dataset} --pretrained "${store}4/${dataset}" --store "${store_ft}4" -cross "positions" 
+# shot=50
+# for p in 50 100
+# do
+#     version="cp_tune_portion_${p}_shot"
+#     store="cross_position/neg_cdl_ewc_p50_"
+#     store_ft="cross_position/neg_cdl_ewc_p${p}_"
+#     for dataset in "Shoaib"
+#     do
+#         python main_trans_ewc.py -shot ${shot} -g 0 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}0" -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store_ft}0" -cross "positions" &
+#         python main_trans_ewc.py -shot ${shot} -g 0 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}1" -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store_ft}1" -cross "positions" &
+#         python main_trans_ewc.py -shot ${shot} -g 0 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}2" -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store_ft}2" -cross "positions" &
+#         python main_trans_ewc.py -shot ${shot} -g 1 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}3" -name ${dataset} --pretrained "${store}3/${dataset}" --store "${store_ft}3" -cross "positions" &
+#         python main_trans_ewc.py -shot ${shot} -g 1 -ewc True -ewc_lambda ${ewc} -fishermax ${max} -version "${version}4" -name ${dataset} --pretrained "${store}4/${dataset}" --store "${store_ft}4" -cross "positions" 
         
-        wait
-    done
-done
+#         wait
+#     done
+# done
 
 # for r in 0.2
 # do

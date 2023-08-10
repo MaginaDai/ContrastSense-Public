@@ -12,6 +12,7 @@ from xml.sax import default_parser_list
 dataset_imu=['Shoaib']
 dataset_emg = ['Myo', 'NinaPro']
 dataset_eeg = ['sleepEDF']
+# dataset_eeg = ['SEED', 'SEED_IV']
 # dataset = ['HHAR']
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')

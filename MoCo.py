@@ -1182,9 +1182,9 @@ class MoCo(object):
             #     log_str += f"chs: {chs.avg} center_shift: {center_shift}"
             logging.debug(log_str)
 
-            if best_acc > 99 and epoch_counter >= 50:
-                print(f"early stop at {epoch_counter}")
-                break  # early stop
+            # if best_acc > 99 and epoch_counter >= 50:
+            #     print(f"early stop at {epoch_counter}")
+            #     break  # early stop
 
             if not_best_counter >= 200:
                 print(f"early stop at {epoch_counter}")

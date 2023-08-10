@@ -1,27 +1,27 @@
 version="shot"
-slr=0.3
+slr=0.9
 lr=5e-5
 max=0.001
 lam=4e3
-t=40
+window=0
 shot=10
 b=512
 
-for slr in 1.0 1.5
+for r in 0.2 0.4
 do
-    store="eeg/cdl_slr${slr}_"
+    store="eeg/cl_r_${r}"
     for dataset in "sleepEDF"
     do
-        python main.py -g 0 -b ${b} -lr ${lr} -slr ${slr} -label_type 1 -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
-        python main.py -g 0 -b ${b} -lr ${lr} -slr ${slr} -label_type 1 -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
-        python main.py -g 1 -b ${b} -lr ${lr} -slr ${slr} -label_type 1 -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
-        python main.py -g 1 -b ${b} -lr ${lr} -slr ${slr} -label_type 1 -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
-        python main.py -g 1 -b ${b} -lr ${lr} -slr ${slr} -label_type 1 -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
+        python main.py -g 0 -b ${b} -last_ratio ${r} -time_window ${window} -lr ${lr} -slr ${slr} -label_type 0 -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
+        python main.py -g 0 -b ${b} -last_ratio ${r} -time_window ${window} -lr ${lr} -slr ${slr} -label_type 0 -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
+        python main.py -g 1 -b ${b} -last_ratio ${r} -time_window ${window} -lr ${lr} -slr ${slr} -label_type 0 -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
+        python main.py -g 1 -b ${b} -last_ratio ${r} -time_window ${window} -lr ${lr} -slr ${slr} -label_type 0 -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
+        python main.py -g 1 -b ${b} -last_ratio ${r} -time_window ${window} -lr ${lr} -slr ${slr} -label_type 0 -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
 
         wait
     done
 
-    store_ft="eeg/cdl_slr${slr}_"
+    store_ft="eeg/cl_r_${r}"
     for dataset in "sleepEDF"
     do
         python main_trans_ewc.py -lr 1e-4 -fishermax ${max} -ewc_lambda ${lam} -g 0 -ft True -version "${version}0" -shot ${shot} -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store_ft}0" &
