@@ -11,6 +11,7 @@ import torch.backends.cudnn as cudnn
 
 from CPC import CPCV1, CPC
 from MoCo import MoCo_v1, MoCo
+from MoCo_without_queue import ContrastSense_without_queue
 from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 from data_aug.preprocessing import UsersNum
 from getFisherDiagonal import getFisherDiagonal_pretrain
@@ -74,7 +75,8 @@ parser.add_argument('-last_ratio', default=1.0, type=float, help='ratio of hard 
 parser.add_argument('-scale_ratio', default=1.0, type=float, help='to scale the similarity between domains')  # to scale the similarity between domains
 parser.add_argument('-time_window', default=0, type=float, help='[time_label-t, time_label + t]')  # how much time idx labels are included.
 
-parser.add_argument('-time_analysis', default=False, type=bool, help='decide whether to evaluate the time overhead')  
+parser.add_argument('-time_analysis', default=False, type=bool, help='decide whether to evaluate the time overhead')
+parser.add_argument('-use_queue', default=True, type=bool, help='decide whether to use domain queues')
 
 
 def main():
@@ -125,7 +127,10 @@ def main():
     else:
         user_num = None
     
-    model = MoCo_v1(args, users_class=user_num)
+    if args.use_queue:
+        model = MoCo_v1(args, users_class=user_num)
+    else:
+        model = ContrastSense_without_queue(args, users_class=user_num)
     
     optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=1e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, last_epoch=-1)
@@ -148,8 +153,12 @@ def main():
 
     #  It’s a no-op if the 'gpu_index' argument is a negative integer or None.
     with torch.cuda.device(args.gpu_index):
-        moco = MoCo(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
-        moco.train(train_loader)
+        if args.use_queue:
+            moco = MoCo(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
+            moco.train(train_loader)
+        else:
+            simclr = SimCLR(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
+            simclr.train(train_loader)
 
     if args.ewc and args.label_type != 0:
         getFisherDiagonal_pretrain(args, train_loader, moco.writer.log_dir)

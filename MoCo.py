@@ -475,10 +475,7 @@ class MoCo_v1(nn.Module):
 
         device=args.device
         modal=args.modal
-        
-        
         modal = args.modal
-        
 
         self.K = args.moco_K 
         self.m = args.moco_m
@@ -1119,7 +1116,6 @@ class MoCo(object):
                     domain_label = None
                     time_label = None
                 with autocast(enabled=self.args.fp16_precision):
-                    
                     output, target, logits_labels, hardest_related_info, similarity_across_domains, feature = self.model(sensor[0], sensor[1], 
                                                                                                                         domain_label=domain_label, 
                                                                                                                         gt=class_label, 
@@ -1201,7 +1197,6 @@ class MoCo(object):
             
 
             # warmup for the first 10 epochs
-            # in current setting, it is not meaningful
             if epoch_counter >= 10:
                 self.scheduler.step()
             
