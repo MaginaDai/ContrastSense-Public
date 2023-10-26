@@ -354,14 +354,14 @@
 #     wait
 # done
 
-version="shot"
-slr=0.7
-shot=10
-max=0.01
-for ewc in 1 25 75 100
-do
-    store="slr_weight/hard_v10_cdl_hard_slr0.7_"
-    store_ft="ewc_results/hard_v10_cdl_hard_ewc${ewc}_"
+# version="shot"
+# slr=0.7
+# shot=10
+# max=0.01
+# for ewc in 1 25 75 100
+# do
+#     store="slr_weight/hard_v10_cdl_hard_slr0.7_"
+#     store_ft="ewc_results/hard_v10_cdl_hard_ewc${ewc}_"
     # for dataset in "MotionSense"
     # do
     #     python main.py -g 0 -hard True -time_window ${w} -last_ratio 1.0 -label_type 0 -slr ${slr} -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
@@ -375,18 +375,18 @@ do
 
 
 
-    for dataset in "HASC" "HHAR" "Shoaib" "MotionSense"
-    do
-        python main_trans_ewc.py -ewc True -fishermax ${max} -ewc_lambda ${ewc} -shot ${shot} -g 0 -version "${version}0" -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store_ft}0" &
-        python main_trans_ewc.py -ewc True -fishermax ${max} -ewc_lambda ${ewc} -shot ${shot} -g 0 -version "${version}1" -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store_ft}1" &
-        python main_trans_ewc.py -ewc True -fishermax ${max} -ewc_lambda ${ewc} -shot ${shot} -g 0 -version "${version}2" -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store_ft}2" &
-        python main_trans_ewc.py -ewc True -fishermax ${max} -ewc_lambda ${ewc} -shot ${shot} -g 1 -version "${version}3" -name ${dataset} --pretrained "${store}3/${dataset}" --store "${store_ft}3" &
-        python main_trans_ewc.py -ewc True -fishermax ${max} -ewc_lambda ${ewc} -shot ${shot} -g 1 -version "${version}4" -name ${dataset} --pretrained "${store}4/${dataset}" --store "${store_ft}4"
+#     for dataset in "HASC" "HHAR" "Shoaib" "MotionSense"
+#     do
+#         python main_trans_ewc.py -ewc True -fishermax ${max} -ewc_lambda ${ewc} -shot ${shot} -g 0 -version "${version}0" -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store_ft}0" &
+#         python main_trans_ewc.py -ewc True -fishermax ${max} -ewc_lambda ${ewc} -shot ${shot} -g 0 -version "${version}1" -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store_ft}1" &
+#         python main_trans_ewc.py -ewc True -fishermax ${max} -ewc_lambda ${ewc} -shot ${shot} -g 0 -version "${version}2" -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store_ft}2" &
+#         python main_trans_ewc.py -ewc True -fishermax ${max} -ewc_lambda ${ewc} -shot ${shot} -g 1 -version "${version}3" -name ${dataset} --pretrained "${store}3/${dataset}" --store "${store_ft}3" &
+#         python main_trans_ewc.py -ewc True -fishermax ${max} -ewc_lambda ${ewc} -shot ${shot} -g 1 -version "${version}4" -name ${dataset} --pretrained "${store}4/${dataset}" --store "${store_ft}4"
         
-        wait
-    done
+#         wait
+#     done
 
-done
+# done
 
 # version="shot"
 # shot=50
@@ -539,3 +539,40 @@ done
 #     store_ft="time_analysis_w_design_${k}_with_ewc_"
 #     python main_trans_ewc.py -shot 10 -e 3000 -ewc True -g 0 -version "${version}0" -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store}0"
 # done
+
+
+version="alpha65_shot"
+slr=0.7
+shot=10
+max=0.01
+w=60
+ewc=50
+
+store="alpha65/all_"
+store_ft="alpha65/all_"
+for dataset in "HASC" "HHAR" "Shoaib" "MotionSense"
+do
+    python main.py -g 0 -hard True -time_window ${w} -last_ratio 0.5 -label_type 1 -slr ${slr} -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
+    python main.py -g 0 -hard True -time_window ${w} -last_ratio 0.5 -label_type 1 -slr ${slr} -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
+    python main.py -g 0 -hard True -time_window ${w} -last_ratio 0.5 -label_type 1 -slr ${slr} -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
+    python main.py -g 1 -hard True -time_window ${w} -last_ratio 0.5 -label_type 1 -slr ${slr} -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
+    python main.py -g 1 -hard True -time_window ${w} -last_ratio 0.5 -label_type 1 -slr ${slr} -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
+
+    wait
+done
+
+
+
+for dataset in "HASC" "HHAR" "Shoaib" "MotionSense"
+do
+    python main_trans_ewc.py -ewc True -fishermax ${max} -ewc_lambda ${ewc} -shot ${shot} -g 0 -version "${version}0" -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store_ft}0" &
+    python main_trans_ewc.py -ewc True -fishermax ${max} -ewc_lambda ${ewc} -shot ${shot} -g 0 -version "${version}1" -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store_ft}1" &
+    python main_trans_ewc.py -ewc True -fishermax ${max} -ewc_lambda ${ewc} -shot ${shot} -g 0 -version "${version}2" -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store_ft}2" &
+    python main_trans_ewc.py -ewc True -fishermax ${max} -ewc_lambda ${ewc} -shot ${shot} -g 1 -version "${version}3" -name ${dataset} --pretrained "${store}3/${dataset}" --store "${store_ft}3" &
+    python main_trans_ewc.py -ewc True -fishermax ${max} -ewc_lambda ${ewc} -shot ${shot} -g 1 -version "${version}4" -name ${dataset} --pretrained "${store}4/${dataset}" --store "${store_ft}4"
+    
+    wait
+done
+
+
+# 

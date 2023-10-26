@@ -107,13 +107,14 @@
 #     done
 # done
 
-for shot in 1
+shot=10
+for a in 45 65
 do
-    version="shot"
+    version="alpha${a}_shot"
     for v in 0 1 2 3 4
     do
-        name="CM_cu${v}"
-        name2="FM_cu${v}"
+        name="CM_alpha${a}_${v}"
+        name2="FM_alpha${a}_${v}"
         python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" -m 'CM' -name HASC --store "${name}" &
         python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" -m 'CM' -name HHAR --store "${name}" &
         python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" -m 'CM' -name MotionSense --store "${name}" &
