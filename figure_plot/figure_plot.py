@@ -535,17 +535,21 @@ def fig_time_analysis():
 
 def fig_memory_analysis():
     q = [256, 512, 1024, 1536, 2048]
-    store_feature = [0.2539, 0.5078, 1.0156, 1.5234, 2.0313]
-    store_original_data = [1.1758, 2.3516, 4.7031, 7.0547, 9.4063]
+    # with_queue = [0.2539, 0.5078, 1.0156, 1.5234, 2.0313]
+    # without_queue = [1.1758, 2.3516, 4.7031, 7.0547, 9.4063]
+    
+    with_queue = [3014, 3016, 3018, 3146, 3146]
+    without_queue = [2312, 3012, 4222, 6144, 6996]
+
     x=np.arange(len(q))
     # plt.subplot(132)
     plt.grid(axis='y')
-    plt.plot(x, store_original_data, '-o', color=color_blue, linewidth=2, markersize=10)
-    plt.plot(x, store_feature, '-^', color=color_red, linewidth=2, markersize=10)
-    plt.legend(['store original samples', 'store features'], fontsize=16)
+    plt.plot(x, without_queue, '-o', color=color_blue, linewidth=2, markersize=10)
+    plt.plot(x, with_queue, '-^', color=color_red, linewidth=2, markersize=10)
+    plt.legend(['w/o domain queues', 'w/  domain queues (K=256)'], fontsize=16)
     plt.xticks(x, labels=q, fontsize=22)
-    plt.yticks([0, 2, 4, 6, 8, 10], fontsize=22)
-    plt.xlabel("Domain Queues Size $M$", fontsize=22)
+    plt.yticks(np.arange(1000, 7000, 1000), fontsize=22)
+    plt.xlabel("The number of negatives", fontsize=22)
     plt.ylabel("Memory (MB)", fontsize=22)
     # plt.title('(b)', fontsize=16, y=-0.4)
     # plt.ylim(57, 63)
@@ -712,13 +716,13 @@ if __name__ == '__main__':
     # fig_label_domain_portion()
     # fig_batch_size_result()
     # fig_aug_effect()
-    fig_queue_results()
+    # fig_queue_results()
     # fig_slr_results()
     # fig_ewc_results()
     # fig_sensativity_analysis()
     # figure_domain_shift_new()
     # fig_time_analysis()
-    # fig_memory_analysis()
+    fig_memory_analysis()
 
     # fig_negative_sampling_result()
     # fig_time_window_result()

@@ -536,11 +536,11 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
-    dataset_name = ["sleepEDF"]
+    dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
     # dataset_name = ["Shoaib"]
     for i in range(seg_types):
         for dataset in dataset_name:
-            preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot{i}/", dataset=dataset, cross='users')
+            preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_alpha65_shot{i}/", dataset=dataset, cross='users', test_portion=0.2)
 
     return
 
