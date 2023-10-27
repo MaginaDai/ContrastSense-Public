@@ -390,6 +390,8 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
             domain.append(data['add_infor'][2])
         elif cross == 'positions':
             domain.append(data['add_infor'][2])
+        elif cross == 'multiple':
+            domain.append([np.float64(data['add_infor'][1]), np.float64(data['add_infor'][2])])
         else:
             NotADirectoryError()
 
@@ -403,7 +405,10 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
         assert label_type_num == ClassesNum[dataset]
 
     while True:
-        domain_type = np.unique(domain)
+        if cross == 'multiple':
+            domain_type = np.unique(domain, axis=0)
+        else:
+            domain_type = np.unique(domain)
         domain_selected_num = np.max([int(len(domain_type) * tune_domain_portion), 1])
 
 
@@ -449,8 +454,12 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
                     if cross:
                         idx_domain_selected = []
                         for j in idx:
-                            if domain[j] in domain_selected:
-                                idx_domain_selected.append(j)
+                            if cross == 'multiple':
+                                if np.any([np.all(domain[j] == ds) for ds in domain_selected]):
+                                    idx_domain_selected.append(j)
+                            else:
+                                if domain[j] in domain_selected:
+                                    idx_domain_selected.append(j)
                         idx = np.array(idx_domain_selected)
                         
                     np.random.shuffle(idx)
@@ -540,7 +549,7 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     # dataset_name = ["Shoaib"]
     for i in range(seg_types):
         for dataset in dataset_name:
-            preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_alpha65_shot{i}/", dataset=dataset, cross='users', test_portion=0.2)
+            preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot{i}_test521/", dataset=dataset, cross='users', test_portion=0.6)
 
     return
 
@@ -723,11 +732,12 @@ def preprocessing_dataset_cross_domain_based_on_existing_split(split, dir, targe
     write_balance_tune_set(dir, target_dir, dataset, dataset_size=num, tune_domain_portion=tune_domain_portion, cross=cross, domain_for_tune=split[2])
 
 
+
 if __name__ == '__main__':
     # datasets_shot_record(datasets='HASC', version='s1', shot=100)
     # new_segmentation_for_positions(seg_types=5)
     # new_segmentation_for_devices(seg_types=1)
-    new_segmentation_for_user(seg_types=5)
+    new_segmentation_for_user(seg_types=1)
     # generate_split_for_cda_based_on_previous_split()
     # cmp_split()
     # new_tune_segmentation_with_different_portion(seed=940, seg_type=5)
