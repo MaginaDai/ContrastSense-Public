@@ -289,27 +289,27 @@
 # python classifier_bert.py v1_v2 "train65_supervised_label" -g 1 -f "${name}" -pv "train65_supervised_label" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}"
 
 
-for a in 45 65
+for a in 65
 do
     version="alpha${a}_shot"
 
-    for dataset in "HASC" "HHAR" "Shoaib" "MotionSense"
+    for dataset in "Shoaib" "MotionSense"
     do
         name="${dataset}_alpha${a}"
-        python pretrain.py v1 "${version}0" -g 0 -f "${name}" -s ${dataset} -name "${dataset}" &
-        python pretrain.py v1 "${version}1" -g 0 -f "${name}" -s ${dataset} -name "${dataset}" &
-        python pretrain.py v1 "${version}2" -g 1 -f "${name}" -s ${dataset} -name "${dataset}" &
-        python pretrain.py v1 "${version}3" -g 1 -f "${name}" -s ${dataset} -name "${dataset}" &
-        python pretrain.py v1 "${version}4" -g 1 -f "${name}" -s ${dataset} -name "${dataset}"
+        python pretrain.py v1 "${version}0" -g 2 -f "${name}" -s ${dataset} -name "${dataset}" &
+        python pretrain.py v1 "${version}1" -g 2 -f "${name}" -s ${dataset} -name "${dataset}" &
+        python pretrain.py v1 "${version}2" -g 3 -f "${name}" -s ${dataset} -name "${dataset}" &
+        python pretrain.py v1 "${version}3" -g 3 -f "${name}" -s ${dataset} -name "${dataset}" &
+        python pretrain.py v1 "${version}4" -g 3 -f "${name}" -s ${dataset} -name "${dataset}"
 
         wait
 
-        python classifier_bert.py v1_v2 "${version}0" -g 0 -f "${name}" -shot 10 -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_10" &
-        python classifier_bert.py v1_v2 "${version}1" -g 0 -f "${name}" -shot 10 -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_10" &
-        python classifier_bert.py v1_v2 "${version}2" -g 1 -f "${name}" -shot 10 -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_10"
-        python classifier_bert.py v1_v2 "${version}3" -g 1 -f "${name}" -shot 10 -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_10" &
-        python classifier_bert.py v1_v2 "${version}4" -g 1 -f "${name}" -shot 10 -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_10"
+        # python classifier_bert.py v1_v2 "${version}0" -g 0 -f "${name}" -shot 10 -pv "${version}0" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_10" &
+        # python classifier_bert.py v1_v2 "${version}1" -g 0 -f "${name}" -shot 10 -pv "${version}1" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_10" &
+        # python classifier_bert.py v1_v2 "${version}2" -g 1 -f "${name}" -shot 10 -pv "${version}2" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_10"
+        # python classifier_bert.py v1_v2 "${version}3" -g 1 -f "${name}" -shot 10 -pv "${version}3" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_10" &
+        # python classifier_bert.py v1_v2 "${version}4" -g 1 -f "${name}" -shot 10 -pv "${version}4" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_10"
 
-        wait
+        # wait
     done
 done

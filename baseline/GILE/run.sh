@@ -99,9 +99,9 @@ shot=1
 
 # done
 
-python main.py -g ${g} -version "${version}1" -shot ${shot} -cross "users" --store "${name}1" -name HHAR & 
-python main.py -g ${g} -version "${version}0" -shot ${shot} -cross "users" --store "${name}0" -name Shoaib &
-python main.py -g ${g} -version "${version}2" -shot ${shot} -cross "users" --store "${name}2" -name Shoaib 
+# python main.py -g ${g} -version "${version}1" -shot ${shot} -cross "users" --store "${name}1" -name HHAR & 
+# python main.py -g ${g} -version "${version}0" -shot ${shot} -cross "users" --store "${name}0" -name Shoaib &
+# python main.py -g ${g} -version "${version}2" -shot ${shot} -cross "users" --store "${name}2" -name Shoaib 
 
 ##################
 # version="train25_supervised_cross"
@@ -112,3 +112,21 @@ python main.py -g ${g} -version "${version}2" -shot ${shot} -cross "users" --sto
 # python main.py -g ${g} -version "${version}" -shot 10 -name HHAR -cross "users" --store "${store}" &
 # python main.py -g ${g} -version "${version}" -shot 50 -name HHAR -cross "users" --store "${store}" &
 # python main.py -g ${g} -version "${version}" -shot 100 -name HHAR -cross "users" --store "${store}"
+
+
+for a in 45 65
+do
+    name="GILE_alpha${a}"
+    version="alpha${a}_shot"
+    g=3
+    shot=10
+    for v in 0 1 2 3 4
+    do
+        python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name HASC &
+        python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name HHAR &
+        python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name MotionSense &
+        python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name Shoaib 
+        wait
+
+    done
+done
