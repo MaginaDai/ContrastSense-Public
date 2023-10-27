@@ -1,9 +1,9 @@
 #!/bin/bash
 key="v1"
-name="runs/eeg/cl_r_0.9"
+name="runs/emg_wo_queue_add_"
 # name="runs/hard_v1_cl_"
 # name="baseline/CDA/runs/CDA_lr5e-4_v"
-python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4" -modal "imu"
+python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4" -modal "emg"
 
 # python results_analysis.py -name "runs/CDL_ewc_mixup_v0" 
 # python results_analysis.py -name "${name}0_${key}" "${name}0.2_${key}" "${name}0.8_${key}" "${name}1.0_${key}"

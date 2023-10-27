@@ -12,6 +12,7 @@ from torchvision import models
 
 from CPC import CPCV1, CPC
 from MoCo import MoCo_v1, MoCo
+from MoCo_without_queue import ContrastSense_without_queue
 from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 from data_aug.preprocessing import UsersNum
 from simclr import SimCLR, MyNet, LIMU_encoder
@@ -111,11 +112,18 @@ def getFisherDiagonal_pretrain(args, train_loader, save_dir):
     # model = MoCo_v1(device=args.device, out_dim=args.out_dim, K=args.moco_K, m=args.moco_m, T=args.temperature, 
     #                 T_labels=args.tem_labels, dims=args.d, label_type=args.label_type, num_clusters=args.num_clusters, mol=args.mol, 
     #                 final_dim=args.final_dim, momentum=args.mo, drop=args.drop, DAL=args.DAL, if_cross_entropy=args.CE)
-
-    model = MoCo_v1(args)
+    
+    if args.use_queue:
+        model = MoCo_v1(args)
+    else:
+        model = ContrastSense_without_queue(args)
+        
     optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=1e-4)
 
-    fisher, fisher_infoNCE = calculateFisher(args, model, optimizer, train_loader, save_dir)
+    if args.use_queue:
+        fisher, fisher_infoNCE = calculateFisher(args, model, optimizer, train_loader, save_dir)
+    else:
+        fisher, fisher_infoNCE = calculateFisher_without_queue(args, model, optimizer, train_loader, save_dir)
     for n, p in fisher.items():
         fisher[n] = torch.min(fisher[n], torch.tensor(args.fishermax)).to('cpu')
 
@@ -231,6 +239,84 @@ def calculateFisher(args, model, optimizer, train_loader, save_dir):
     model.to('cpu')
 
     return fisher_cdl, fisher_infoNCE
+
+
+def calculateFisher_without_queue(args, model, optimizer, train_loader, save_dir):
+
+    model_dir = save_dir + '/model_best.pth.tar'
+    checkpoint = torch.load(model_dir, map_location="cpu")
+    state_dict = checkpoint['state_dict']
+    model.load_state_dict(state_dict, strict=False)
+    optimizer.load_state_dict(checkpoint['optimizer'])
+
+    model.to(args.device)
+
+    model.train()
+
+    fisher_cdl = {
+        n[len("encoder_q."):]: torch.zeros(p.shape).to(args.device)
+        for n, p in model.named_parameters()
+            if p.requires_grad and n.startswith('encoder_q.encoder')
+    }
+    fisher_infoNCE = {
+        n[len("encoder_q."):]: torch.zeros(p.shape).to(args.device)
+        for n, p in model.named_parameters()
+            if p.requires_grad and n.startswith('encoder_q.encoder')
+    }
+    
+    criterion = torch.nn.CrossEntropyLoss().to(args.device)
+
+    with torch.cuda.device(args.gpu_index):
+        optimizer.zero_grad()
+        for sensor, labels in train_loader:
+            sensor = [t.to(args.device) for t in sensor]
+            gt_label = labels[:, 0].to(args.device) # the first dim is motion labels
+            if args.label_type:
+                if args.cross == 'users': # use domain labels
+                    domain_label = [labels[:, 1].to(args.device)] 
+                elif args.cross == 'positions' or args.cross == 'devices' :
+                    domain_label = [labels[:, 2].to(args.device)] 
+                else:
+                    NotADirectoryError
+                    
+            time_label = labels[:, -1].to(args.device) # the last dim is time labels
+
+            _, _, logits_labels, _, _ = model(sensor[0], sensor[1], domain_label=domain_label, time_label=time_label)
+            sup_loss = model.supervised_CL(logits_labels=logits_labels, labels=domain_label)
+            loss = - args.slr[0] * sup_loss
+            loss /= len(train_loader)
+            loss.backward() 
+
+        for n, p in model.named_parameters():
+            if p.grad is not None and n.startswith('encoder_q.encoder'):
+                fisher_cdl[n[len("encoder_q."):]] += p.grad.pow(2).clone()
+            
+        optimizer.zero_grad()
+        for sensor, labels in train_loader:
+            sensor = [t.to(args.device) for t in sensor]
+            gt_label = labels[:, 0].to(args.device) # the first dim is motion labels
+            if args.label_type or args.hard:
+                time_label = [labels[:, -1].to(args.device)] # the last dim is time labels
+                if args.cross == 'users': # use domain labels
+                    domain_label = [labels[:, 1].to(args.device)] 
+                elif args.cross == 'positions' or args.cross == 'devices' :
+                    domain_label = [labels[:, 2].to(args.device)] 
+                else:
+                    NotADirectoryError
+            
+            output, target,  _, _, _, = model(sensor[0], sensor[1], domain_label=domain_label, time_label=time_label)
+            loss = criterion(output, target)
+            loss /= len(train_loader)
+            loss.backward()
+
+        for n, p in model.named_parameters():
+            if p.grad is not None and n.startswith('encoder_q.encoder'):
+                fisher_infoNCE[n[len("encoder_q."):]] += p.grad.pow(2).clone()
+        
+    model.to('cpu')
+
+    return fisher_cdl, fisher_infoNCE
+
 
 def load_fisher_matrix(pretrain_dir, device):
     fisher_dir = './runs/' + pretrain_dir + '/fisher.npz'

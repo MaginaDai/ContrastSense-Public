@@ -11,7 +11,7 @@ import torch.backends.cudnn as cudnn
 
 from CPC import CPCV1, CPC
 from MoCo import MoCo_v1, MoCo
-from MoCo_without_queue import ContrastSense_without_queue
+from MoCo_without_queue import ContrastSense_without_queue, MoCo_without_queue
 from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 from data_aug.preprocessing import UsersNum
 from getFisherDiagonal import getFisherDiagonal_pretrain
@@ -25,7 +25,7 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 
-parser.add_argument('-name', default='HHAR', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF'])
+parser.add_argument('-name', default='Myo', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF'])
 parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
 parser.add_argument('-cross', default='users', type=str, help='decide to use which kind of labels')
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
@@ -76,7 +76,7 @@ parser.add_argument('-scale_ratio', default=1.0, type=float, help='to scale the 
 parser.add_argument('-time_window', default=0, type=float, help='[time_label-t, time_label + t]')  # how much time idx labels are included.
 
 parser.add_argument('-time_analysis', default=False, type=bool, help='decide whether to evaluate the time overhead')
-parser.add_argument('-use_queue', default=True, type=bool, help='decide whether to use domain queues')
+parser.add_argument('-use_queue', default=False, type=bool, help='decide whether to use domain queues')
 
 
 def main():
@@ -110,7 +110,7 @@ def main():
 
     if args.label_type == 1:
         if args.name == 'NinaPro':
-            args.slr=0.1
+            args.slr=[0.1]
         if args.name == 'HASC':
             args.tem_labels = [0.08,]
             
@@ -157,11 +157,14 @@ def main():
             moco = MoCo(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
             moco.train(train_loader)
         else:
-            simclr = SimCLR(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
-            simclr.train(train_loader)
+            moco_without_queue = MoCo_without_queue(model=model, optimizer=optimizer, scheduler=scheduler, args=args)
+            moco_without_queue.train(train_loader)
 
     if args.ewc and args.label_type != 0:
-        getFisherDiagonal_pretrain(args, train_loader, moco.writer.log_dir)
+        if args.use_queue:
+            getFisherDiagonal_pretrain(args, train_loader, moco.writer.log_dir)
+        else:
+            getFisherDiagonal_pretrain(args, train_loader, moco_without_queue.writer.log_dir)
     return
 
 
