@@ -324,47 +324,24 @@ class SimCLR(object):
         self.model = kwargs['model'].to(self.args.device)
         self.optimizer = kwargs['optimizer']
         self.scheduler = kwargs['scheduler']
-        lr_str = str(self.args.lr)
-        if '.' in lr_str:
-            writer_pos = './runs/' + self.args.store + '_' + lr_str.replace('.', '_')
-        else:
-            writer_pos = './runs/' + self.args.store + '_' + lr_str
+
+        writer_pos = './runs/' + self.args.store + '/' + self.args.name
         if self.args.transfer is True:
-            writer_pos += '_fine_tune'
+            if self.args.if_fine_tune:
+                writer_pos += '_ft'
+            else:
+                writer_pos += '_le'
+            if self.args.shot:
+                writer_pos += f'_shot_{self.args.shot}'
+            else:
+                writer_pos += f'_percent_{self.args.percent}'
+        else:
+            writer_pos += '/'
         self.writer = SummaryWriter(writer_pos)
         logging.basicConfig(filename=os.path.join(self.writer.log_dir, 'training.log'), level=logging.DEBUG)
         self.criterion = torch.nn.CrossEntropyLoss().to(self.args.device)
 
-    def info_nce_loss(self, features):
 
-        labels = torch.cat([torch.arange(self.args.batch_size) for i in range(self.args.n_views)], dim=0)
-        labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
-        labels = labels.to(self.args.device)
-
-        if self.args.if_normalize:
-            features = F.normalize(features, dim=1)
-
-        similarity_matrix = torch.matmul(features, features.T)
-        # assert similarity_matrix.shape == (
-        #     self.args.n_views * self.args.batch_size, self.args.n_views * self.args.batch_size)
-        # assert similarity_matrix.shape == labels.shape
-
-        # discard the main diagonal from both: labels and similarities matrix
-        mask = torch.eye(labels.shape[0], dtype=torch.bool).to(self.args.device)
-        labels = labels[~mask].view(labels.shape[0], -1)
-        similarity_matrix = similarity_matrix[~mask].view(similarity_matrix.shape[0], -1)
-        # assert similarity_matrix.shape == labels.shape
-
-        # select and combine multiple positives
-        positives = similarity_matrix[labels.bool()].view(labels.shape[0], -1)
-
-        # select only the negatives the negatives
-        negatives = similarity_matrix[~labels.bool()].view(similarity_matrix.shape[0], -1)
-
-        logits = torch.cat([positives, negatives], dim=1)
-        labels = torch.zeros(logits.shape[0], dtype=torch.long).to(self.args.device)
-        logits = logits / self.args.temperature
-        return logits, labels
 
     def train(self, train_loader):
 
@@ -378,6 +355,10 @@ class SimCLR(object):
         logging.info(f"Training with gpu: {self.args.disable_cuda}.")
 
         acc = 0
+        best_epoch = 0
+        best_acc = 0
+        not_best_counter = 0
+        best_loss = 1e6
 
         if self.args.resume:
             best_acc = self.args.best_acc
@@ -385,14 +366,18 @@ class SimCLR(object):
             best_acc = 0
 
         for epoch_counter in tqdm(range(self.args.epochs)):
-            for sensor, _ in train_loader:
-                sensor = torch.cat(sensor, dim=0)
+            acc_batch = AverageMeter('acc_batch', ':6.2f')
+            loss_batch = AverageMeter('loss_batch', ':6.5f')
+            mscr_batch = AverageMeter('mslr_batch', ':6.3f')
+            msdr_batch = AverageMeter('msdr_batch', ':6.3f')
+            mscsdr_batch = AverageMeter('mscsdr_batch', ':6.3f')
 
-                sensor = sensor.to(self.args.device)
+            for sensor, _ in train_loader:
+                sensor = [t.to(self.args.device) for t in sensor]
+                domain_label = None
 
                 with autocast(enabled=self.args.fp16_precision):
-                    features = self.model(sensor)
-                    logits, labels = self.info_nce_loss(features)
+                    logits, labels = self.model(sensor[0], sensor[1], domain_label=domain_label)
                     loss = self.criterion(logits, labels)
 
                 self.optimizer.zero_grad()
@@ -402,42 +387,50 @@ class SimCLR(object):
                 scaler.step(self.optimizer)
                 scaler.update()
 
+                acc = accuracy(logits, labels, topk=(1,))
+
+                acc_batch.update(acc, sensor[0].size(0))
+                loss_batch.update(loss, sensor[0].size(0))
+
                 if n_iter % self.args.log_every_n_steps == 0:
-                    acc = accuracy(logits, labels, topk=(1,))
                     self.writer.add_scalar('loss', loss, global_step=n_iter)
                     self.writer.add_scalar('acc', acc, global_step=n_iter)
                     self.writer.add_scalar('learning_rate', self.scheduler.get_last_lr()[0], global_step=n_iter)
-
+                    self.writer.add_scalar('lr', self.optimizer.state_dict()['param_groups'][0]['lr'], global_step=n_iter)
+                    
                 n_iter += 1
 
-            is_best = acc > best_acc
-            best_acc = max(acc, best_acc)
+            is_best = loss_batch.avg <= best_loss
+            if epoch_counter >= 10:  # only after the first 10 epochs, the best_acc is updated.
+                best_loss = min(loss_batch.avg, best_loss)
+                best_acc = max(acc_batch.avg, best_acc)
             if is_best:
-                # checkpoint_name = 'checkpoint_at_{:04d}.pth.tar'.format(epoch_counter)
+                best_epoch = epoch_counter
                 checkpoint_name = 'model_best.pth.tar'
                 save_checkpoint({
-                    'epoch': epoch_counter + 1,
-                    'arch': self.args.arch,
+                    'epoch': epoch_counter,
                     'state_dict': self.model.state_dict(),
-                    'best_acc': best_acc,
+                    'best_loss': best_loss,
                     'optimizer': self.optimizer.state_dict(),
                 }, is_best, filename=os.path.join(self.writer.log_dir, checkpoint_name), path_dir=self.writer.log_dir)
+                not_best_counter = 0
+            else:
+                not_best_counter += 1
 
             # warmup for the first 10 epochs
             if epoch_counter >= 10:
                 self.scheduler.step()
-            logging.debug(f"Epoch: {epoch_counter}\tLoss: {loss}\t accuracy: {acc}")
+            
+            if epoch_counter == 0:
+                continue  # the first epoch would not have record.
+            log_str = f"Epoch: {epoch_counter} Loss: {loss_batch.avg} accuracy: {acc_batch.avg} "
+            logging.debug(log_str)
+
+            if not_best_counter >= 200:
+                print(f"early stop at {epoch_counter}")
+                break
 
         logging.info("Training has finished.")
-        # save model checkpoints
-        checkpoint_name = 'checkpoint_end_{:04d}.pth.tar'.format(self.args.epochs)
-        save_checkpoint({
-            'epoch': self.args.epochs,
-            'arch': self.args.arch,
-            'state_dict': self.model.state_dict(),
-            'optimizer': self.optimizer.state_dict(),
-            'acc': acc
-        }, is_best=False, filename=os.path.join(self.writer.log_dir, checkpoint_name), path_dir=self.writer.log_dir)
         logging.info(f"Model checkpoint and metadata has been saved at {self.writer.log_dir}.")
 
     def transfer_train(self, tune_loader, val_loader):
