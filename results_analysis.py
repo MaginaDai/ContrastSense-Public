@@ -21,8 +21,9 @@ parser.add_argument('-ft', default=True, type=bool, help='fine-tune or linear ev
 parser.add_argument('-nad', default='ft_shot_10', type=str, help='name after datasets')
 parser.add_argument('-shot', default=10, type=int, help='how many shots we use')
 parser.add_argument('-modal', default='imu', type=str, help='which modal we use')
+parser.add_argument('-version', default='shot', type=str, help='which modal we use')
 
-def avg_result(name, ft, modal, shot=10):
+def avg_result(name, ft, modal, shot=10, version="shot"):
     if modal == 'imu':
         dataset = dataset_imu
     elif modal == 'emg':
@@ -32,6 +33,8 @@ def avg_result(name, ft, modal, shot=10):
     else:
         NotImplementedError
     
+    weight = cal_weight_for_weighted_evalution(modal, version)
+
     eval = np.zeros([len(name), len(dataset)])
     test = np.zeros([len(name), len(dataset)])
     test_acc = np.zeros([len(name), len(dataset)])
@@ -64,9 +67,16 @@ def avg_result(name, ft, modal, shot=10):
     eval_mean = np.expand_dims(np.mean(eval, axis=1), 1)
     test_mean = np.expand_dims(np.mean(test, axis=1), 1)
     acc_mean = np.expand_dims(np.mean(test_acc, axis=1), 1)
-    eval_final = np.concatenate((eval, eval_mean), axis=1)
-    test_final = np.concatenate((test, test_mean), axis=1)
-    test_acc_final = np.concatenate((test_acc, acc_mean), axis=1)
+
+    print(eval_mean.shape)
+
+    weighted_eval = np.expand_dims(np.average(eval, axis=1, weights=weight), 1)
+    weighted_f1 = np.expand_dims(np.average(test, axis=1, weights=weight), 1)
+    weighted_acc = np.expand_dims(np.average(test_acc, axis=1, weights=weight), 1)
+
+    eval_final = np.concatenate((eval, eval_mean, weighted_eval), axis=1)
+    test_final = np.concatenate((test, test_mean, weighted_f1), axis=1)
+    test_acc_final = np.concatenate((test_acc, acc_mean, weighted_acc), axis=1)
     
     print("Eval f1 is: \n {}".format(np.around(eval_final, 2)))
     print("Test f1 is: \n {}".format(np.around(test_final, 2)))
@@ -270,9 +280,29 @@ def analysis_semi_hard_sampling():
     return
 
 
+def cal_weight_for_weighted_evalution(modal='imu', version="shot"):
+    if modal == 'imu':
+        datasets = dataset_imu
+    elif modal == 'emg':
+        datasets = dataset_emg
+    num_test_sample = np.zeros(len(datasets))
+
+    for i, dataset in enumerate(datasets):
+        dir = f"datasets/{dataset}_{version}"
+        for v in np.arange(5):
+            test_dir = dir + f"{v}/test_set.npz"
+            test_set = np.load(test_dir)['test_set']
+            num_test_sample[i] += len(test_set)/5
+        
+    weight = num_test_sample/np.sum(num_test_sample)
+    # print(weight)
+    return weight
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
     avg_result(args.name, ft=args.ft, modal=args.modal, shot=args.shot)
+    # cal_weight_for_weighted_evalution()
 
     # analysis_semi_hard_sampling()
     # avg_result_for_limited_labels(args.name)

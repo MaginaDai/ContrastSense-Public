@@ -230,7 +230,7 @@ version="users_devices_shot"
 name="CM_users_devices_"
 name2="FM_users_devices_"
 
-for shot in 1 5 10 20 50
+for shot in 50 100
 do
     python main.py -g 2 -version "${version}0" -shot ${shot} -cross "multiple" -m 'CM' -name HASC --store "${name}0" &
     python main.py -g 2 -version "${version}1" -shot ${shot} -cross "multiple" -m 'CM' -name HASC --store "${name}1" &
@@ -251,7 +251,7 @@ version="users_positions_shot"
 name="CM_users_positions_"
 name2="FM_users_positions_"
 
-for shot in 1 5 10 20 50
+for shot in 5 10 50 100
 do
     python main.py -g 2 -version "${version}0" -shot ${shot} -cross "multiple" -m 'CM' -name Shoaib --store "${name}0" &
     python main.py -g 2 -version "${version}1" -shot ${shot} -cross "multiple" -m 'CM' -name Shoaib --store "${name}1" &

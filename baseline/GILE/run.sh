@@ -137,7 +137,7 @@ name="GILE_users_positions_"
 version="users_positions_shot"
 g=0
 
-for shot in 1 5 10 20 50 
+for shot in 100
 do
     python main.py -g ${g} -version "${version}0" -shot ${shot} -cross "multiple" --store "${name}0" -name Shoaib &
     python main.py -g ${g} -version "${version}1" -shot ${shot} -cross "multiple" --store "${name}1" -name Shoaib &
@@ -153,7 +153,7 @@ name="GILE_users_devices_"
 version="users_devices_shot"
 g=0
 
-for shot in 1 5 10 20 50 
+for shot in 100
 do
     python main.py -g ${g} -version "${version}0" -shot ${shot} -cross "multiple" --store "${name}0" -name HASC &
     python main.py -g ${g} -version "${version}1" -shot ${shot} -cross "multiple" --store "${name}1" -name HASC &

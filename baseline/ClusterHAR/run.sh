@@ -233,19 +233,19 @@ version="users_devices_shot"
 store="ClusterCL_users_devices_"
 store_ft="ClusterCL_users_devices_"
 g=1
-for dataset in "HASC"
-do
-    python main.py -g ${g} --store "${store}0" -version "${version}0" -name ${dataset} &
-    python main.py -g ${g} --store "${store}1" -version "${version}1" -name ${dataset} &
-    python main.py -g ${g} --store "${store}2" -version "${version}2" -name ${dataset} &
-    python main.py -g ${g} --store "${store}3" -version "${version}3" -name ${dataset} &
-    python main.py -g ${g} --store "${store}4" -version "${version}4" -name ${dataset} 
+# for dataset in "HASC"
+# do
+#     python main.py -g ${g} --store "${store}0" -version "${version}0" -name ${dataset} &
+#     python main.py -g ${g} --store "${store}1" -version "${version}1" -name ${dataset} &
+#     python main.py -g ${g} --store "${store}2" -version "${version}2" -name ${dataset} &
+#     python main.py -g ${g} --store "${store}3" -version "${version}3" -name ${dataset} &
+#     python main.py -g ${g} --store "${store}4" -version "${version}4" -name ${dataset} 
 
-    wait
-done
+#     wait
+# done
 
 dataset="HASC"
-for shot in 1 5 10 20 50
+for shot in 100
 do
     python transfer.py -g ${g} -ft True -version "${version}0" -shot ${shot} -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store_ft}0" &
     python transfer.py -g ${g} -ft True -version "${version}1" -shot ${shot} -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store_ft}1" &
@@ -260,19 +260,19 @@ version="users_positions_shot"
 store="ClusterCL_users_positions_"
 store_ft="ClusterCL_users_positions_"
 g=1
-for dataset in "Shoaib"
-do
-    python main.py -g ${g} --store "${store}0" -version "${version}0" -name ${dataset} &
-    python main.py -g ${g} --store "${store}1" -version "${version}1" -name ${dataset} &
-    python main.py -g ${g} --store "${store}2" -version "${version}2" -name ${dataset} &
-    python main.py -g ${g} --store "${store}3" -version "${version}3" -name ${dataset} &
-    python main.py -g ${g} --store "${store}4" -version "${version}4" -name ${dataset} 
+# for dataset in "Shoaib"
+# do
+#     python main.py -g ${g} --store "${store}0" -version "${version}0" -name ${dataset} &
+#     python main.py -g ${g} --store "${store}1" -version "${version}1" -name ${dataset} &
+#     python main.py -g ${g} --store "${store}2" -version "${version}2" -name ${dataset} &
+#     python main.py -g ${g} --store "${store}3" -version "${version}3" -name ${dataset} &
+#     python main.py -g ${g} --store "${store}4" -version "${version}4" -name ${dataset} 
 
-    wait
-done
+#     wait
+# done
 
 dataset="Shoaib"
-for shot in 1 5 10 20 50
+for shot in 100
 do
     python transfer.py -g ${g} -ft True -version "${version}0" -shot ${shot} -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store_ft}0" &
     python transfer.py -g ${g} -ft True -version "${version}1" -shot ${shot} -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store_ft}1" &
