@@ -240,21 +240,21 @@ g=0
 # done
 
 dataset="Shoaib"
-for shot in 50
+for shot in 100
 do
-    python transfer.py -g ${g} -ft True -version "${version}0" -shot ${shot} -name ${dataset} --pretrained "${name}0/${dataset}" --store "${name}0" &
+    # python transfer.py -g ${g} -ft True -version "${version}0" -shot ${shot} -name ${dataset} --pretrained "${name}0/${dataset}" --store "${name}0" &
     # python transfer.py -g ${g} -ft True -version "${version}1" -shot ${shot} -name ${dataset} --pretrained "${name}1/${dataset}" --store "${name}1" &
-    # python transfer.py -g ${g} -ft True -version "${version}2" -shot ${shot} -name ${dataset} --pretrained "${name}2/${dataset}" --store "${name}2" &
+    python transfer.py -g ${g} -ft True -version "${version}2" -shot ${shot} -name ${dataset} --pretrained "${name}2/${dataset}" --store "${name}2" &
     # python transfer.py -g ${g} -ft True -version "${version}3" -shot ${shot} -name ${dataset} --pretrained "${name}3/${dataset}" --store "${name}3" &
     # python transfer.py -g ${g} -ft True -version "${version}4" -shot ${shot} -name ${dataset} --pretrained "${name}4/${dataset}" --store "${name}4" 
 
-    # wait
+    wait
 done
 
 
-# name="CPCHAR_users_devices_"
-# version="users_devices_shot"
-# g=0
+name="CPCHAR_users_devices_"
+version="users_devices_shot"
+g=0
 # for dataset in "HASC" 
 # do
 #     python main.py -g ${g} -version "${version}0" -name ${dataset} --store "${name}0" &
@@ -266,14 +266,14 @@ done
 #     wait
 # done
 
-# dataset="HASC"
-# for shot in 1 5 10 20 50
-# do
-#     python transfer.py -g ${g} -ft True -version "${version}0" -shot ${shot} -name ${dataset} --pretrained "${name}0/${dataset}" --store "${name}0" &
-#     python transfer.py -g ${g} -ft True -version "${version}1" -shot ${shot} -name ${dataset} --pretrained "${name}1/${dataset}" --store "${name}1" &
-#     python transfer.py -g ${g} -ft True -version "${version}2" -shot ${shot} -name ${dataset} --pretrained "${name}2/${dataset}" --store "${name}2" &
-#     python transfer.py -g ${g} -ft True -version "${version}3" -shot ${shot} -name ${dataset} --pretrained "${name}3/${dataset}" --store "${name}3" &
-#     python transfer.py -g ${g} -ft True -version "${version}4" -shot ${shot} -name ${dataset} --pretrained "${name}4/${dataset}" --store "${name}4" 
+dataset="HASC"
+for shot in 100
+do
+    python transfer.py -g ${g} -ft True -version "${version}0" -shot ${shot} -name ${dataset} --pretrained "${name}0/${dataset}" --store "${name}0" &
+    # python transfer.py -g ${g} -ft True -version "${version}1" -shot ${shot} -name ${dataset} --pretrained "${name}1/${dataset}" --store "${name}1" &
+    # python transfer.py -g ${g} -ft True -version "${version}2" -shot ${shot} -name ${dataset} --pretrained "${name}2/${dataset}" --store "${name}2" &
+    # python transfer.py -g ${g} -ft True -version "${version}3" -shot ${shot} -name ${dataset} --pretrained "${name}3/${dataset}" --store "${name}3" &
+    # python transfer.py -g ${g} -ft True -version "${version}4" -shot ${shot} -name ${dataset} --pretrained "${name}4/${dataset}" --store "${name}4" 
 
-#     wait
-# done
+    wait
+done
