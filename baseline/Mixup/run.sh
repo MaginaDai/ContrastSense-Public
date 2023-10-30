@@ -64,23 +64,23 @@
 #     done
 # done
 
-for a in 45
-do
-    version="alpha${a}_shot"
-    store="mixup_alpha${a}_"
-    for shot in 10
-    do
-        for dataset in "HHAR" 
-        do
+# for a in 45
+# do
+#     version="alpha${a}_shot"
+#     store="mixup_alpha${a}_"
+#     for shot in 10
+#     do
+#         for dataset in "HHAR" 
+#         do
             # python main.py -g 3 -version "${version}0" --store "${store}0" -shot ${shot} -name ${dataset} &
             # python main.py -g 2 -version "${version}1" --store "${store}1" -shot ${shot} -name ${dataset} &
             # python main.py -g 3 -version "${version}2" --store "${store}2" -shot ${shot} -name ${dataset} &
-            python main.py -g 2 -version "${version}3" --store "${store}3" -shot ${shot} -name ${dataset} &
+            # python main.py -g 2 -version "${version}3" --store "${store}3" -shot ${shot} -name ${dataset} &
             # python main.py -g 3 -version "${version}4" --store "${store}4" -shot ${shot} -name ${dataset}
-            wait
-        done
-    done
-done
+#             wait
+#         done
+#     done
+# done
 
 # for portion in 60 80 100
 # do
@@ -140,3 +140,35 @@ done
 #     done
 
 # done
+
+
+version="users_positions_shot"
+store="mixup_users_positions_"
+for shot in 1 5 10 20 50
+do
+    for dataset in "Shoaib" 
+    do
+        python main.py -g 1 -version "${version}0" --store "${store}0" -shot ${shot} -name ${dataset} &
+        python main.py -g 1 -version "${version}1" --store "${store}1" -shot ${shot} -name ${dataset} &
+        python main.py -g 1 -version "${version}2" --store "${store}2" -shot ${shot} -name ${dataset} &
+        python main.py -g 1 -version "${version}3" --store "${store}3" -shot ${shot} -name ${dataset} &
+        python main.py -g 1 -version "${version}4" --store "${store}4" -shot ${shot} -name ${dataset}
+        wait
+    done
+done
+
+
+version="users_devices_shot"
+store="mixup_users_devices_"
+for shot in 1 5 10 20 50
+do
+    for dataset in "HASC" 
+    do
+        python main.py -g 1 -version "${version}0" --store "${store}0" -shot ${shot} -name ${dataset} &
+        python main.py -g 1 -version "${version}1" --store "${store}1" -shot ${shot} -name ${dataset} &
+        python main.py -g 1 -version "${version}2" --store "${store}2" -shot ${shot} -name ${dataset} &
+        python main.py -g 1 -version "${version}3" --store "${store}3" -shot ${shot} -name ${dataset} &
+        python main.py -g 1 -version "${version}4" --store "${store}4" -shot ${shot} -name ${dataset}
+        wait
+    done
+done
