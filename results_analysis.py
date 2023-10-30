@@ -190,9 +190,9 @@ def avg_result_for_limited_labels(name):
 def avg_result_for_cross_domains(name, ft, modal, shot, cross="preliminary"):
     eval = np.zeros([len(name)])
     test = np.zeros([len(name)])
-    if cross == 'positions' or cross == 'positions_100':
+    if cross == 'positions' or cross == 'positions_100' or cross == 'users_positions':
         data="Shoaib"
-    elif cross == 'devices':
+    elif cross == 'devices' or cross == 'users_devices':
         data="HASC"
     elif cross == 'preliminary':
         data='HHAR'

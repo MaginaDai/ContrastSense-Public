@@ -107,27 +107,27 @@
 #     done
 # done
 
-shot=10
-for a in 45 65
-do
-    version="alpha${a}_shot"
-    for v in 0 1 2 3 4
-    do
-        name="CM_alpha${a}_${v}"
-        name2="FM_alpha${a}_${v}"
-        python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" -m 'CM' -name HASC --store "${name}" &
-        python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" -m 'CM' -name HHAR --store "${name}" &
-        python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" -m 'CM' -name MotionSense --store "${name}" &
-        python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" -m 'CM' -name Shoaib --store "${name}" &
-        python main.py -g 3 -version "${version}${v}" -shot ${shot} -cross "users" -m 'FM' -name HASC --store "${name2}" &
-        python main.py -g 3 -version "${version}${v}" -shot ${shot} -cross "users" -m 'FM' -name HHAR --store "${name2}" &
-        python main.py -g 3 -version "${version}${v}" -shot ${shot} -cross "users" -m 'FM' -name MotionSense --store "${name2}" &
-        python main.py -g 3 -version "${version}${v}" -shot ${shot} -cross "users" -m 'FM' -name Shoaib --store "${name2}" 
+# shot=10
+# for a in 45 65
+# do
+#     version="alpha${a}_shot"
+#     for v in 0 1 2 3 4
+#     do
+#         name="CM_alpha${a}_${v}"
+#         name2="FM_alpha${a}_${v}"
+#         python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" -m 'CM' -name HASC --store "${name}" &
+#         python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" -m 'CM' -name HHAR --store "${name}" &
+#         python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" -m 'CM' -name MotionSense --store "${name}" &
+#         python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" -m 'CM' -name Shoaib --store "${name}" &
+#         python main.py -g 3 -version "${version}${v}" -shot ${shot} -cross "users" -m 'FM' -name HASC --store "${name2}" &
+#         python main.py -g 3 -version "${version}${v}" -shot ${shot} -cross "users" -m 'FM' -name HHAR --store "${name2}" &
+#         python main.py -g 3 -version "${version}${v}" -shot ${shot} -cross "users" -m 'FM' -name MotionSense --store "${name2}" &
+#         python main.py -g 3 -version "${version}${v}" -shot ${shot} -cross "users" -m 'FM' -name Shoaib --store "${name2}" 
 
-        wait
+#         wait
 
-    done
-done
+#     done
+# done
 
 # version=cp
 # name1="cross positions/CM_cp"
@@ -203,3 +203,66 @@ done
 # python main.py -g ${g1} -version "${version}" -shot 10 -m 'FM' -cross "users" -name HHAR --store "${name1}" &
 # python main.py -g ${g1} -version "${version}" -shot 50 -m 'FM' -cross "users" -name HHAR --store "${name1}" &
 # python main.py -g ${g1} -version "${version}" -shot 100 -m 'FM' -cross "users" -name HHAR --store "${name1}"
+
+
+# shot=10
+
+# version="alpha${a}_shot"
+# for v in 0 1 2 3 4
+# do
+#     name="CM_alpha${a}_${v}"
+#     name2="FM_alpha${a}_${v}"
+#     python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" -m 'CM' -name HASC --store "${name}" &
+#     python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" -m 'CM' -name HHAR --store "${name}" &
+#     python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" -m 'CM' -name MotionSense --store "${name}" &
+#     python main.py -g 2 -version "${version}${v}" -shot ${shot} -cross "users" -m 'CM' -name Shoaib --store "${name}" &
+#     python main.py -g 3 -version "${version}${v}" -shot ${shot} -cross "users" -m 'FM' -name HASC --store "${name2}" &
+#     python main.py -g 3 -version "${version}${v}" -shot ${shot} -cross "users" -m 'FM' -name HHAR --store "${name2}" &
+#     python main.py -g 3 -version "${version}${v}" -shot ${shot} -cross "users" -m 'FM' -name MotionSense --store "${name2}" &
+#     python main.py -g 3 -version "${version}${v}" -shot ${shot} -cross "users" -m 'FM' -name Shoaib --store "${name2}" 
+
+#     wait
+
+# done
+
+
+version="users_devices_shot"
+name="CM_users_devices_"
+name2="FM_users_devices_"
+
+for shot in 1 5 10 20 50
+do
+    python main.py -g 2 -version "${version}0" -shot ${shot} -cross "multiple" -m 'CM' -name HASC --store "${name}0" &
+    python main.py -g 2 -version "${version}1" -shot ${shot} -cross "multiple" -m 'CM' -name HASC --store "${name}1" &
+    python main.py -g 2 -version "${version}2" -shot ${shot} -cross "multiple" -m 'CM' -name HASC --store "${name}2" &
+    python main.py -g 2 -version "${version}3" -shot ${shot} -cross "multiple" -m 'CM' -name HASC --store "${name}3" &
+    python main.py -g 2 -version "${version}4" -shot ${shot} -cross "multiple" -m 'CM' -name HASC --store "${name}4" &
+    python main.py -g 3 -version "${version}0" -shot ${shot} -cross "multiple" -m 'FM' -name HASC --store "${name2}0" &
+    python main.py -g 3 -version "${version}1" -shot ${shot} -cross "multiple" -m 'FM' -name HASC --store "${name2}1" &
+    python main.py -g 3 -version "${version}2" -shot ${shot} -cross "multiple" -m 'FM' -name HASC --store "${name2}2" &
+    python main.py -g 3 -version "${version}3" -shot ${shot} -cross "multiple" -m 'FM' -name HASC --store "${name2}3" &
+    python main.py -g 3 -version "${version}4" -shot ${shot} -cross "multiple" -m 'FM' -name HASC --store "${name2}4" 
+    wait
+
+done
+
+
+version="users_positions_shot"
+name="CM_users_positions_"
+name2="FM_users_positions_"
+
+for shot in 1 5 10 20 50
+do
+    python main.py -g 2 -version "${version}0" -shot ${shot} -cross "multiple" -m 'CM' -name Shoaib --store "${name}0" &
+    python main.py -g 2 -version "${version}1" -shot ${shot} -cross "multiple" -m 'CM' -name Shoaib --store "${name}1" &
+    python main.py -g 2 -version "${version}2" -shot ${shot} -cross "multiple" -m 'CM' -name Shoaib --store "${name}2" &
+    python main.py -g 2 -version "${version}3" -shot ${shot} -cross "multiple" -m 'CM' -name Shoaib --store "${name}3" &
+    python main.py -g 2 -version "${version}4" -shot ${shot} -cross "multiple" -m 'CM' -name Shoaib --store "${name}4" &
+    python main.py -g 3 -version "${version}0" -shot ${shot} -cross "multiple" -m 'FM' -name Shoaib --store "${name2}0" &
+    python main.py -g 3 -version "${version}1" -shot ${shot} -cross "multiple" -m 'FM' -name Shoaib --store "${name2}1" &
+    python main.py -g 3 -version "${version}2" -shot ${shot} -cross "multiple" -m 'FM' -name Shoaib --store "${name2}2" &
+    python main.py -g 3 -version "${version}3" -shot ${shot} -cross "multiple" -m 'FM' -name Shoaib --store "${name2}3" &
+    python main.py -g 3 -version "${version}4" -shot ${shot} -cross "multiple" -m 'FM' -name Shoaib --store "${name2}4" 
+    wait
+
+done

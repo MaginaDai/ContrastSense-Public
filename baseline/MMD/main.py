@@ -9,7 +9,7 @@ from os.path import dirname
 sys.path.append(dirname(dirname(sys.path[0])))
 sys.path.append(dirname(sys.path[0]))
 
-from data_aug.preprocessing import ClassesNum, DevicesNum, PositionNum, UsersNum
+from data_aug.preprocessing import ClassesNum, DevicesNum, Multiple_DomainNum, PositionNum, UsersNum
 from baseline.MMD.FMUDA import FMUDA, FM_model
 from baseline.MMD.dataload import FMUDA_Dataset
 from baseline.CPCHAR.dataload import CPCHAR_Dataset
@@ -76,6 +76,9 @@ def main():
         domain_num = PositionNum[args.name]
     elif args.cross == 'devices':
         domain_num = DevicesNum[args.name]
+    elif args.cross == 'multiple':
+        domain_num = Multiple_DomainNum[args.name]
+
     model = FM_model(classes=ClassesNum[args.name], method=args.method, domains=domain_num)
     optimizer = torch.optim.Adam(model.parameters(), args.lr)
 

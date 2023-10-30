@@ -243,9 +243,10 @@ class MoCo_without_queue(object):
                     time_label = [labels[:, -1].to(self.args.device)] # the last dim is time labels
                     if self.args.cross == 'users': # use domain labels
                         domain_label = [labels[:, 1].to(self.args.device)] 
-                        
                     elif self.args.cross == 'positions' or self.args.cross == 'devices' :
                         domain_label = [labels[:, 2].to(self.args.device)] 
+                    elif self.args.cross == 'multiple':
+                        domain_label = [labels[:, 3].to(self.args.device)]
                     else:
                         NotADirectoryError
                 else:

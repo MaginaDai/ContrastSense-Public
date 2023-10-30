@@ -68,6 +68,8 @@ def load_data(datasets_name, version, split, cross, shot=None):
             d[idx] = label[1]
         elif cross == 'positions' or cross == 'devices':
             d[idx] = label[2]
+        elif cross == 'multiple':
+            d[idx] = label[3]
         else:
             NotADirectoryError
 

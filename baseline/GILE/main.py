@@ -12,7 +12,7 @@ from baseline.CPCHAR.dataload import CPCHAR_Dataset
 from baseline.GILE.dataloader import load_GILE_type_data
 from baseline.GILE.GILE import train
 import baseline.GILE.network as net
-from data_aug.preprocessing import ClassesNum, UsersNum, PositionNum, DevicesNum
+from data_aug.preprocessing import ClassesNum, Multiple_DomainNum, UsersNum, PositionNum, DevicesNum
 
 from utils import seed_torch
 import torch
@@ -64,6 +64,8 @@ if __name__ == '__main__':
         args.n_domains = PositionNum[args.name]
     elif args.cross == 'devices':
         args.n_domains = DevicesNum[args.name]
+    elif args.cross == 'multiple':
+        args.n_domains = Multiple_DomainNum[args.name]
 
     args.n_class = ClassesNum[args.name]
     seed_torch(seed=args.seed)

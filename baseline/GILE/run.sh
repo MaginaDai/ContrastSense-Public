@@ -114,19 +114,52 @@ shot=1
 # python main.py -g ${g} -version "${version}" -shot 100 -name HHAR -cross "users" --store "${store}"
 
 
-for a in 45 65
-do
-    name="GILE_alpha${a}"
-    version="alpha${a}_shot"
-    g=3
-    shot=10
-    for v in 0 1 2 3 4
-    do
-        python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name HASC &
-        python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name HHAR &
-        python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name MotionSense &
-        python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name Shoaib 
-        wait
+# for a in 45 65
+# do
+#     name="GILE_alpha${a}"
+#     version="alpha${a}_shot"
+#     g=3
+#     shot=10
+#     for v in 0 1 2 3 4
+#     do
+#         python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name HASC &
+#         python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name HHAR &
+#         python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name MotionSense &
+#         python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name Shoaib 
+#         wait
 
-    done
+#     done
+# done
+
+
+
+name="GILE_users_positions_"
+version="users_positions_shot"
+g=0
+
+for shot in 1 5 10 20 50 
+do
+    python main.py -g ${g} -version "${version}0" -shot ${shot} -cross "multiple" --store "${name}0" -name Shoaib &
+    python main.py -g ${g} -version "${version}1" -shot ${shot} -cross "multiple" --store "${name}1" -name Shoaib &
+    python main.py -g ${g} -version "${version}2" -shot ${shot} -cross "multiple" --store "${name}2" -name Shoaib &
+    python main.py -g ${g} -version "${version}3" -shot ${shot} -cross "multiple" --store "${name}3" -name Shoaib &
+    python main.py -g ${g} -version "${version}4" -shot ${shot} -cross "multiple" --store "${name}4" -name Shoaib 
+    wait
+
+done
+
+
+name="GILE_users_devices_"
+version="users_devices_shot"
+g=0
+
+for shot in 1 5 10 20 50 
+do
+    python main.py -g ${g} -version "${version}0" -shot ${shot} -cross "multiple" --store "${name}0" -name HASC &
+    python main.py -g ${g} -version "${version}1" -shot ${shot} -cross "multiple" --store "${name}1" -name HASC &
+    python main.py -g ${g} -version "${version}2" -shot ${shot} -cross "multiple" --store "${name}2" -name HASC &
+    python main.py -g ${g} -version "${version}3" -shot ${shot} -cross "multiple" --store "${name}3" -name HASC &
+    python main.py -g ${g} -version "${version}4" -shot ${shot} -cross "multiple" --store "${name}4" -name HASC 
+    wait
+
 done

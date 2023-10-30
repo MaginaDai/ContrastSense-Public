@@ -92,6 +92,12 @@ PositionNum = {
     'Shoaib': 5,
 }
 
+Multiple_DomainNum = {
+    'Shoaib': 50,
+    'HASC': 84,
+}
+
+
 HHAR_movement = ['stand', 'sit', 'walk', 'stairsup', 'stairsdown', 'bike']
 ACT_Translated_labels = ['Downstairs', 'Upstairs', 'Walking', 'Running', 'Standing', 'Sitting']
 

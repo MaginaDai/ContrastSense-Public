@@ -155,8 +155,8 @@ class FMUDA(object):
 
             data_loader = zip(tune_loader, train_loader)
 
-            if epoch_counter == 24:
-                print('now')
+            # if epoch_counter == 24:
+            #     print('now')
 
             for (sensor, target), (sensor_domain, target_domain) in data_loader:
                 sensor = sensor.to(self.args.device)
@@ -167,6 +167,8 @@ class FMUDA(object):
                     target_domain = target_domain[:, 1].to(self.args.device)
                 elif self.args.cross == 'positions' or self.args.cross == 'devices' :
                     target_domain = target_domain[:, 2].to(self.args.device)
+                elif self.args.cross == 'multiple':
+                    target_domain = target_domain[:, 3].to(self.args.device)
                 else:
                     NotADirectoryError
 

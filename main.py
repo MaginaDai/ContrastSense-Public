@@ -25,7 +25,7 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 
-parser.add_argument('-name', default='Myo', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF'])
+parser.add_argument('-name', default='Shoaib', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF'])
 parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
 parser.add_argument('-cross', default='users', type=str, help='decide to use which kind of labels')
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
@@ -76,7 +76,7 @@ parser.add_argument('-scale_ratio', default=1.0, type=float, help='to scale the 
 parser.add_argument('-time_window', default=0, type=float, help='[time_label-t, time_label + t]')  # how much time idx labels are included.
 
 parser.add_argument('-time_analysis', default=False, type=bool, help='decide whether to evaluate the time overhead')
-parser.add_argument('-use_queue', default=False, type=bool, help='decide whether to use domain queues')
+parser.add_argument('-use_queue', default=True, type=bool, help='decide whether to use domain queues')
 
 
 def main():

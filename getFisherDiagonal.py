@@ -147,6 +147,8 @@ def replenish_queue(model, train_loader, args):
                     sup_label = [labels[:, 1].to(args.device)] 
                 elif args.cross == 'positions' or args.cross == 'devices' :
                     sup_label = [labels[:, 2].to(args.device)] 
+                elif args.cross == 'multiple':
+                    sup_label = [labels[:, 3].to(args.device)]
                 else:
                     NotADirectoryError
             
@@ -200,6 +202,8 @@ def calculateFisher(args, model, optimizer, train_loader, save_dir):
                     domain_label = [labels[:, 1].to(args.device)] 
                 elif args.cross == 'positions' or args.cross == 'devices' :
                     domain_label = [labels[:, 2].to(args.device)] 
+                elif args.cross == 'multiple':
+                    domain_label = [labels[:, 3].to(args.device)]
                 else:
                     NotADirectoryError
                     
@@ -224,6 +228,8 @@ def calculateFisher(args, model, optimizer, train_loader, save_dir):
                     domain_label = [labels[:, 1].to(args.device)] 
                 elif args.cross == 'positions' or args.cross == 'devices' :
                     domain_label = [labels[:, 2].to(args.device)] 
+                elif args.cross == 'multiple':
+                    domain_label = [labels[:, 3].to(args.device)]
                 else:
                     NotADirectoryError
             
@@ -276,6 +282,8 @@ def calculateFisher_without_queue(args, model, optimizer, train_loader, save_dir
                     domain_label = [labels[:, 1].to(args.device)] 
                 elif args.cross == 'positions' or args.cross == 'devices' :
                     domain_label = [labels[:, 2].to(args.device)] 
+                elif args.cross == 'multiple':
+                    domain_label = [labels[:, 3].to(args.device)]
                 else:
                     NotADirectoryError
                     
@@ -301,6 +309,8 @@ def calculateFisher_without_queue(args, model, optimizer, train_loader, save_dir
                     domain_label = [labels[:, 1].to(args.device)] 
                 elif args.cross == 'positions' or args.cross == 'devices' :
                     domain_label = [labels[:, 2].to(args.device)] 
+                elif args.cross == 'multiple':
+                    domain_label = [labels[:, 3].to(args.device)]
                 else:
                     NotADirectoryError
             
