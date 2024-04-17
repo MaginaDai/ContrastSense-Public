@@ -50,7 +50,7 @@ class CALDA_encoder(nn.Module):
         self.task_classifier = torch.nn.Linear(self.feature_size, num_classes)
 
         self.domain_classifier = nn.Sequential(
-            GradientReversal(),
+            # GradientReversal(),
             torch.nn.Linear(self.feature_size, 500),
             torch.nn.BatchNorm1d(500),
             torch.nn.ReLU(),

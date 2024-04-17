@@ -290,8 +290,8 @@
 
 
 
-version="users_positions_shot"
-name="multiple"
+# version="users_positions_shot"
+# name="multiple"
 # for dataset in "Shoaib"
 # do
     
@@ -304,21 +304,37 @@ name="multiple"
 #     wait
 # done
 
-dataset="Shoaib"
-for shot in 100
-do
-    python classifier_bert.py v1_v2 "${version}0" -g 1 -f "${name}" -shot ${shot} -pv "${version}0" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
-    python classifier_bert.py v1_v2 "${version}1" -g 1 -f "${name}" -shot ${shot} -pv "${version}1" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
-    python classifier_bert.py v1_v2 "${version}2" -g 1 -f "${name}" -shot ${shot} -pv "${version}2" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}"
-    python classifier_bert.py v1_v2 "${version}3" -g 1 -f "${name}" -shot ${shot} -pv "${version}3" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
-    python classifier_bert.py v1_v2 "${version}4" -g 1 -f "${name}" -shot ${shot} -pv "${version}4" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}"
+# dataset="Shoaib"
+# for shot in 100
+# do
+#     python classifier_bert.py v1_v2 "${version}0" -g 1 -f "${name}" -shot ${shot} -pv "${version}0" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "${version}1" -g 1 -f "${name}" -shot ${shot} -pv "${version}1" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "${version}2" -g 1 -f "${name}" -shot ${shot} -pv "${version}2" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}"
+#     python classifier_bert.py v1_v2 "${version}3" -g 1 -f "${name}" -shot ${shot} -pv "${version}3" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "${version}4" -g 1 -f "${name}" -shot ${shot} -pv "${version}4" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}"
 
-    wait
-done
+#     wait
+# done
 
 
-version="users_devices_shot"
-name="multiple"
+# name="multiple"
+# dataset="Shoaib"
+# shot=50
+# pt_version="users_positions_shot"
+# for portion in 60 80 100
+# do
+#     version="users_positions_tune_portion_${portion}_shot"
+#     python classifier_bert.py v1_v2 "${version}0" -g 2 -f "${name}" -shot ${shot} -pv "${pt_version}0" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "${version}1" -g 2 -f "${name}" -shot ${shot} -pv "${pt_version}1" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "${version}2" -g 2 -f "${name}" -shot ${shot} -pv "${pt_version}2" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "${version}3" -g 3 -f "${name}" -shot ${shot} -pv "${pt_version}3" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "${version}4" -g 3 -f "${name}" -shot ${shot} -pv "${pt_version}4" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}"
+
+#     wait
+# done
+
+# version="users_devices_shot"
+# name="multiple"
 # for dataset in "HASC"
 # do
     
@@ -331,14 +347,188 @@ name="multiple"
 #     wait
 # done
 
-dataset="HASC"
-for shot in 100
+# dataset="HASC"
+# for shot in 100
+# do
+#     python classifier_bert.py v1_v2 "${version}0" -g 1 -f "${name}" -shot ${shot} -pv "${version}0" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "${version}1" -g 1 -f "${name}" -shot ${shot} -pv "${version}1" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "${version}2" -g 1 -f "${name}" -shot ${shot} -pv "${version}2" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}"
+#     python classifier_bert.py v1_v2 "${version}3" -g 1 -f "${name}" -shot ${shot} -pv "${version}3" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "${version}4" -g 1 -f "${name}" -shot ${shot} -pv "${version}4" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}"
+
+#     wait
+# done
+
+# pt_version="users_devices_shot"
+# name="multiple"
+# shot=50
+# dataset="HASC"
+# for portion in 80
+# do
+    # version="users_devices_tune_portion_${portion}_shot"
+    # python classifier_bert.py v1_v2 "${version}0" -g 2 -f "${name}" -shot ${shot} -pv "${pt_version}0" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+    # python classifier_bert.py v1_v2 "${version}1" -g 2 -f "${name}" -shot ${shot} -pv "${pt_version}1" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+    # python classifier_bert.py v1_v2 "${version}2" -g 2 -f "${name}" -shot ${shot} -pv "${pt_version}2" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+    # python classifier_bert.py v1_v2 "${version}3" -g 3 -f "${name}" -shot ${shot} -pv "${pt_version}3" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+    # python classifier_bert.py v1_v2 "${version}4" -g 1 -f "${name}" -shot ${shot} -pv "${pt_version}4" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}"
+
+    # wait
+# done
+
+
+
+
+
+
+# for portion in 45 65
+# do
+#     version="cd_alpha${portion}_shot"
+#     name="cd"
+#     shot=10
+#     for dataset in "HASC"
+#     do
+        
+#         python pretrain.py v1 "${version}0" -g 2 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}1" -g 2 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}2" -g 3 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}3" -g 3 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}4" -g 3 -f "${name}" -s ${dataset} -name "${dataset}"
+
+#         wait
+
+#         python classifier_bert.py v1_v2 "${version}0" -g 2 -f "${name}" -shot ${shot} -pv "${version}0" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}1" -g 2 -f "${name}" -shot ${shot} -pv "${version}1" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}2" -g 3 -f "${name}" -shot ${shot} -pv "${version}2" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}3" -g 3 -f "${name}" -shot ${shot} -pv "${version}3" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}4" -g 3 -f "${name}" -shot ${shot} -pv "${version}4" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}"
+
+#         wait
+#     done
+# done
+
+
+# for portion in 45 65
+# do
+#     version="users_devices_alpha${portion}_shot"
+#     name="multiple"
+#     shot=10
+#     for dataset in "HASC"
+#     do
+
+#         python pretrain.py v1 "${version}0" -g 2 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}1" -g 2 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}2" -g 3 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}3" -g 3 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}4" -g 3 -f "${name}" -s ${dataset} -name "${dataset}"
+
+#         wait
+
+#         python classifier_bert.py v1_v2 "${version}0" -g 2 -f "${name}" -shot ${shot} -pv "${version}0" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}1" -g 2 -f "${name}" -shot ${shot} -pv "${version}1" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}2" -g 3 -f "${name}" -shot ${shot} -pv "${version}2" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}3" -g 3 -f "${name}" -shot ${shot} -pv "${version}3" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}4" -g 3 -f "${name}" -shot ${shot} -pv "${version}4" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}"
+
+#         wait
+#     done
+# done
+
+
+# for portion in 60
+# do
+#     version="cp_alpha${portion}_shot"
+#     name="cp"
+#     shot=10
+#     for dataset in "Shoaib"
+#     do
+    
+#         python pretrain.py v1 "${version}0" -g 2 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}1" -g 2 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}2" -g 3 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}3" -g 3 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}4" -g 3 -f "${name}" -s ${dataset} -name "${dataset}"
+
+#         wait
+
+#         python classifier_bert.py v1_v2 "${version}0" -g 2 -f "${name}" -shot ${shot} -pv "${version}0" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}1" -g 2 -f "${name}" -shot ${shot} -pv "${version}1" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}2" -g 3 -f "${name}" -shot ${shot} -pv "${version}2" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}3" -g 3 -f "${name}" -shot ${shot} -pv "${version}3" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}4" -g 3 -f "${name}" -shot ${shot} -pv "${version}4" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}"
+
+#         wait
+#     done
+# done
+
+
+# for portion in 45 65
+# do
+#     version="users_positions_alpha${portion}_shot"
+#     name="multiple"
+#     shot=10
+#     for dataset in "Shoaib"
+#     do
+    
+#         python pretrain.py v1 "${version}0" -g 2 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}1" -g 2 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}2" -g 3 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}3" -g 3 -f "${name}" -s ${dataset} -name "${dataset}" &
+#         python pretrain.py v1 "${version}4" -g 3 -f "${name}" -s ${dataset} -name "${dataset}"
+
+#         wait
+
+#         python classifier_bert.py v1_v2 "${version}0" -g 2 -f "${name}" -shot ${shot} -pv "${version}0" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}1" -g 2 -f "${name}" -shot ${shot} -pv "${version}1" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}2" -g 3 -f "${name}" -shot ${shot} -pv "${version}2" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}3" -g 3 -f "${name}" -shot ${shot} -pv "${version}3" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#         python classifier_bert.py v1_v2 "${version}4" -g 3 -f "${name}" -shot ${shot} -pv "${version}4" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}"
+
+#         wait
+#     done
+# done
+
+
+
+name="cross_datasets"
+shot=50
+# for shot in 5 10 100
+# do
+# for dataset in "Merged_dataset"
+# do
+
+#     # python pretrain.py v1 "HASC" -g 0 -f "${name}" -s "${dataset}/HASC" -name "${dataset}" &
+#     # python pretrain.py v1 "HHAR" -g 0 -f "${name}" -s "${dataset}/HHAR" -name "${dataset}" &
+#     # python pretrain.py v1 "MotionSense" -g 1 -f "${name}" -s "${dataset}/MotionSense" -name "${dataset}" &
+#     # python pretrain.py v1 "Shoaib" -g 1 -f "${name}" -s "${dataset}/Shoaib" -name "${dataset}"
+
+#     # wait
+
+#     python classifier_bert.py v1_v2 "HASC" -g 0 -f "${name}" -shot ${shot} -pv "${dataset}/HASC" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "HHAR" -g 0 -f "${name}" -shot ${shot} -pv "${dataset}/HHAR" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "MotionSense" -g 1 -f "${name}" -shot ${shot} -pv "${dataset}/MotionSense" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "Shoaib" -g 1 -f "${name}" -shot ${shot} -pv "${dataset}/Shoaib" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+
+#     wait
+# done
+# done
+
+for portion in 70 100
 do
-    python classifier_bert.py v1_v2 "${version}0" -g 1 -f "${name}" -shot ${shot} -pv "${version}0" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
-    python classifier_bert.py v1_v2 "${version}1" -g 1 -f "${name}" -shot ${shot} -pv "${version}1" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
-    python classifier_bert.py v1_v2 "${version}2" -g 1 -f "${name}" -shot ${shot} -pv "${version}2" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}"
-    python classifier_bert.py v1_v2 "${version}3" -g 1 -f "${name}" -shot ${shot} -pv "${version}3" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
-    python classifier_bert.py v1_v2 "${version}4" -g 1 -f "${name}" -shot ${shot} -pv "${version}4" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}"
+for dataset in "Merged_dataset"
+do
+
+    # python pretrain.py v1 "HASC" -g 0 -f "${name}" -s "${dataset}/HASC" -name "${dataset}" &
+    # python pretrain.py v1 "HHAR" -g 0 -f "${name}" -s "${dataset}/HHAR" -name "${dataset}" &
+    # python pretrain.py v1 "MotionSense" -g 1 -f "${name}" -s "${dataset}/MotionSense" -name "${dataset}" &
+    # python pretrain.py v1 "Shoaib" -g 1 -f "${name}" -s "${dataset}/Shoaib" -name "${dataset}"
+
+    # wait
+
+    python classifier_bert.py v1_v2 "tune_portion_${portion}_HASC" -g 0 -f "${name}" -shot ${shot} -pv "${dataset}/HASC" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+    python classifier_bert.py v1_v2 "tune_portion_${portion}_HHAR" -g 0 -f "${name}" -shot ${shot} -pv "${dataset}/HHAR" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+    python classifier_bert.py v1_v2 "tune_portion_${portion}_MotionSense" -g 1 -f "${name}" -shot ${shot} -pv "${dataset}/MotionSense" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+    python classifier_bert.py v1_v2 "tune_portion_${portion}_Shoaib" -g 1 -f "${name}" -shot ${shot} -pv "${dataset}/Shoaib" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
 
     wait
+done
 done

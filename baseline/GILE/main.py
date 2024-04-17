@@ -12,7 +12,7 @@ from baseline.CPCHAR.dataload import CPCHAR_Dataset
 from baseline.GILE.dataloader import load_GILE_type_data
 from baseline.GILE.GILE import train
 import baseline.GILE.network as net
-from data_aug.preprocessing import ClassesNum, Multiple_DomainNum, UsersNum, PositionNum, DevicesNum
+from data_aug.preprocessing import ClassesNum, Cross_DatasetsNum, Multiple_DomainNum, UsersNum, PositionNum, DevicesNum
 
 from utils import seed_torch
 import torch
@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser(description='argument setting of network')
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
 parser.add_argument('-version', default="shot", type=str, help='control the version of the setting')
 parser.add_argument('--store', default='lr', type=str, help='define the name head for model storing')
-parser.add_argument('-name', default='HHAR', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR'])
+parser.add_argument('-name', default='HHAR', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR', "Merged_dataset"])
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
@@ -66,6 +66,8 @@ if __name__ == '__main__':
         args.n_domains = DevicesNum[args.name]
     elif args.cross == 'multiple':
         args.n_domains = Multiple_DomainNum[args.name]
+    elif args.cross == 'datasets':
+        args.n_domains = Cross_DatasetsNum[args.name]
 
     args.n_class = ClassesNum[args.name]
     seed_torch(seed=args.seed)

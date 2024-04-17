@@ -24,7 +24,7 @@ parser.add_argument('-b', '--batch-size', default=50, type=int, metavar='N',
                     help='mini-batch size (default: 50), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('-name', default='HHAR', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR'])
+parser.add_argument('-name', default='HHAR', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR', "Merged_dataset"])
 
 parser.add_argument('--log-every-n-steps', default=5, type=int, help='Log every n steps')
 parser.add_argument('-g', '--gpu-index', default=0, type=int, help='Gpu index.')

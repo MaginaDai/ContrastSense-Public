@@ -38,7 +38,8 @@ def split_last(x, shape):
     shape = list(shape)
     assert shape.count(-1) <= 1
     if -1 in shape:
-        shape[shape.index(-1)] = x.size(-1) // -np.prod(shape)
+        # shape[shape.index(-1)] = x.size(-1) // -np.prod(shape)
+        shape[shape.index(-1)] = torch.div(x.size(-1), -np.prod(shape), rounding_mode='trunc') 
     return x.view(*x.size()[:-1], *shape)
 
 
@@ -380,8 +381,8 @@ def handle_argv(target, config_train, prefix):
     parser.add_argument('model_version', type=str, help='Model config')
     parser.add_argument('dataset_version',  type=str, help='Dataset version')
     parser.add_argument('-g', '--gpu_index', default=0, type=int, help='Gpu index.')
-    parser.add_argument('-f', '--model_file', type=str, default=None, help='Pretrain model name')
-    parser.add_argument('-p', '--pretrain_dataset', type=str, default=None, help='Pretrain dataset name')
+    parser.add_argument('-f', '--model_file', type=str, default="user", help='Pretrain model name')
+    parser.add_argument('-p', '--pretrain_dataset', type=str, default="HHAR", help='Pretrain dataset name')
     parser.add_argument('-t', '--train_cfg', type=str, default='./config/' + config_train, help='Training config json file path')
     parser.add_argument('-a', '--mask_cfg', type=str, default='./config/mask.json',
                         help='Mask strategy json file path')
@@ -389,7 +390,7 @@ def handle_argv(target, config_train, prefix):
                         help='Label Index')
     parser.add_argument('-s', '--save_model', type=str, default='model',
                         help='The saved model name')
-    parser.add_argument('-name', default='HASC', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR'])
+    parser.add_argument('-name', default='HHAR', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR', 'Merged_dataset'])
 
     parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
     parser.add_argument('--disable-cuda', action='store_true', help='Disable CUDA')
@@ -398,7 +399,7 @@ def handle_argv(target, config_train, prefix):
     parser.add_argument('-shot', default=None, type=int, help='how many shots of labels to use')
     parser.add_argument('-frozen_bert', default=False, type=int, help='how many shots of labels to use')
     parser.add_argument('-cross', default='devices', type=str, help='cross domain setting')
-    parser.add_argument('-pv', '--pretrain_version',  type=str, help='Pretrained Dataset version')
+    parser.add_argument('-pv', '--pretrain_version',  type=str, default="shot", help='Pretrained Dataset version')
     try:
         args = parser.parse_args()
     except:
@@ -411,6 +412,7 @@ def handle_argv(target, config_train, prefix):
     args.model_cfg = model_cfg
     args = create_io_config(args, args.name, args.dataset_version, pretrain_model=args.pretrain_dataset,
                          target=target, model_file=args.model_file, pretrain_version=args.pretrain_version)
+    # pdb.set_trace()
     return args
 
 
@@ -475,9 +477,36 @@ def compute_mmd(x, y, sigma):
     mmd = x_kernel.mean() + y_kernel.mean() - 2*xy_kernel.mean()
     return mmd
 
+
+def cal_average_for_leave_one_domain_out():
+    weight = [0.29306424, 0.06156095, 0.60972143, 0.03565337]
+    performance_acc = [[55.81,  68.31,  54.96,  28.25 ],
+                       [54.78,  68.38,  55.39,  30.48 ],
+                       [85.58,  69.19,  74.37,  46.58 ],
+                       [77.74,  80.66,  76.95,  51.45 ],
+                       [65.19,  72.15,  69.27,  41.46 ],
+                       [83.67,  77.52,  83.23,  56.22 ]]
+
+    performance_f1 = [[53.76, 63.15, 53.22, 21.76],
+                      [52.88, 63.66, 53.01, 36.01],
+                      [82.06, 63.13, 73.62, 15.42],
+                      [74.98, 79.27, 76.12, 38.92],
+                      [55.94, 67.99, 69.22, 21.09],
+                      [81.95, 76.24, 82.18, 41.25]]
+    mean_acc = np.mean(performance_acc, axis=1)
+    mean_f1 = np.mean(performance_f1, axis=1)
+    weighted_acc = np.average(performance_acc, axis=1, weights=weight)
+    weighted_f1 = np.average(performance_f1, axis=1, weights=weight)
+    print(mean_acc)
+    print(mean_f1)
+    print(weighted_acc)
+    print(weighted_f1)
+
+
 if __name__ == '__main__':
-    source_data = torch.rand(256, 128)
-    target_data = torch.rand(256, 128)
-    sigma=16
-    mmd_distance = compute_mmd(source_data, target_data, sigma)
-    print(mmd_distance)
+    # source_data = torch.rand(256, 128)
+    # target_data = torch.rand(256, 128)
+    # sigma=16
+    # mmd_distance = compute_mmd(source_data, target_data, sigma)
+    # print(mmd_distance)
+    cal_average_for_leave_one_domain_out()

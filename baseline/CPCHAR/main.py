@@ -17,7 +17,7 @@ parser.add_argument('-lr', '--learning-rate', default=5e-4, type=float, metavar=
 parser.add_argument('--seed', default=0, type=int, help='seed for initializing training. ')
 parser.add_argument('-b', '--batch-size', default=64, type=int, metavar='N')
 parser.add_argument('-e', '--epochs', default=150, type=int, metavar='N', help='number of total epochs to run')
-parser.add_argument('-name', default='HHAR', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR'])
+parser.add_argument('-name', default='HHAR', help='datasets name', choices=['HHAR', 'MotionSense', 'UCI', 'Shoaib', 'HASC', 'ICHAR', "Merged_dataset"])
 
 parser.add_argument('--resume', default='', type=str, help='To restart the model from a previous model')
 parser.add_argument('--transfer', default=False, type=str, help='to tell whether we are doing transfer learning')

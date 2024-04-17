@@ -70,6 +70,8 @@ def load_data(datasets_name, version, split, cross, shot=None):
             d[idx] = label[2]
         elif cross == 'multiple':
             d[idx] = label[3]
+        elif cross == 'datasets':
+            d[idx] = label[4]
         else:
             NotADirectoryError
 

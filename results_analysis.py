@@ -9,7 +9,7 @@ from xml.sax import default_parser_list
 
 
 dataset_imu = ['HHAR', 'MotionSense', 'Shoaib', 'HASC']
-# dataset_imu=['MotionSense', 'Shoaib']
+# dataset_imu=['MotionSense', 'HASC']
 dataset_emg = ['Myo', 'NinaPro']
 dataset_eeg = ['sleepEDF']
 # dataset_eeg = ['SEED', 'SEED_IV']
@@ -17,7 +17,7 @@ dataset_eeg = ['sleepEDF']
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 parser.add_argument('-name', default=["test", "test"], nargs='+', type=str, help='the interested models file')
-parser.add_argument('-ft', default=True, type=bool, help='fine-tune or linear evaluation')
+parser.add_argument('-ft', default=False, type=bool, help='fine-tune or linear evaluation')
 parser.add_argument('-nad', default='ft_shot_10', type=str, help='name after datasets')
 parser.add_argument('-shot', default=10, type=int, help='how many shots we use')
 parser.add_argument('-modal', default='imu', type=str, help='which modal we use')
@@ -85,7 +85,8 @@ def avg_result(name, ft, modal, shot=10, version="shot"):
     print("Test mean is: {}".format(np.around(np.mean(test_final, axis=0), 2)))
     print("Test acc is: {}".format(np.around(np.mean(test_acc_final, axis=0), 2)))
     print("Test std is: {}".format(np.around(np.std(test_mean), 2)))
-    return np.mean(test_final, axis=0)
+    print(weight)
+    return np.mean(test_final, axis=0), np.around(np.std(test_mean), 2)
 
 def results_for_each_file(files):
     eval = np.zeros([len(files)])
@@ -235,7 +236,7 @@ def avg_result_for_cross_domains(name, ft, modal, shot, cross="preliminary"):
     print("Eval f1 is: {}".format(np.around(eval_final, 2)))
     print("Test f1 is: {}".format(np.around(test_final, 2)))
     print("Test std is: {}".format(np.around(np.std(test), 2)))
-    return test_mean
+    return test_mean, np.around(np.std(test), 2)
 
 
 def analysis_semi_hard_sampling():
@@ -301,7 +302,7 @@ def cal_weight_for_weighted_evalution(modal='imu', version="shot"):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    avg_result(args.name, ft=args.ft, modal=args.modal, shot=args.shot)
+    avg_result(args.name, ft=args.ft, modal=args.modal, shot=args.shot, version=args.version)
     # cal_weight_for_weighted_evalution()
 
     # analysis_semi_hard_sampling()

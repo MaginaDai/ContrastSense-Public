@@ -247,6 +247,8 @@ class MoCo_without_queue(object):
                         domain_label = [labels[:, 2].to(self.args.device)] 
                     elif self.args.cross == 'multiple':
                         domain_label = [labels[:, 3].to(self.args.device)]
+                    elif self.args.cross == 'datasets':
+                        domain_label = [labels[:, 4].to(self.args.device)]
                     else:
                         NotADirectoryError
                 else:

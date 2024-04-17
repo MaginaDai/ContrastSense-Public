@@ -12,7 +12,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import re
 from matplotlib import rc
 import seaborn as sns
-
+from PIL import Image
 # color_blue = '#A1A9D0'
 # color_red = '#F0988C'
 
@@ -127,33 +127,59 @@ def fig_extract_phone_loss():
     limu_pattern = r'train\sacc:\s*(-?\d+\.+\d*)'
     loss_pattern = r'Loss:\s*(-?\d+\.+\d+)'
     chs_pattern = r'chs:\s*(\d+\.+\d+)'
-    epochs = np.arange(200 -1, step=1)
-    with open("./runs/cluster_test_6/training.log", "r") as f:  # 打开文件
-        content = f.read()
-        u1 = re.findall(pattern, content)
+    epochs = np.arange(2000 -1, step=1)
+    epochs_2 = np.arange(200 -1, step=1)
+    pretrain_file = "runs/slr_weight/hard_v10_cdl_hard_slr0.7_0/HHAR/training.log"
+    fine_tune_file = "runs/ewc_results/hard_v10_cdl_hard_ewc50_0/HHAR_ft_shot_10/training.log"
+    # with open("./runs/cluster_test_6/training.log", "r") as f:  # 打开文件
+    #     content = f.read()
+    #     u1 = re.findall(pattern, content)
     
     # with open("./baseline/LIMU_BERT/saved/bert_classifier_base_gru_HHAR_20_120/limu_gru_hhar/training.log", "r") as f:  # 打开文件
     #     content = f.read()
     #     u2 = re.findall(limu_pattern, content)
 
-    # with open("./runs/mileStone_g01_w_both/training.log", "r") as f:  # 打开文件
-    #     content = f.read()
-    #     bl = re.findall(loss_pattern, content)
+    with open(pretrain_file, "r") as f:  # 打开文件
+        content = f.read()
+        bl = re.findall(loss_pattern, content)
 
-    u1 = np.asarray(u1, dtype=float)
+
+    with open(fine_tune_file, "r") as f:  # 打开文件
+        content = f.read()
+        b2 = re.findall(loss_pattern, content)
+
+    # u1 = np.asarray(u1, dtype=float)
     # u2 = np.asarray(u2, dtype=float) * 100
-    # bl = np.asarray(bl, dtype=float)
+    bl = np.asarray(bl, dtype=float)
+    b2 = np.asarray(b2, dtype=float)
     # plt.figure()
-    plt.figure(figsize=(7.5, 5.5))
-    plt.plot(epochs, u1[epochs], "b")
+    fig, ax = plt.subplots(1, 2, figsize=(11, 3))
+    # plt.subplot(121)
+    ax[0].plot(epochs, bl[epochs], "b")
     # plt.plot(epochs, u2[epochs], "b")
     # plt.plot(epochs, bl[epochs])
-    plt.ylabel('Acc', fontsize=14)
-    plt.xlabel('Epoch', fontsize=14)
-    plt.xticks(fontsize=14)
-    plt.yticks(fontsize=14)
-    # plt.legend(["Mine", "LIMU"])
-    plt.savefig('Acc_Cluster.png')
+    ax[0].set_ylabel(r"$L_{pt}$", fontsize=18)
+    ax[0].set_xlabel('Epoch', fontsize=16)
+    ax[0].set_xticks([0, 500, 1000, 1500, 2000], fontsize=16)
+    ax[0].tick_params(axis='x', labelsize=16)
+    ax[0].tick_params(axis='y', labelsize=16)
+    ax[0].set_title("(a)", fontsize=18, y=-0.4)
+
+    # plt.subplot(122)
+    ax[1].plot(epochs_2, b2[epochs_2], "b")
+    # plt.plot(epochs, u2[epochs], "b")
+    # plt.plot(epochs, bl[epochs])
+    ax[1].set_ylabel(r"$L_{ft}$", fontsize=18)
+    ax[1].set_xlabel('Epoch', fontsize=16)
+    ax[1].set_xticks([0, 50, 100, 150, 200], fontsize=16)
+    ax[1].tick_params(axis='y', labelsize=16)
+    ax[1].tick_params(axis='x', labelsize=16)
+    ax[1].set_title("(b)", fontsize=18, y=-0.4)
+    
+    plt.subplots_adjust(wspace=0.3)
+
+    fig.savefig('figure_plot/saved/loss.png', bbox_inches='tight')
+    fig.savefig('figure_plot/saved/loss.pdf', bbox_inches='tight')
 
 
 def fig_cmp_robustness():
@@ -290,14 +316,15 @@ def figure_domain_shift():
     ax.set_xticks(x)
     ax.set_xticklabels([r'65', r'45', r'25'])
     # ax.set_xticklabels([r'$\alpha$ = 60', r'$\alpha$ = 25'], fontsize=14)
-    ax.legend(fontsize=14, loc='lower right')
+    ax.legend(fontsize=22, loc='lower right')
     ax.set_ylim(0, 105)
-    plt.xlabel(r"Percentage $\alpha$ (%)", fontsize=16)
-    plt.ylabel("F1 Score (%)", fontsize=16)
-    plt.xticks(fontsize=16)
-    plt.yticks(fontsize=16)
+    plt.xlabel(r"Percentage $\alpha$ (%)", fontsize=22)
+    plt.ylabel("F1 Score (%)", fontsize=22)
+    plt.xticks(fontsize=22)
+    plt.yticks(fontsize=22)
     plt.tight_layout()
     plt.savefig('./figure_plot/preliminary_new.pdf')
+    plt.savefig('./figure_plot/preliminary_new.png')
     return
 
 def figure_limited_labels():
@@ -318,14 +345,15 @@ def figure_limited_labels():
     plt.plot(x, CMUDA_result, '-^', color=color_blue, linewidth=2, markersize=10)
     # plt.plot(x, ewq)
     # plt.plot(x, train_65, 'g-*')
-    plt.legend(["GILE", "Mixup", "CMUDA"], fontsize=14)
+    plt.legend(["GILE", "Mixup", "CMUDA"], fontsize=16)
     plt.xticks(x, labels=["Full", 100, 50, 10, 5])
-    plt.xticks(fontsize=16)
-    plt.yticks(fontsize=16)
-    plt.xlabel(r"Shots $n$", fontsize=16)
-    plt.ylabel("F1 Score (%)", fontsize=16)
+    plt.xticks(fontsize=22)
+    plt.yticks(fontsize=22)
+    plt.xlabel(r"Shots $n$", fontsize=22)
+    plt.ylabel("F1 Score (%)", fontsize=22)
     plt.tight_layout()
     plt.savefig('./figure_plot/limited labels.pdf')
+    plt.savefig('./figure_plot/limited labels.png')
     return
 
 def figure_cross_domain(cross):
@@ -406,6 +434,58 @@ def fig_label_domain_portion():
     plt.legend(Methods, fontsize=10, loc=4, borderaxespad=0.)
     plt.tight_layout()
     plt.savefig('./figure_plot/label_portion_domains_test.png')
+
+
+def sensitivity_in_one():
+    fig, ax = plt.subplots(1, 2, figsize=(11, 4))
+    
+    queue_size=[256, 512, 1024, 1536, 2048]
+    queue_result = [57.64, 58.62, 61.92, 60.46, 60.12]
+    err=[2.28, 1.45, 2.88, 2.18, 1.14]
+    x=np.arange(len(queue_size))
+
+    ax[0].grid(axis='y')
+    ax[0].bar(x, queue_result, align='center', color=color_blue, yerr=err, capsize=10, ecolor='black', error_kw=dict(elinewidth=2, capthick=2), edgecolor='black', zorder=100)
+    ax[0].set_xticks(x, labels=[r"w/o $Q$", "512", "1024", "1536", "2048"], fontsize=22)
+    ax[0].set_yticks(np.arange(53, 67, 2), fontsize=22)
+    ax[0].tick_params(axis='y', labelsize=22)
+    ax[0].set_xlabel(r"(a) The domain queues size $M$", fontsize=22)
+    ax[0].set_ylabel("F1 Score (%)", fontsize=22)
+    ax[0].set_ylim(53, 67)
+    
+
+    
+    window=[0, 60, 120, 180, 240]
+    window_result = [54.91, 57.34, 57.66, 57.41, 56.19]
+    err=[2.23, 1.82, 1.35, 1.06, 2.57]
+    x=np.arange(len(window))
+
+
+    ax[1].grid(axis='y')
+    ax[1].bar(x, window_result, align='center', color=color_blue, yerr=err, capsize=10, ecolor='black', error_kw=dict(elinewidth=2, capthick=2), edgecolor='black', zorder=100)
+    ax[1].set_xticks(x, labels=[r"w/o $T$", '60', '120', '180', '240'], fontsize=22)
+    ax[1].set_yticks(np.arange(52, 61, 2), fontsize=22)
+    ax[1].set_xlabel(r"(b) The time window length $T$", fontsize=22)
+    ax[1].set_ylabel("F1 Score (%)", fontsize=22)
+    ax[1].set_ylim(52, 61)
+
+    ax[1].tick_params(axis='y', labelsize=22)
+
+    plt.subplots_adjust(wspace=3)
+    slr=[0.1, 0.3, 0.5, 0.7, 0.9]
+    slr_result = [58.80, 59.04, 58.66, 61.92, 59.74]
+    err=[1.31, 2.55, 2.76, 2.88, 2.42]
+    x=np.arange(len(slr))
+    
+    plt.tight_layout()
+
+    plt.savefig(f"./figure_plot/saved/sens.pdf", bbox_inches='tight')
+    plt.savefig(f"./figure_plot/saved/sens.png", bbox_inches='tight')
+
+    # plt.savefig('./figure_plot/Queue_size_sensativity.pdf')
+    return
+
+
 
 def fig_queue_results():
     queue_size=[256, 512, 1024, 1536, 2048]
@@ -525,7 +605,7 @@ def fig_time_analysis():
     plt.bar(x+0.2, ours, color=color_red, width=width, edgecolor='black', )
     plt.xticks(x, labels=q, fontsize=22)
     plt.yticks(np.arange(1.2, 1.9, 0.2), fontsize=22)
-    plt.xlabel("Domain Queues Size $M$", fontsize=22)
+    plt.xlabel("The domain queues size $M$", fontsize=22)
     plt.ylabel("Time (s)", fontsize=22)
     plt.legend(['w/o NegSelet, w/o CDL', 'w/   NegSelet, w/o CDL', 'w/   NegSelet, w/   CDL '], fontsize=16)
     plt.ylim([1.2, 1.9])
@@ -546,7 +626,7 @@ def fig_memory_analysis():
     plt.grid(axis='y')
     plt.plot(x, without_queue, '-o', color=color_blue, linewidth=2, markersize=10)
     plt.plot(x, with_queue, '-^', color=color_red, linewidth=2, markersize=10)
-    plt.legend(['w/o domain queues', 'w/  domain queues (K=256)'], fontsize=16)
+    plt.legend([r'w/o $Q$', r'w/ $Q$'], fontsize=16)
     plt.xticks(x, labels=q, fontsize=22)
     plt.yticks(np.arange(1000, 7000, 1000), fontsize=22)
     plt.xlabel("The number of negatives", fontsize=22)
@@ -555,6 +635,55 @@ def fig_memory_analysis():
     # plt.ylim(57, 63)
     plt.tight_layout()
     plt.savefig('./figure_plot/memory_analysis.pdf')
+
+def fig_cost_in_one_figure():
+    fig, ax = plt.subplots(1, 2, figsize=(13, 4))
+
+    infoNCE=[1.544, 1.5558, 1.5713, 1.5768, 1.5829]
+    RInfo=[1.5809, 1.5936, 1.5950, 1.6061, 1.6052]
+    ours=[1.6087, 1.6286, 1.6274, 1.6286, 1.6259]
+    q = [256, 512, 1024, 1536, 2048]
+    x=np.arange(len(infoNCE))
+    width=0.2
+    # plt.grid(axis='y')
+    
+    ax[0].bar(x-0.2, infoNCE, color=color_blue, width=width, edgecolor='black', )
+    ax[0].bar(x, RInfo, color=color_box[0], width=width, edgecolor='black', )
+    ax[0].bar(x+0.2, ours, color=color_red, width=width, edgecolor='black', )
+    ax[0].set_xticks(x, labels=["w/o Q", "512", "1024", "1536", "2048"], fontsize=14)
+    ax[0].set_ylim([1.3, 2.0])
+    ax[0].set_yticks(np.arange(1.3, 2.0, 0.2), fontsize=20)
+    ax[0].set_xlabel("The domain queues size $M$", fontsize=20)
+    ax[0].set_ylabel("Time (s)", fontsize=20)
+    ax[0].legend(['w/o NegSelet, w/o CDL', 'w/   NegSelet, w/o CDL', 'w/   NegSelet, w/   CDL '], fontsize=16, loc='upper right')
+    
+    ax[0].tick_params(axis='y', labelsize=20)
+    ax[0].set_title("(a) Time consumption", fontsize=20, y=-0.4)
+
+
+    with_queue = [3014, 3016, 3018, 3146, 3146]
+    without_queue = [2312, 3012, 4222, 6144, 6996]
+
+    x=np.arange(len(q))
+    # plt.subplot(132)
+    ax[1].grid(axis='y')
+    ax[1].plot(x, without_queue, '-o', color=color_blue, linewidth=2, markersize=10)
+    ax[1].plot(x, with_queue, '-^', color=color_red, linewidth=2, markersize=10)
+    ax[1].legend([r'w/o $Q$', r'w/ $Q$'], fontsize=16)
+    ax[1].set_xticks(x, labels=q, fontsize=20)
+    ax[1].set_yticks(np.arange(1000, 7000, 1000), fontsize=20)
+    ax[1].set_xlabel("The number of negatives", fontsize=20)
+    ax[1].set_ylabel("Memory (MB)", fontsize=20)
+    ax[1].tick_params(axis='y', labelsize=20)
+    ax[1].set_title("(b) Memory usage", fontsize=20, y=-0.4)
+
+    plt.subplots_adjust(wspace=3)
+
+    plt.tight_layout()
+    plt.savefig('./figure_plot/saved/cost_in_one.pdf', bbox_inches='tight')
+    plt.savefig('./figure_plot/saved/cost_in_one.png', bbox_inches='tight')
+
+    return
 
 def fig_aug_effect():
     name = ['All', 'w/o Negate', 'w/o Scale', 'w/o Wrap', 'w/o Flip', 'w/o Noise', 'w/o Rotate']
@@ -673,12 +802,12 @@ def figure_domain_shift_new():
     ax[0].set_ylim(40, 100)
     ax[0].set_xlim(-0.6, 2.6)
     # plt.xlabel(r"Percentage $\alpha$", fontsize=16)
-    ax[0].set_ylabel("F1 Score (%)", fontsize=16)
-    ax[0].set_xlabel("CPCHAR", fontsize=16)
-    ax[0].set_xticks(x, labels=[r"$\alpha=65$", r"$\alpha=45$", r"$\alpha=25$"], fontsize=16)
-    ax[0].set_yticks(np.arange(40,120,20), fontsize=16)
-    ax[0].tick_params(axis='y', labelsize=16)
-    ax[0].legend(fontsize=14, loc='lower left', ncol=1)
+    ax[0].set_ylabel("F1 Score (%)", fontsize=20)
+    ax[0].set_xlabel("CPCHAR", fontsize=22)
+    ax[0].set_xticks(x, labels=[r"$\alpha=65$", r"$\alpha=45$", r"$\alpha=25$"], fontsize=22)
+    ax[0].set_yticks(np.arange(40,120,20), fontsize=22)
+    ax[0].tick_params(axis='y', labelsize=22)
+    ax[0].legend(fontsize=16, loc='lower left', ncol=1)
    
 
     ax[1].bar(x-width/2, limu_label, width, color=color_red, label="Setting A", edgecolor='black')
@@ -690,15 +819,35 @@ def figure_domain_shift_new():
 
     # plt.xlabel(r"Percentage $\alpha$", fontsize=16)
     # plt.ylabel("F1 Score (%)", fontsize=16)
-    ax[1].tick_params(axis='y', labelsize=16)
-    ax[1].set_ylabel("F1 Score (%)", fontsize=16)
-    ax[1].set_xticks(x, labels=[r"$\alpha=65$", r"$\alpha=45$", r"$\alpha=25$"], fontsize=16)
-    ax[1].set_yticks(np.arange(40,120,20), fontsize=16)
-    ax[1].set_xlabel("LIMU-BERT", fontsize=16)
-    ax[1].legend(fontsize=14, loc='lower left', ncol=1)
+    ax[1].tick_params(axis='y', labelsize=22)
+    ax[1].set_ylabel("F1 Score (%)", fontsize=20)
+    ax[1].set_xticks(x, labels=[r"$\alpha=65$", r"$\alpha=45$", r"$\alpha=25$"], fontsize=22)
+    ax[1].set_yticks(np.arange(40,120,20), fontsize=22)
+    ax[1].set_xlabel("LIMU-BERT", fontsize=22)
+    ax[1].legend(fontsize=16, loc='lower left', ncol=1)
     plt.tight_layout()
     plt.savefig('./figure_plot/preliminary_new.pdf')
     plt.savefig('./figure_plot/preliminary_new.png')
+
+
+def add_axis_to_tSNE():
+    path='figure_plot/tSNE/show_CDL_effect_in_MotionSense_t.png'
+
+    image = Image.open(path)
+
+    fig, ax = plt.subplots()
+
+    # Display the image using imshow
+    ax.imshow(image)
+
+    ax.set_xlabel("dimension 1")
+    ax.set_ylabel("dimension 2")
+    # ax.set_xlim([0, 1])
+    # ax.set_ylim([0, 1])
+
+    fig.savefig('figure_plot/tSNE/show_CDL_effect_in_MotionSense_t_with_axis.png')
+
+
 
 color_blue = '#3c75b0'
 color_red = '#e6843b'
@@ -711,7 +860,7 @@ if __name__ == '__main__':
     # cmp_segmentation_performance()
     # figure_supervised_learning()
     # figure_domain_shift()
-    # figure_limited_labels()
+    figure_limited_labels()
     # figure_cross_domain(cross='positions')
     # fig_label_domain_portion()
     # fig_batch_size_result()
@@ -722,7 +871,12 @@ if __name__ == '__main__':
     # fig_sensativity_analysis()
     # figure_domain_shift_new()
     # fig_time_analysis()
-    fig_memory_analysis()
+    # fig_memory_analysis()
+    # add_axis_to_tSNE()
 
     # fig_negative_sampling_result()
     # fig_time_window_result()
+
+    # sensitivity_in_one()
+
+    # fig_cost_in_one_figure()

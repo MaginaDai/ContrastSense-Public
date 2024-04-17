@@ -542,3 +542,90 @@ class GILE(nn.Module):
         return zy_q
 
 
+
+class GILE_for_mobile(nn.Module):
+    def __init__(self, args):
+        super(GILE_for_mobile, self).__init__()
+        self.zd_dim = args.d_AE
+        self.zx_dim = 0
+        self.zy_dim = args.d_AE
+        self.d_dim = args.n_domains
+        self.x_dim = args.x_dim
+        self.y_dim = args.n_class
+
+        self.start_zx = self.zd_dim
+        self.start_zy = self.zd_dim + self.zx_dim
+
+        self.px = px(self.d_dim, self.x_dim, self.y_dim, self.zd_dim, self.zx_dim, self.zy_dim, args)
+        self.pzd = pzd(self.d_dim, self.x_dim, self.y_dim, self.zd_dim, self.zx_dim, self.zy_dim, args)
+        self.pzy = pzy(self.d_dim, self.x_dim, self.y_dim, self.zd_dim, self.zx_dim, self.zy_dim, args)
+
+        self.qzd = qzd(self.d_dim, self.x_dim, self.y_dim, self.zd_dim, self.zx_dim, self.zy_dim, args)
+        if self.zx_dim != 0:
+            self.qzx = qzx(self.d_dim, self.x_dim, self.y_dim, self.zd_dim, self.zx_dim, self.zy_dim, args)
+        self.qzy = qzy(self.d_dim, self.x_dim, self.y_dim, self.zd_dim, self.zx_dim, self.zy_dim, args)
+
+        self.qd = qd(self.d_dim, self.x_dim, self.y_dim, self.zd_dim, self.zx_dim, self.zy_dim)
+        self.qy = qy(self.d_dim, self.x_dim, self.y_dim, self.zd_dim, self.zx_dim, self.zy_dim)
+
+        self.aux_loss_multiplier_y = args.aux_loss_multiplier_y
+        self.aux_loss_multiplier_d = args.aux_loss_multiplier_d
+
+        self.beta_d = args.beta_d
+        self.beta_x = args.beta_x
+        self.beta_y = args.beta_y
+
+        self.cuda()
+
+    def forward(self, x):
+        """
+        classify an image (or a batch of images)
+        :param xs: a batch of scaled vectors of pixels from an image
+        :return: a batch of the corresponding class labels (as one-hots)
+        """
+        with torch.no_grad():
+            zd_q_loc, zd_q_scale, _, _ = self.qzd(x)
+            zd = zd_q_loc
+            alpha = F.softmax(self.qd(zd), dim=1)
+
+            # get the index (digit) that corresponds to
+            # the maximum predicted class probability
+            res, ind = torch.topk(alpha, 1)
+
+            # convert the digit(s) to one-hot tensor(s)
+            d = x.new_zeros(alpha.size())
+            d = d.scatter_(1, ind, 1.0)
+
+
+            zy_q_loc, zy_q_scale, _, _ = self.qzy.forward(x)
+            zy = zy_q_loc
+            alpha = F.softmax(self.qy(zy), dim=1)
+
+            # get the index (digit) that corresponds to
+            # the maximum predicted class probability
+            res, ind = torch.topk(alpha, 1)
+
+            # convert the digit(s) to one-hot tensor(s)
+            y = x.new_zeros(alpha.size())
+            y = y.scatter_(1, ind, 1.0)
+
+            alpha_y2d = F.softmax(self.qd(zy), dim=1)
+
+            # get the index (digit) that corresponds to
+            # the maximum predicted class probability
+            res, ind = torch.topk(alpha_y2d, 1)
+            # convert the digit(s) to one-hot tensor(s)
+            d_false = x.new_zeros(alpha_y2d.size())
+            d_false = d_false.scatter_(1, ind, 1.0)
+
+            alpha_d2y = F.softmax(self.qy(zd), dim=1)
+
+            # get the index (digit) that corresponds to
+            # the maximum predicted class probability
+            res, ind = torch.topk(alpha_d2y, 1)
+
+            # convert the digit(s) to one-hot tensor(s)
+            y_false = x.new_zeros(alpha_d2y.size())
+            y_false = y_false.scatter_(1, ind, 1.0)
+
+        return y

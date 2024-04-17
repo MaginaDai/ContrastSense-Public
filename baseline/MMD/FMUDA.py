@@ -5,7 +5,7 @@ from sklearn.metrics import f1_score
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import pdb
 from os.path import dirname
 sys.path.append(dirname(dirname(sys.path[0])))
 
@@ -62,8 +62,6 @@ class FM_Encoder(nn.Module):
         self.conv6 = nn.Conv1d(64, 100, kernel_size=5, stride=1)
         self.norm6 = nn.InstanceNorm1d(100)
 
-        
-        
     
     def forward(self, x):
         x = x.permute(0, 2, 1)
@@ -76,7 +74,8 @@ class FM_Encoder(nn.Module):
         h = self.dropout(self.norm6(self.leakyRelu(self.conv6(h))))
 
         h = h.reshape(h.shape[0], h.shape[1], -1)
-        h = F.max_pool1d(h, kernel_size=h.size()[-1]) 
+        # pdb.set_trace()
+        h = F.max_pool1d(h, kernel_size=int(h.size()[-1])) 
         h = h.reshape(h.shape[0], -1)
 
         return h
@@ -169,6 +168,8 @@ class FMUDA(object):
                     target_domain = target_domain[:, 2].to(self.args.device)
                 elif self.args.cross == 'multiple':
                     target_domain = target_domain[:, 3].to(self.args.device)
+                elif self.args.cross == 'datasets':
+                    target_domain = target_domain[:, 4].to(self.args.device)
                 else:
                     NotADirectoryError
 

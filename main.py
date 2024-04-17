@@ -25,8 +25,8 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 
-parser.add_argument('-name', default='Shoaib', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF'])
-parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
+parser.add_argument('-name', default='Merged_dataset', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF', "Merged_dataset"])
+parser.add_argument('-version', default="HASC", type=str, help='control the version of the setting')
 parser.add_argument('-cross', default='users', type=str, help='decide to use which kind of labels')
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 
@@ -171,4 +171,3 @@ def main():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     main()
-    # getFisherDiagonal()

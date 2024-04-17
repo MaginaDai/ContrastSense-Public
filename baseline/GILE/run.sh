@@ -85,10 +85,10 @@
 #     done
 # done
 
-name="GILE_cu"
-version="shot"
-g=3
-shot=1
+# name="GILE_cu"
+# version="shot"
+# g=3
+# shot=1
 # for v in 0 1 2 3 4
 # do
 #     python main.py -g ${g} -version "${version}${v}" -shot ${shot} -cross "users" --store "${name}${v}" -name HASC &
@@ -133,33 +133,140 @@ shot=1
 
 
 
-name="GILE_users_positions_"
-version="users_positions_shot"
-g=0
+# name="GILE_users_positions_"
+# version="users_positions_shot"
+# g=0
 
-for shot in 100
+# for shot in 100
+# do
+#     python main.py -g ${g} -version "${version}0" -shot ${shot} -cross "multiple" --store "${name}0" -name Shoaib &
+#     python main.py -g ${g} -version "${version}1" -shot ${shot} -cross "multiple" --store "${name}1" -name Shoaib &
+#     python main.py -g ${g} -version "${version}2" -shot ${shot} -cross "multiple" --store "${name}2" -name Shoaib &
+#     python main.py -g ${g} -version "${version}3" -shot ${shot} -cross "multiple" --store "${name}3" -name Shoaib &
+#     python main.py -g ${g} -version "${version}4" -shot ${shot} -cross "multiple" --store "${name}4" -name Shoaib 
+#     wait
+
+# done
+
+
+# name="GILE_users_devices_"
+# version="users_devices_shot"
+# g=0
+
+# for shot in 100
+# do
+#     python main.py -g ${g} -version "${version}0" -shot ${shot} -cross "multiple" --store "${name}0" -name HASC &
+#     python main.py -g ${g} -version "${version}1" -shot ${shot} -cross "multiple" --store "${name}1" -name HASC &
+#     python main.py -g ${g} -version "${version}2" -shot ${shot} -cross "multiple" --store "${name}2" -name HASC &
+#     python main.py -g ${g} -version "${version}3" -shot ${shot} -cross "multiple" --store "${name}3" -name HASC &
+#     python main.py -g ${g} -version "${version}4" -shot ${shot} -cross "multiple" --store "${name}4" -name HASC 
+#     wait
+
+# done
+
+# shot=50
+# g=0
+
+# for portion in 60 80 100
+# do
+#     version="users_positions_tune_portion_${portion}_shot"
+#     name="GILE_users_positions_tune_portion_${portion}_"
+#     python main.py -g ${g} -version "${version}0" -shot ${shot} -cross "multiple" --store "${name}0" -name Shoaib &
+#     python main.py -g ${g} -version "${version}1" -shot ${shot} -cross "multiple" --store "${name}1" -name Shoaib &
+#     python main.py -g ${g} -version "${version}2" -shot ${shot} -cross "multiple" --store "${name}2" -name Shoaib &
+#     python main.py -g ${g} -version "${version}3" -shot ${shot} -cross "multiple" --store "${name}3" -name Shoaib &
+#     python main.py -g ${g} -version "${version}4" -shot ${shot} -cross "multiple" --store "${name}4" -name Shoaib 
+
+#     wait
+# done
+
+# g=1
+# shot=50
+# for portion in 80
+# do
+#     version="users_devices_tune_portion_${portion}_shot"
+#     name="GILE_users_devices_tune_portion_${portion}_"
+
+    # python main.py -g ${g} -version "${version}0" -shot ${shot} -cross "multiple" --store "${name}0" -name HASC &
+    # python main.py -g ${g} -version "${version}1" -shot ${shot} -cross "multiple" --store "${name}1" -name HASC &
+    # python main.py -g ${g} -version "${version}2" -shot ${shot} -cross "multiple" --store "${name}2" -name HASC &
+    # python main.py -g ${g} -version "${version}3" -shot ${shot} -cross "multiple" --store "${name}3" -name HASC &
+#     python main.py -g ${g} -version "${version}4" -shot ${shot} -cross "multiple" --store "${name}4" -name HASC
+
+#     wait
+# done
+
+
+# for v in 0 1 2 3 4
+# do
+# mkdir "runs/GILE_users_devices_tune_portion_40_${v}"
+# cp -r "runs/GILE_users_devices_${v}/HASC_shot_50/" "runs/GILE_users_devices_tune_portion_40_${v}"
+# mkdir "runs/GILE_users_positions_tune_portion_40_${v}"
+# cp -r "runs/GILE_users_positions_${v}/Shoaib_shot_50/" "runs/GILE_users_positions_tune_portion_40_${v}"
+# done
+
+
+# g=3
+# shot=10
+# for portion in 80
+# do
+#     version="users_devices_tune_portion_${portion}_shot"
+#     name="GILE_users_devices_tune_portion_${portion}_"
+
+#     python main.py -g ${g} -version "${version}0" -shot ${shot} -cross "multiple" --store "${name}0" -name HASC &
+#     python main.py -g ${g} -version "${version}1" -shot ${shot} -cross "multiple" --store "${name}1" -name HASC &
+#     python main.py -g ${g} -version "${version}2" -shot ${shot} -cross "multiple" --store "${name}2" -name HASC &
+#     python main.py -g ${g} -version "${version}3" -shot ${shot} -cross "multiple" --store "${name}3" -name HASC &
+#     python main.py -g ${g} -version "${version}4" -shot ${shot} -cross "multiple" --store "${name}4" -name HASC
+
+#     wait
+# done
+
+# g=0
+# shot=10
+
+# version="leave_shot"
+# name="GILE_leave_shot"
+
+# for dataset in "HASC" "MotionSense"
+# do
+#     python main.py -g ${g} -version "${version}0" -shot ${shot} -cross "users" --store "${name}0" -name ${dataset} &
+#     python main.py -g ${g} -version "${version}1" -shot ${shot} -cross "users" --store "${name}1" -name ${dataset} &
+#     python main.py -g ${g} -version "${version}2" -shot ${shot} -cross "users" --store "${name}2" -name ${dataset} &
+#     python main.py -g ${g} -version "${version}3" -shot ${shot} -cross "users" --store "${name}3" -name ${dataset} &
+#     python main.py -g ${g} -version "${version}4" -shot ${shot} -cross "users" --store "${name}4" -name ${dataset}
+
+#     wait
+# done
+
+g=2
+shot=50
+
+name="GILE_cross_datasets"
+
+for shot in 5 10 100
 do
-    python main.py -g ${g} -version "${version}0" -shot ${shot} -cross "multiple" --store "${name}0" -name Shoaib &
-    python main.py -g ${g} -version "${version}1" -shot ${shot} -cross "multiple" --store "${name}1" -name Shoaib &
-    python main.py -g ${g} -version "${version}2" -shot ${shot} -cross "multiple" --store "${name}2" -name Shoaib &
-    python main.py -g ${g} -version "${version}3" -shot ${shot} -cross "multiple" --store "${name}3" -name Shoaib &
-    python main.py -g ${g} -version "${version}4" -shot ${shot} -cross "multiple" --store "${name}4" -name Shoaib 
-    wait
+    for dataset in "Merged_dataset"
+    do
+        python main.py -g ${g} -version "HASC" -shot ${shot} -cross "datasets" --store "${name}/HASC" -name ${dataset} &
+        python main.py -g ${g} -version "HHAR" -shot ${shot} -cross "datasets" --store "${name}/HHAR" -name ${dataset} &
+        python main.py -g ${g} -version "MotionSense" -shot ${shot} -cross "datasets" --store "${name}/MotionSense" -name ${dataset} &
+        python main.py -g ${g} -version "Shoaib" -shot ${shot} -cross "datasets" --store "${name}/Shoaib" -name ${dataset} &
 
+        wait
+    done
 done
 
-
-name="GILE_users_devices_"
-version="users_devices_shot"
-g=0
-
-for shot in 100
+shot=50
+for portion in 70 100
 do
-    python main.py -g ${g} -version "${version}0" -shot ${shot} -cross "multiple" --store "${name}0" -name HASC &
-    python main.py -g ${g} -version "${version}1" -shot ${shot} -cross "multiple" --store "${name}1" -name HASC &
-    python main.py -g ${g} -version "${version}2" -shot ${shot} -cross "multiple" --store "${name}2" -name HASC &
-    python main.py -g ${g} -version "${version}3" -shot ${shot} -cross "multiple" --store "${name}3" -name HASC &
-    python main.py -g ${g} -version "${version}4" -shot ${shot} -cross "multiple" --store "${name}4" -name HASC 
-    wait
+    for dataset in "Merged_dataset"
+    do
+        python main.py -g ${g} -version "tune_portion_${portion}_HASC" -shot ${shot} -cross "datasets" --store "${name}_tune_portion_${portion}/HASC" -name ${dataset} &
+        python main.py -g ${g} -version "tune_portion_${portion}_HHAR" -shot ${shot} -cross "datasets" --store "${name}_tune_portion_${portion}/HHAR" -name ${dataset} &
+        python main.py -g ${g} -version "tune_portion_${portion}_MotionSense" -shot ${shot} -cross "datasets" --store "${name}_tune_portion_${portion}/MotionSense" -name ${dataset} &
+        python main.py -g ${g} -version "tune_portion_${portion}_Shoaib" -shot ${shot} -cross "datasets" --store "${name}_tune_portion_${portion}/Shoaib" -name ${dataset} &
 
+        wait
+    done
 done

@@ -56,6 +56,7 @@ UsersNum = {
     'Myo': 40,
     'NinaPro': 10,
     'sleepEDF': 20,
+    'Merged_dataset': 4
 }
 
 LabelPosition = {
@@ -81,6 +82,7 @@ ClassesNum = {
     'SEED': 3,
     'SEED_IV': 4,
     'sleepEDF': 5,
+    "Merged_dataset": 4,
 }
 
 DevicesNum = {
@@ -95,6 +97,10 @@ PositionNum = {
 Multiple_DomainNum = {
     'Shoaib': 50,
     'HASC': 84,
+}
+
+Cross_DatasetsNum = {
+    'Merged_dataset': 4,
 }
 
 
@@ -113,7 +119,7 @@ def label_alignment(label, dataset):
     if dataset == 'HASC':
         label[0] = HASC_LABEL_Translate[label[0]]
     elif dataset == 'HHAR':
-        label[0] = HHAR_LABEL_Translate[label[0]]
+        label[0] = HHAR_LABEL_Translate[int(label[0])]
     elif dataset == 'MotionSense':
         label[0] = MotionSense_LABEL_Translate[label[0]]
     elif dataset == 'Shoaib':
@@ -386,8 +392,6 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
         sub_dir = ori_dir + i
         data = np.load(sub_dir, allow_pickle=True)
         motion = data['add_infor'][0]
-        if cross == 'dataset':
-            motion = label_alignment([motion], dataset=dataset)[0]
         label.append(motion)
 
         if cross == 'users':
@@ -398,6 +402,8 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
             domain.append(data['add_infor'][2])
         elif cross == 'multiple':
             domain.append([np.float64(data['add_infor'][1]), np.float64(data['add_infor'][2])])
+        elif cross == "datasets":
+            domain.append(data['add_infor'][4])
         else:
             NotADirectoryError()
 
@@ -405,7 +411,7 @@ def write_balance_tune_set(ori_dir, target_dir, dataset, dataset_size=None, if_p
     label_type = np.unique(label)
     label_type_num = len(label_type)
     print(f"type of labels {label_type}")
-    if cross == 'dataset':
+    if cross == 'datasets':
         assert label_type_num == 4
     else:
         assert label_type_num == ClassesNum[dataset]
@@ -551,11 +557,11 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
-    dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
-    # dataset_name = ["Shoaib"]
+    # dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
+    dataset_name = ["UCI"]
     for i in range(seg_types):
         for dataset in dataset_name:
-            preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot{i}_test521/", dataset=dataset, cross='users', test_portion=0.6)
+            preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot{i}/", dataset=dataset, cross='users', test_portion=0.6)
 
     return
 
@@ -578,7 +584,7 @@ def new_segmentation_for_positions(seg_types=5, seed=940):
     
     dataset = "Shoaib"
     for i in range(seg_types):
-        preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_cp{i}/", test_portion=0.4, val_portion=0.2, tune_domain_portion=0.5, dataset=dataset, cross='positions')
+        preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_cp_alpha60_shot{i}/", test_portion=0.2, val_portion=0.2, tune_domain_portion=0.5, dataset=dataset, cross='positions')
     return
 
 
@@ -589,7 +595,7 @@ def new_segmentation_for_devices(seg_types=1, seed=0):
     
     dataset = "HASC"
     for i in range(seg_types):
-        preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_cd_test{i}/", test_portion=0.6, val_portion=0.15, tune_domain_portion=0.4, dataset=dataset, cross='devices')
+        preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_cd_alpha65_shot{i}_test/", test_portion=0.2, val_portion=0.15, tune_domain_portion=0.4, dataset=dataset, cross='devices')
     return
 
     
@@ -742,8 +748,8 @@ def preprocessing_dataset_cross_domain_based_on_existing_split(split, dir, targe
 if __name__ == '__main__':
     # datasets_shot_record(datasets='HASC', version='s1', shot=100)
     # new_segmentation_for_positions(seg_types=5)
-    # new_segmentation_for_devices(seg_types=1)
-    new_segmentation_for_user(seg_types=1)
+    # new_segmentation_for_devices(seg_types=5)
+    new_segmentation_for_user(seg_types=5)
     # generate_split_for_cda_based_on_previous_split()
     # cmp_split()
     # new_tune_segmentation_with_different_portion(seed=940, seg_type=5)

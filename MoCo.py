@@ -84,6 +84,47 @@ class MoCo_model(nn.Module):
         else:
             d = None
         return z, d
+    
+
+class MoCo_model_for_mobile(nn.Module):
+    def __init__(self, transfer=False, out_dim=256, classes=6, dims=32, classifier_dim=1024, final_dim=8, momentum=0.9, drop=0.1, DAL=False, users_class=None, SCL=False, modal='imu'):
+        super(MoCo_model_for_mobile, self).__init__()
+        self.DAL = DAL
+        self.modal = modal
+        self.transfer = transfer
+
+        if self.modal == 'imu':
+            self.encoder = MoCo_encoder(dims=dims, momentum=momentum, drop=drop)
+        elif self.modal == 'emg':
+            self.encoder = MoCo_encoder_for_emg_v2(dims=dims, momentum=momentum, drop=drop)
+        elif self.modal == 'eeg':
+            self.encoder = SACLEncoder_CNN_block(num_channels=1, temporal_len=3000)
+        else:
+            NotADirectoryError
+        
+        if transfer:
+            self.classifier = MoCo_classifier(classes=classes, dims=dims, classifier_dim=classifier_dim, final_dim=final_dim, drop=drop, modal=self.modal)
+            if SCL:
+                self.projector = MoCo_projector(out_dim=out_dim, modal=self.modal)
+        else:
+            self.projector = MoCo_projector(out_dim=out_dim, modal=self.modal)
+        
+        if self.DAL:
+            if users_class is None:
+                self.discriminator = MoCo_discriminator(out_dim=out_dim, modal=self.modal)
+            else:
+                self.discriminator = MoCo_discriminator(out_dim=users_class, modal=self.modal)
+                # print(users_class)
+        
+        
+
+    def forward(self, x):
+        h = self.encoder(x)
+        if self.transfer:
+            z = self.classifier(h)
+        else:
+            z = self.projector(h)
+        return z
 
 
 class MoCo_classifier(nn.Module):
@@ -494,6 +535,7 @@ class MoCo_v1(nn.Module):
         self.hard_record = args.hard_record
         self.time_window = args.time_window
         self.scale_ratio = args.scale_ratio 
+        self.cross = args.cross
         
 
         # create the encoders
@@ -735,6 +777,11 @@ class MoCo_v1(nn.Module):
                 mask_low = low_boundary < queue_time # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
                 mask_high = queue_time < high_boundary
                 mask = torch.logical_and(mask_low, mask_high)
+                if self.cross == "datasets":
+                    queue_domain = self.queue_labels.T.expand(l_neg.shape[0], l_neg.shape[1])
+                    mask_domain = queue_domain == domain_label[0].contiguous().view(-1, 1)
+                    mask = torch.logical_and(mask, mask_domain)
+                    
                 l_neg[mask] = -torch.inf    
                 hardest_related_info[0] = mask.sum(1).float().mean()
                 
@@ -1113,6 +1160,10 @@ class MoCo(object):
                     
                     elif self.args.cross == 'multiple':
                         domain_label = [labels[:, 3].to(self.args.device)]
+
+                    elif self.args.cross == 'datasets':
+                        domain_label = [labels[:, 4].to(self.args.device)]
+                        
                     else:
                         NotADirectoryError
                 else:

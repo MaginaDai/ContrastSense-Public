@@ -62,14 +62,30 @@ def new_segmentation_for_multiple_domain_shift(seg_types=5, seed=940):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
-    dataset_name = ["HASC"]
-    # dataset_name = ["Shoaib"]
+    # dataset_name = ["HASC"]
+    dataset_name = ["Shoaib"]
     for i in range(seg_types):
         for dataset in dataset_name:
-            preprocessing_dataset_cross_multiple_domains(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_users_devices{i}/", dataset=dataset, cross='multiple', test_portion=0.6)
+            preprocessing_dataset_cross_multiple_domains(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_users_positions_alpha45_shot{i}/", dataset=dataset, cross='multiple', test_portion=0.4)
 
     return
+
+
+def new_tune_segmentation_cross_multiple_domains_with_different_portion(seed=940, seg_type=1):
+    random.seed(seed)
+    np.random.seed(seed)
+    # dataset_name = ["HASC", ]
+    dataset_name = ["Shoaib", ]
+
+    tune_portion = [0.6, 0.8, 1.0]
+    for i in range(seg_type):
+        for portion in tune_portion:
+            for dataset in dataset_name:
+                write_balance_tune_set(ori_dir=f'datasets/{dataset}/', train_dir=f'datasets/{dataset}_users_positions_shot{i}/', target_dir=f'datasets/{dataset}_users_positions_tune_portion_{int(portion*100)}_shot{i}/', dataset=dataset, tune_domain_portion=portion, cross='multiple')
+    return
+
 
 if __name__ == '__main__':
 
     new_segmentation_for_multiple_domain_shift(seg_types=5)
+    # new_tune_segmentation_cross_multiple_domains_with_different_portion(seg_type=5)
