@@ -73,6 +73,7 @@ ClassesNum = {
     'MotionSense': 6,
     'Shoaib': 7,
     'UCI': 6,
+    'UCI_cda': 6,
     'ICHAR': 9,
     'HASC': 6,
     'Myo': 7,
@@ -561,7 +562,7 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     dataset_name = ["UCI"]
     for i in range(seg_types):
         for dataset in dataset_name:
-            preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot{i}/", dataset=dataset, cross='users', test_portion=0.6)
+            preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_leave_shot{i}/", dataset=dataset, cross='users', test_portion=0.60)
 
     return
 
@@ -625,7 +626,7 @@ def new_tune_segmentation_with_different_portion(seed=940, seg_type=1):
     random.seed(seed)
     np.random.seed(seed)
     # dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
-    dataset_name = ["Myo", "NinaPro"]
+    dataset_name = ["UCI"]
     # dataset_name = ["HHAR"]
     tune_portion = [0.6, 0.8, 1.0]
     for i in range(seg_type):
@@ -677,8 +678,14 @@ def generate_split_for_cda_based_on_previous_split():
     # dataset_1 = 'NinaPro_cda'
     # dataset_2 = 'NinaPro'
     
-    dataset_1 = 'Myo_cda'
-    dataset_2 = 'Myo'
+    # dataset_1 = 'Myo_cda'
+    # dataset_2 = 'Myo'
+
+    dataset_1 = "UCI_cda"
+    dataset_2 = "UCI"
+
+    if not os.path.exists(f"datasets/{dataset_1}/"):
+        os.makedirs(f"datasets/{dataset_1}/")
 
     for v in range(5):
         dir = 'datasets/' + dataset_2 + '_shot' + str(v)
@@ -712,7 +719,7 @@ def get_split_infor(dir):
         domain = np.unique(np.hstack(domain))
         
         domain_split.append(domain)
-        # print(domain)
+        print(domain)
     
     return domain_split
 
@@ -739,7 +746,6 @@ def preprocessing_dataset_cross_domain_based_on_existing_split(split, dir, targe
     train_num = [j for j in range(num) if domain[j] in domains_train_name]
     val_num =  [j for j in range(num) if domain[j] in domains_val_name]
     test_num = [j for j in range(num) if domain[j] in domains_test_name]
-
     write_dataset(target_dir, train_num, val_num, test_num)
     write_balance_tune_set(dir, target_dir, dataset, dataset_size=num, tune_domain_portion=tune_domain_portion, cross=cross, domain_for_tune=split[2])
 

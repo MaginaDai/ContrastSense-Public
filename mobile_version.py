@@ -160,4 +160,4 @@ def CPCHAR_args():
 
 
 if __name__ == "__main__":
-    generate_mobile_model(modal="emg", method="ContrastSense")
+    generate_mobile_model(modal="imu", method="CM")
