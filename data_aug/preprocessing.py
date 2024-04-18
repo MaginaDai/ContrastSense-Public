@@ -551,11 +551,11 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
-    dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
-    # dataset_name = ["Shoaib"]
+    # dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
+    dataset_name = ["UCI"]
     for i in range(seg_types):
         for dataset in dataset_name:
-            preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot{i}_test521/", dataset=dataset, cross='users', test_portion=0.6)
+            preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot{i}/", dataset=dataset, cross='users', test_portion=0.6)
 
     return
 
@@ -578,7 +578,7 @@ def new_segmentation_for_positions(seg_types=5, seed=940):
     
     dataset = "Shoaib"
     for i in range(seg_types):
-        preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_cp{i}/", test_portion=0.4, val_portion=0.2, tune_domain_portion=0.5, dataset=dataset, cross='positions')
+        preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_cp_alpha60_shot{i}/", test_portion=0.2, val_portion=0.2, tune_domain_portion=0.5, dataset=dataset, cross='positions')
     return
 
 
@@ -589,7 +589,7 @@ def new_segmentation_for_devices(seg_types=1, seed=0):
     
     dataset = "HASC"
     for i in range(seg_types):
-        preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_cd_test{i}/", test_portion=0.6, val_portion=0.15, tune_domain_portion=0.4, dataset=dataset, cross='devices')
+        preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_cd_alpha65_shot{i}_test/", test_portion=0.2, val_portion=0.15, tune_domain_portion=0.4, dataset=dataset, cross='devices')
     return
 
     
@@ -619,7 +619,8 @@ def new_tune_segmentation_with_different_portion(seed=940, seg_type=1):
     random.seed(seed)
     np.random.seed(seed)
     # dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
-    dataset_name = ["Myo", "NinaPro"]
+    # dataset_name = ["Myo", "NinaPro"]
+    dataset_name = ['UCI']
     # dataset_name = ["HHAR"]
     tune_portion = [0.6, 0.8, 1.0]
     for i in range(seg_type):
@@ -742,11 +743,11 @@ def preprocessing_dataset_cross_domain_based_on_existing_split(split, dir, targe
 if __name__ == '__main__':
     # datasets_shot_record(datasets='HASC', version='s1', shot=100)
     # new_segmentation_for_positions(seg_types=5)
-    # new_segmentation_for_devices(seg_types=1)
-    new_segmentation_for_user(seg_types=1)
+    # new_segmentation_for_devices(seg_types=5)
+    # new_segmentation_for_user(seg_types=5)
     # generate_split_for_cda_based_on_previous_split()
     # cmp_split()
-    # new_tune_segmentation_with_different_portion(seed=940, seg_type=5)
+    new_tune_segmentation_with_different_portion(seed=940, seg_type=5)
     # dataset='Myo'
     # preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot0/", test_portion=0.6, val_portion=0.15, tune_domain_portion=0.4, dataset=dataset, cross='users')
     

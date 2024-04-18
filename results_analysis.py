@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 from xml.sax import default_parser_list
 
 
-dataset_imu = ['HHAR', 'MotionSense', 'Shoaib', 'HASC']
-# dataset_imu=['MotionSense', 'Shoaib']
+# dataset_imu = ['HHAR', 'MotionSense', 'Shoaib', 'HASC']
+dataset_imu=['MotionSense', 'HASC']
 dataset_emg = ['Myo', 'NinaPro']
 dataset_eeg = ['sleepEDF']
 # dataset_eeg = ['SEED', 'SEED_IV']
@@ -17,7 +17,7 @@ dataset_eeg = ['sleepEDF']
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 parser.add_argument('-name', default=["test", "test"], nargs='+', type=str, help='the interested models file')
-parser.add_argument('-ft', default=True, type=bool, help='fine-tune or linear evaluation')
+parser.add_argument('-ft', default=False, type=bool, help='fine-tune or linear evaluation')
 parser.add_argument('-nad', default='ft_shot_10', type=str, help='name after datasets')
 parser.add_argument('-shot', default=10, type=int, help='how many shots we use')
 parser.add_argument('-modal', default='imu', type=str, help='which modal we use')
@@ -85,6 +85,7 @@ def avg_result(name, ft, modal, shot=10, version="shot"):
     print("Test mean is: {}".format(np.around(np.mean(test_final, axis=0), 2)))
     print("Test acc is: {}".format(np.around(np.mean(test_acc_final, axis=0), 2)))
     print("Test std is: {}".format(np.around(np.std(test_mean), 2)))
+    print(weight)
     return np.mean(test_final, axis=0)
 
 def results_for_each_file(files):

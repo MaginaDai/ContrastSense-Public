@@ -1,6 +1,6 @@
 #!/bin/bash
 key="v1"
-name="runs/negative sampling/hard_v10_cl_wo_time_best_"
+name="baseline/Mixup/runs/mixup_leave_shot"
 # name="runs/hard_v1_cl_"
 # name="baseline/CDA/runs/CDA_lr5e-4_v"
 python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4" -modal "imu"

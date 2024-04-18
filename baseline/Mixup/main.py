@@ -19,8 +19,8 @@ from baseline.Mixup.ConvNet import ConvNet
 
 parser = argparse.ArgumentParser(description='PyTorch Mixup for Wearable Sensing')
 
-parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
-parser.add_argument('-name', default='Myo', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro'])
+parser.add_argument('-version', default="leave_shot0", type=str, help='control the version of the setting')
+parser.add_argument('-name', default='HASC', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro'])
 parser.add_argument('--store', default='test_Ninapro', type=str, help='define the name head for model storing')
 
 parser.add_argument('-lr', '--learning-rate', default=5e-3, type=float, metavar='LR', help='initial learning rate', dest='lr')

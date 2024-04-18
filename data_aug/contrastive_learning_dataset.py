@@ -35,7 +35,8 @@ def fetch_dataset_root(dataset_name):
             'NinaPro_cda': './datasets/NinaPro_cda',
             'SEED': './datasets/SEED',
             'SEED_IV': './datasets/SEED_IV',
-            'sleepEDF': './datasets/sleepEDF'
+            'sleepEDF': './datasets/sleepEDF',
+            'UCI': './datasets/UCI',
             }
     try:
         root_dir = root[dataset_name]

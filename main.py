@@ -25,8 +25,8 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 
-parser.add_argument('-name', default='Shoaib', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF'])
-parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
+parser.add_argument('-name', default='HASC', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF', 'UCI'])
+parser.add_argument('-version', default="leave_shot0", type=str, help='control the version of the setting')
 parser.add_argument('-cross', default='users', type=str, help='decide to use which kind of labels')
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 
@@ -91,7 +91,7 @@ def main():
         args.device = torch.device('cpu')
         args.gpu_index = -1
     
-    if args.name in ['NinaPro', 'Myo']:
+    if args.name in ['NinaPro', 'Myo', 'UCI']:
         args.modal = 'emg'
     elif args.name == 'sleepEDF':
         args.modal = 'eeg'

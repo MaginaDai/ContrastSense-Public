@@ -40,7 +40,7 @@ parser.add_argument('-shot', default=10, type=int, help='how many shots of label
 parser.add_argument('--pretrained', default='time_analysis_w_design_1024_0/HHAR', type=str,
                     help='path to ContrastSense pretrained checkpoint')
 parser.add_argument('-name', default='HHAR',
-                    help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF'])
+                    help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF', 'UCI'])
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 
 parser.add_argument('-e', '--epochs', default=400, type=int, metavar='N',
@@ -274,7 +274,7 @@ if __name__ == '__main__':
         args.device = torch.device('cpu')
         args.gpu_index = -1
     
-    if args.name in ['NinaPro', 'Myo']:
+    if args.name in ['NinaPro', 'Myo', 'UCI']:
         args.modal = 'emg'
     elif args.name in ['sleepEDF']:
         args.modal = 'eeg'
