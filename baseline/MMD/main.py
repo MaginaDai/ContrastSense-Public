@@ -9,7 +9,7 @@ from os.path import dirname
 sys.path.append(dirname(dirname(sys.path[0])))
 sys.path.append(dirname(sys.path[0]))
 
-from data_aug.preprocessing import ClassesNum, DevicesNum, Multiple_DomainNum, PositionNum, UsersNum
+from data_aug.preprocessing import ClassesNum, Cross_DatasetsNum, DevicesNum, Multiple_DomainNum, PositionNum, UsersNum
 from baseline.MMD.FMUDA import FMUDA, FM_model
 from baseline.MMD.dataload import FMUDA_Dataset
 from baseline.CPCHAR.dataload import CPCHAR_Dataset
@@ -18,7 +18,7 @@ from utils import evaluate, seed_torch
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 
 parser.add_argument('-version', default="cd4", type=str, help='control the version of the setting')
-parser.add_argument('-name', default='HASC', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC'])
+parser.add_argument('-name', default='HASC', help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', "Merged_dataset"])
 parser.add_argument('--store', default='CM_cd_test', type=str, help='define the name head for model storing')
 parser.add_argument('-m', '--method', default='CM', type=str, help='select method to use', choices=['FM', 'CM'])
 
@@ -78,6 +78,8 @@ def main():
         domain_num = DevicesNum[args.name]
     elif args.cross == 'multiple':
         domain_num = Multiple_DomainNum[args.name]
+    elif args.cross == "datasets":
+        domain_num = Cross_DatasetsNum[args.name]
 
     model = FM_model(classes=ClassesNum[args.name], method=args.method, domains=domain_num)
     optimizer = torch.optim.Adam(model.parameters(), args.lr)

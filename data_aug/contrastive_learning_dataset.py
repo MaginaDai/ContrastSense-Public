@@ -36,6 +36,8 @@ def fetch_dataset_root(dataset_name):
             'SEED': './datasets/SEED',
             'SEED_IV': './datasets/SEED_IV',
             'sleepEDF': './datasets/sleepEDF',
+            'Merged_dataset': './datasets/Merged_dataset',
+            'sleepEDF': './datasets/sleepEDF',
             'UCI': './datasets/UCI',
             }
     try:
@@ -243,7 +245,6 @@ class Dataset4Training(Dataset):
         sample = np.load(loc, allow_pickle=True)
 
         sensor, label = self.sperate_label_data(sample)
-
         if self.transform:
             sensor = self.transform(sensor)
         return sensor, label
@@ -254,8 +255,6 @@ class Dataset4Training(Dataset):
             acc, gyro, label = sample['acc'], sample['gyro'], sample['add_infor']
             sensor = np.concatenate((acc, gyro), axis=1)
 
-            if self.cross_dataset:
-                label = label_alignment(label, self.datasets_name)
         elif self.modal == 'emg':
             sensor, label = sample['emg'], sample['add_infor']
         elif self.modal == 'eeg':

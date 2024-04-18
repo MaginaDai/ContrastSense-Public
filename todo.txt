@@ -1,0 +1,8 @@
+1. new dataset for EMG
+2. leave-one-domain-out results for EMG
+3. cross-dataset experiment for EMG
+4. cross-dataset experiment on ContrastSense, fix the error in time-window and run different shots and percentages.
+    already fix bug, wait LIMU-BERT to finish.
+5. mobile model for IMU and EMG, overhead evaluation
+6. (maybe) potential results on Xavier
+    discussion required.

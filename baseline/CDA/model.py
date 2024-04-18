@@ -61,8 +61,10 @@ class unit_gcn(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x):
-
-        A = self.A.cuda(x.get_device())
+        if x.get_device() != -1:
+            A = self.A.cuda(x.get_device())
+        else:
+            A = self.A
         A = A + self.PA
 
         y = self.conv(torch.matmul(x, A))

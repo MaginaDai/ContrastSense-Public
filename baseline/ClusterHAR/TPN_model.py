@@ -21,7 +21,7 @@ class TPN_encoder(nn.Module):
         h = self.dropout(self.relu(self.convB(h)))
         h = self.dropout(self.relu(self.convC(h)))
         h = h.reshape(h.shape[0], h.shape[1], -1)
-        h = F.max_pool1d(h, kernel_size=h.size()[-1]) 
+        h = F.max_pool1d(h, kernel_size=int(h.size()[-1])) 
         return h
     
 

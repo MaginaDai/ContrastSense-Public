@@ -1,11 +1,12 @@
 import torch, time, sys
+from baseline.CALDA.model import CALDA_encoder
 from DeepSense import DeepSense_model
 from MoCo import MoCo_model
-
-from data_aug.preprocessing import ClassesNum
+from baseline.Mixup.ConvNet import ConvNet
+from data_aug.preprocessing import ClassesNum, UsersNum
 from torchsummary import summary
 
-modal='imu'
+modal='emg'
 
 def cost_evaluate():
     if modal == 'emg':
@@ -18,13 +19,17 @@ def cost_evaluate():
         NotADirectoryError
     
     # model = MoCo_model(transfer=True, classes=ClassesNum[name], modal=modal).to('cuda')
-    model = DeepSense_model(classes=ClassesNum[name]).to('cuda')
-    
-    
+    # model = DeepSense_model(classes=ClassesNum[name]).to('cuda')
+    # model = CALDA_encoder(num_classes=ClassesNum[name], 
+    #                       num_domains=UsersNum[name],
+    #                       num_units=128,
+    #                       modal=modal).to('cuda')
+    model = ConvNet(number_of_class=ClassesNum[name]).to('cuda')
+
     summary(model, input_size=input_size, batch_size=-1)
 
-    # get_model_parameter_amount(model)
-    get_model_inference_time(model)
+    get_model_parameter_amount(model)
+    # get_model_inference_time(model)
     # get_model_memory_usage(model)
     return
 

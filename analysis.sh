@@ -1,9 +1,12 @@
 #!/bin/bash
 key="v1"
-name="baseline/Mixup/runs/mixup_leave_shot"
+name="runs/negative sampling/hard_v10_cl_wo_time_best_"
 # name="runs/hard_v1_cl_"
 # name="baseline/CDA/runs/CDA_lr5e-4_v"
-python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4" -modal "imu"
+
+python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4" -modal "imu" -version "shot" -ft True
+# python results_analysis.py -shot 10 -name "${name}/HASC" "${name}/HHAR" "${name}/MotionSense" "${name}/Shoaib" -version "Merged_dataset"
+
 
 # python results_analysis.py -name "runs/CDL_ewc_mixup_v0" 
 # python results_analysis.py -name "${name}0_${key}" "${name}0.2_${key}" "${name}0.8_${key}" "${name}1.0_${key}"

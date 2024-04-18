@@ -111,6 +111,9 @@ def tSNE_visualization(dir, dataset_name, version, model_type='CPC', shot=10, gp
 
         h_trans = tsne.fit_transform(feature_bank)
 
+    h_trans[:, 0] = (h_trans[:, 0] - np.min(h_trans[:, 0]))/(np.max(h_trans[:, 0]) - np.min(h_trans[:, 0]))
+    h_trans[:, 1] = (h_trans[:, 1] - np.min(h_trans[:, 1]))/(np.max(h_trans[:, 1]) - np.min(h_trans[:, 1]))
+
     plt.figure()
 
     for i, u in enumerate(select_user):
@@ -132,8 +135,10 @@ def tSNE_visualization(dir, dataset_name, version, model_type='CPC', shot=10, gp
     legd.legendHandles[1].set_sizes([60])
     legd.legendHandles[2].set_sizes([60])
 
-    save_str = f'./figure_plot/tSNE/{dataset_name}_{version}_{model_type}_2user2motion_t.pdf'
-    save_str_png = f'./figure_plot/tSNE/{dataset_name}_{version}_{model_type}_2user2motion_t.png'
+    save_str = f'./figure_plot/tSNE/{dataset_name}_{version}_{model_type}_2user2motion_t_rescale.pdf'
+    save_str_png = f'./figure_plot/tSNE/{dataset_name}_{version}_{model_type}_2user2motion_t_rescale.png'
+    
+    plt.subplots_adjust(wspace=0.3)
     plt.savefig(save_str, bbox_inches='tight')
     plt.savefig(save_str_png, bbox_inches='tight')
     return
@@ -210,41 +215,47 @@ def compare_model_effect(dataset):
     
     h_cl = tsne.fit_transform(data_cl)
     h_cdl = tsne.fit_transform(data_cdl)
+
+    h_cl[:, 0] = (h_cl[:, 0] - np.min(h_cl[:, 0]))/(np.max(h_cl[:, 0]) - np.min(h_cl[:, 0]))
+    h_cl[:, 1] = (h_cl[:, 1] - np.min(h_cl[:, 1]))/(np.max(h_cl[:, 1]) - np.min(h_cl[:, 1]))
+    h_cdl[:, 1] = (h_cdl[:, 1] - np.min(h_cdl[:, 1]))/(np.max(h_cdl[:, 1]) - np.min(h_cdl[:, 1]))
+    h_cdl[:, 0] = (h_cdl[:, 0] - np.min(h_cdl[:, 0]))/(np.max(h_cdl[:, 0]) - np.min(h_cdl[:, 0]))
     
     # plt.figure((10, 6))
-    fig = plt.figure(figsize=(10, 4))
+    fig = plt.figure(figsize=(13, 5))
     
     ax1 = plt.subplot(121)
     for i, u in enumerate(user):
         pos = np.int32(np.argwhere(label_cl[:, 1] == u))
         plt.scatter(h_cl[pos, 0], h_cl[pos, 1], color=color_box[i], s=30, label=f"User {i}", marker=marker_box[i])
         
-    plt.grid(axis='both')
-    plt.xticks([])
-    plt.yticks([])
-    # plt.xlabel("Feature One", fontsize=16)
-    # plt.ylabel("Feature Two", fontsize=16)
-    plt.title('(a) w/o CDL', fontsize=16, y=-0.15)
+    # plt.grid(axis='both')
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
+    plt.xlabel("Feature One", fontsize=20)
+    plt.ylabel("Feature Two", fontsize=20)
+    plt.title('(a) w/o CDL', fontsize=22, y=-0.3)
     
     ax2 = plt.subplot(122)
     for i, u in enumerate(user):
         pos = np.int32(np.argwhere(label_cdl[:, 1] == u))
         plt.scatter(h_cdl[pos, 0], h_cdl[pos, 1], color=color_box[i], s=30, label=f"User {i}", marker=marker_box[i])
-    plt.grid(axis='both')
-    plt.xticks([])
-    plt.yticks([])
-    # plt.xlabel("Feature One", fontsize=16)
-    # plt.ylabel("Feature Two", fontsize=16)
-    plt.title('(b) w/ CDL', fontsize=16, y=-0.15)
+    # plt.grid(axis='both')
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
+    plt.xlabel("Feature One", fontsize=20)
+    plt.ylabel("Feature Two", fontsize=20)
+    plt.title('(b) w/ CDL', fontsize=22, y=-0.3)
     
-    legd = fig.legend(['User 0', 'User 1', 'User 2'], fontsize=16, 
+    legd = fig.legend(['User 0', 'User 1', 'User 2'], fontsize=22, 
                 bbox_to_anchor=(0.5, 1.00), loc='center', ncol=3,)
     legd.legendHandles[0].set_sizes([60])
     legd.legendHandles[1].set_sizes([60])
     legd.legendHandles[2].set_sizes([60])
     # fig.tight_layout()
-    plt.savefig(f"./figure_plot/tSNE/show_CDL_effect_in_{dataset}_t.png", bbox_inches='tight')
-    plt.savefig(f"./figure_plot/tSNE/show_CDL_effect_in_{dataset}_t.pdf", bbox_inches='tight')
+    plt.subplots_adjust(wspace=0.3)
+    plt.savefig(f"./figure_plot/tSNE/show_CDL_effect_in_{dataset}_t_with_axis.png", bbox_inches='tight')
+    plt.savefig(f"./figure_plot/tSNE/show_CDL_effect_in_{dataset}_t_with_axis.pdf", bbox_inches='tight')
 
 # color_box = ['#A1A9D0', '#F0988C', '#C4A5DE',  '#F6CAE5', '#96CCCB', '#CFEAF1', '#B883D4', '#9E9E9E', ]
 color_box = ['#529e52', '#e6843b', '#3c75b0', '#c53a32', '#529e52', '#e6843b', '#c53a32',  ]
@@ -256,14 +267,14 @@ if __name__ == '__main__':
     # dir = f"baseline/CPCHAR/runs/CPCHAR_cu{v}/{dataset}_ft_shot_50"
     # model_dir = dir + '/model_best.pth.tar'
     # version=f"shot{v}"
-    # dataset='MotionSense'
+    dataset='MotionSense'
     # feature_extract(dataset, v=2)
-    # compare_model_effect(dataset)
+    compare_model_effect(dataset)
 
-    dir = f"baseline/CPCHAR/runs/25_label/HHAR_ft_shot_50"
-    model_dir = dir + '/model_best.pth.tar'
-    version=f"domain_shift"
-    dataset='HHAR'
-    tSNE_visualization(model_dir, dataset, version, model_type='CPC', shot=0, gpu_idx=1)
+    # dir = f"baseline/CPCHAR/runs/25_label/HHAR_ft_shot_50"
+    # model_dir = dir + '/model_best.pth.tar'
+    # version=f"domain_shift"
+    # dataset='HHAR'
+    # tSNE_visualization(model_dir, dataset, version, model_type='CPC', shot=0, gpu_idx=1)
 
     

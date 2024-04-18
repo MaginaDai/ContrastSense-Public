@@ -229,6 +229,9 @@
 # version="users_devices_shot"
 # name="CM_users_devices_"
 # name2="FM_users_devices_"
+# version="users_devices_shot"
+# name="CM_users_devices_"
+# name2="FM_users_devices_"
 
 # for shot in 50 100
 # do

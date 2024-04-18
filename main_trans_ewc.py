@@ -37,10 +37,10 @@ parser.add_argument('-ft', '--if-fine-tune', default=True, type=bool, help='to d
 parser.add_argument('-percent', default=1, type=float, help='how much percent of labels to use')
 parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
-parser.add_argument('--pretrained', default='time_analysis_w_design_1024_0/HHAR', type=str,
+parser.add_argument('--pretrained', default='test/Merged_dataset', type=str,
                     help='path to ContrastSense pretrained checkpoint')
 parser.add_argument('-name', default='HHAR',
-                    help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF', 'UCI'])
+                    help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF'])
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 
 parser.add_argument('-e', '--epochs', default=400, type=int, metavar='N',
@@ -82,7 +82,7 @@ parser.add_argument('-final_dim', default=8, type=int, help='the output dims of 
 parser.add_argument('-mo', default=0.9, type=float, help='the momentum for Batch Normalization')
 
 parser.add_argument('-drop', default=0.1, type=float, help='the dropout portion')
-parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
+parser.add_argument('-version', default="HHAR", type=str, help='control the version of the setting')
 parser.add_argument('-DAL', default=False, type=bool, help='Use Domain Adaversarial Learning or not')
 parser.add_argument('-ad-lr', default=0.001, type=float, help='DAL learning rate')
 parser.add_argument('-dlr', default=0.5, type=float, help='DAL learning ratio')
@@ -166,9 +166,14 @@ def main(args, fisher=None):
     tune_loader = torch.utils.data.DataLoader(
         tune_dataset, batch_size=int(args.batch_size), shuffle=True, pin_memory=False, drop_last=False)
     
-    model = MoCo_model(transfer=True, classes=ClassesNum[args.name], dims=args.d, 
-                       classifier_dim=args.classifer_dims, final_dim=args.final_dim, 
-                       momentum=args.mo, drop=args.drop, DAL=args.DAL, users_class=user_num, modal=args.modal)
+    if args.cross == "datasets":
+        num_of_class = 4  # use the common dataset class name
+    else:
+        num_of_class = ClassesNum[args.name]
+    
+    model = MoCo_model(transfer=True, classes=num_of_class, dims=args.d, 
+                    classifier_dim=args.classifer_dims, final_dim=args.final_dim, 
+                    momentum=args.mo, drop=args.drop, DAL=args.DAL, users_class=user_num, modal=args.modal)
     
     classifier_name = []
     # load pre-trained model
