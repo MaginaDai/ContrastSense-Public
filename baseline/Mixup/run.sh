@@ -294,14 +294,29 @@ store="mixup_cross_datasets"
 #     done
 # done
 
-for portion in 70 100
+# for portion in 70 100
+# do
+#     for dataset in "Merged_dataset"
+#     do
+#         python main.py -g 3 -version "tune_portion_${portion}_HASC" --store "${store}/HASC" -shot ${shot} -name ${dataset} &
+#         python main.py -g 3 -version "tune_portion_${portion}_HHAR" --store "${store}/HHAR" -shot ${shot} -name ${dataset} &
+#         python main.py -g 3 -version "tune_portion_${portion}_MotionSense" --store "${store}/MotionSense" -shot ${shot} -name ${dataset} &
+#         python main.py -g 3 -version "tune_portion_${portion}_Shoaib" --store "${store}/Shoaib" -shot ${shot} -name ${dataset}
+#         wait
+#     done
+# done
+
+version="leave_shot"
+store="mixup_alpha99_"
+for shot in 10
 do
-    for dataset in "Merged_dataset"
+    for dataset in "Shoaib" 
     do
-        python main.py -g 3 -version "tune_portion_${portion}_HASC" --store "${store}/HASC" -shot ${shot} -name ${dataset} &
-        python main.py -g 3 -version "tune_portion_${portion}_HHAR" --store "${store}/HHAR" -shot ${shot} -name ${dataset} &
-        python main.py -g 3 -version "tune_portion_${portion}_MotionSense" --store "${store}/MotionSense" -shot ${shot} -name ${dataset} &
-        python main.py -g 3 -version "tune_portion_${portion}_Shoaib" --store "${store}/Shoaib" -shot ${shot} -name ${dataset}
+        python main.py -g 2 -version "${version}0" --store "${store}0" -shot ${shot} -name ${dataset} &
+        python main.py -g 2 -version "${version}1" --store "${store}1" -shot ${shot} -name ${dataset} &
+        python main.py -g 2 -version "${version}2" --store "${store}2" -shot ${shot} -name ${dataset} &
+        python main.py -g 2 -version "${version}3" --store "${store}3" -shot ${shot} -name ${dataset} &
+        python main.py -g 2 -version "${version}4" --store "${store}4" -shot ${shot} -name ${dataset}
         wait
     done
 done

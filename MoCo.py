@@ -41,7 +41,7 @@ from sklearn.metrics import f1_score
 mol='MoCo'
 
 class MoCo_model(nn.Module):
-    def __init__(self, transfer=False, out_dim=256, classes=6, dims=32, classifier_dim=1024, final_dim=8, momentum=0.9, drop=0.1, DAL=False, users_class=None, SCL=False, modal='imu'):
+    def __init__(self, transfer=False, out_dim=256, classes=6, dims=16, classifier_dim=32, final_dim=8, momentum=0.9, drop=0.1, DAL=False, users_class=None, SCL=False, modal='imu'):
         super(MoCo_model, self).__init__()
         self.DAL = DAL
         self.modal = modal
@@ -87,7 +87,7 @@ class MoCo_model(nn.Module):
     
 
 class MoCo_model_for_mobile(nn.Module):
-    def __init__(self, transfer=False, out_dim=256, classes=6, dims=32, classifier_dim=1024, final_dim=8, momentum=0.9, drop=0.1, DAL=False, users_class=None, SCL=False, modal='imu'):
+    def __init__(self, transfer=False, out_dim=256, classes=6, dims=32, classifier_dim=64, final_dim=8, momentum=0.9, drop=0.1, DAL=False, users_class=None, SCL=False, modal='imu'):
         super(MoCo_model_for_mobile, self).__init__()
         self.DAL = DAL
         self.modal = modal
@@ -132,10 +132,10 @@ class MoCo_classifier(nn.Module):
         super(MoCo_classifier, self).__init__()
 
         if modal == 'imu':
-            feature_num = 3200
+            feature_num = 100 * dims
             self.gru = torch.nn.GRU(dims, final_dim, num_layers=1, batch_first=True, bidirectional=True)
         elif modal == 'emg':
-            feature_num = 1024
+            feature_num = dims * 32
             # feature_num = 832
             self.gru = torch.nn.GRU(16, final_dim, num_layers=1, batch_first=True, bidirectional=True)
         elif modal == 'eeg':
@@ -224,7 +224,7 @@ class MoCo_projector(nn.Module):
     def __init__(self, out_dim=512, modal='imu'):
         super(MoCo_projector, self).__init__()
         if modal == 'imu':
-            feature_num = 6400
+            feature_num = 3200
         elif modal == 'emg':
             feature_num = 1024
             # feature_num = 2912
@@ -248,8 +248,8 @@ class MoCo_projector(nn.Module):
 
 
 class MoCo_encoder(nn.Module):
-
-    def __init__(self, dims=32, momentum=0.9, drop=0.1):
+    # dims=32
+    def __init__(self, dims=16, momentum=0.9, drop=0.1):
         super(MoCo_encoder, self).__init__()
 
         self.dropout = torch.nn.Dropout(p=drop)
@@ -777,10 +777,10 @@ class MoCo_v1(nn.Module):
                 mask_low = low_boundary < queue_time # (NxQ) = label of sen_q (Nx1) x labels of queue (Qx1).T
                 mask_high = queue_time < high_boundary
                 mask = torch.logical_and(mask_low, mask_high)
-                if self.cross == "datasets":
-                    queue_domain = self.queue_labels.T.expand(l_neg.shape[0], l_neg.shape[1])
-                    mask_domain = queue_domain == domain_label[0].contiguous().view(-1, 1)
-                    mask = torch.logical_and(mask, mask_domain)
+                # if self.cross == "datasets":
+                #     queue_domain = self.queue_labels.T.expand(l_neg.shape[0], l_neg.shape[1])
+                #     mask_domain = queue_domain == domain_label[0].contiguous().view(-1, 1)
+                #     mask = torch.logical_and(mask, mask_domain)
                     
                 l_neg[mask] = -torch.inf    
                 hardest_related_info[0] = mask.sum(1).float().mean()

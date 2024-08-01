@@ -453,7 +453,6 @@ def sensitivity_in_one():
     ax[0].set_ylabel("F1 Score (%)", fontsize=22)
     ax[0].set_ylim(53, 67)
     
-
     
     window=[0, 60, 120, 180, 240]
     window_result = [54.91, 57.34, 57.66, 57.41, 56.19]
@@ -498,7 +497,7 @@ def fig_queue_results():
     plt.xticks(x, labels=queue_size, fontsize=22)
     plt.yticks(fontsize=22)
     plt.xlabel(r"$M$", fontsize=22)
-    plt.ylabel("F1 Score (%)", fontsize=22)
+    plt.ylabel("Average F1 Score (%)", fontsize=22)
     plt.ylim(53, 67)
     plt.tight_layout()
     plt.savefig('./figure_plot/Queue_size_sensativity.pdf')
@@ -510,13 +509,14 @@ def fig_slr_results():
     err=[1.31, 2.55, 2.76, 2.88, 2.42]
     x=np.arange(len(slr))
     plt.grid(axis='y')
-    plt.errorbar(x, slr_result, fmt='--', color=color_blue, linewidth=6, yerr=err, capsize=10, capthick=3, elinewidth=3, ecolor='black')
+    plt.bar(x, slr_result, align='center', color=color_blue, yerr=err, capsize=10, ecolor='black', error_kw=dict(elinewidth=3, capthick=3), edgecolor='black', zorder=100)
     plt.xticks(x, labels=slr, fontsize=22)
     plt.yticks(np.arange(55, 66, 2), fontsize=22)
     plt.xlabel("$\lambda_1$", fontsize=22)
-    plt.ylabel("F1 Score (%)", fontsize=22)
+    plt.ylabel("Average F1 Score (%)", fontsize=22)
     plt.ylim(55, 66)
     plt.tight_layout()
+    plt.savefig('./figure_plot/Slr_sensativity.png')
     plt.savefig('./figure_plot/Slr_sensativity.pdf')
 
 
@@ -530,7 +530,7 @@ def fig_time_window_result():
     plt.xticks(x, labels=window, fontsize=22)
     plt.yticks(np.arange(52, 61, 1), fontsize=22)
     plt.xlabel("$T$", fontsize=22)
-    plt.ylabel("F1 Score (%)", fontsize=22)
+    plt.ylabel("Average F1 Score (%)", fontsize=22)
     plt.ylim(52, 61)
     plt.tight_layout()
     plt.savefig('./figure_plot/time_window.pdf')
@@ -583,14 +583,15 @@ def fig_ewc_results():
     err=[2.34, 2.91, 2.17, 2.50, 1.86]
     x=np.arange(len(ewc))
     plt.grid(axis='y')
-    plt.errorbar(x, ewc_result, fmt='--', color=color_blue, linewidth=6, yerr=err, capsize=10, capthick=3, elinewidth=3, ecolor='black')
+    plt.bar(x, ewc_result, align='center', color=color_blue, yerr=err, capsize=10, ecolor='black', error_kw=dict(elinewidth=3, capthick=3), edgecolor='black', zorder=100)
     plt.xticks(x, labels=ewc, fontsize=22)
     plt.yticks(np.arange(59, 66, 1), fontsize=22)
     plt.xlabel("$\lambda_2$", fontsize=22)
-    plt.ylabel("F1 Score (%)", fontsize=22)
+    plt.ylabel("Average F1 Score (%)", fontsize=22)
     plt.ylim(59, 66)
     plt.tight_layout()
     plt.savefig('./figure_plot/EWC_sensativity.pdf')
+    plt.savefig('./figure_plot/EWC_sensativity.png')
 
 def fig_time_analysis():
     infoNCE=[1.544, 1.5558, 1.5713, 1.5768, 1.5829]
@@ -804,7 +805,7 @@ def figure_domain_shift_new():
     # plt.xlabel(r"Percentage $\alpha$", fontsize=16)
     ax[0].set_ylabel("F1 Score (%)", fontsize=20)
     ax[0].set_xlabel("CPCHAR", fontsize=22)
-    ax[0].set_xticks(x, labels=[r"$\alpha=65$", r"$\alpha=45$", r"$\alpha=25$"], fontsize=22)
+    ax[0].set_xticks(x, labels=[r"$\alpha=65\%$", r"$\alpha=45\%$", r"$\alpha=25\%$"], fontsize=22)
     ax[0].set_yticks(np.arange(40,120,20), fontsize=22)
     ax[0].tick_params(axis='y', labelsize=22)
     ax[0].legend(fontsize=16, loc='lower left', ncol=1)
@@ -821,7 +822,7 @@ def figure_domain_shift_new():
     # plt.ylabel("F1 Score (%)", fontsize=16)
     ax[1].tick_params(axis='y', labelsize=22)
     ax[1].set_ylabel("F1 Score (%)", fontsize=20)
-    ax[1].set_xticks(x, labels=[r"$\alpha=65$", r"$\alpha=45$", r"$\alpha=25$"], fontsize=22)
+    ax[1].set_xticks(x, labels=[r"$\alpha=65\%$", r"$\alpha=45\%$", r"$\alpha=25\%$"], fontsize=22)
     ax[1].set_yticks(np.arange(40,120,20), fontsize=22)
     ax[1].set_xlabel("LIMU-BERT", fontsize=22)
     ax[1].legend(fontsize=16, loc='lower left', ncol=1)
@@ -848,6 +849,110 @@ def add_axis_to_tSNE():
     fig.savefig('figure_plot/tSNE/show_CDL_effect_in_MotionSense_t_with_axis.png')
 
 
+def Momemtum_update_rate_plot():
+    rate=[0, 0.9, 0.99, 0.999, 1.0]
+    f1=[49.08, 60.96, 62.45, 62.85, 56.39]
+    x=np.arange(len(rate))
+    # plt.subplot(131)
+    plt.grid(axis='y')
+    plt.bar(x, f1, align='center', color=color_blue, capsize=14)
+    plt.xticks(x, labels=rate, fontsize=16)
+    plt.yticks(np.arange(45, 65, 2), fontsize=16)
+    plt.xlabel("Momemtum Update Rate", fontsize=16)
+    plt.ylabel("F1 Score (%)", fontsize=16)
+    plt.title('(a)', fontsize=16, y=-0.25)
+    plt.ylim(45, 65)
+    plt.tight_layout()
+    plt.savefig('./figure_plot/momentum_update_rate.png')
+    
+
+def effectiveness_of_domain_queues_in_one():
+    fig, ax = plt.subplots(1, 3, figsize=(16, 4))
+    
+    queue_size=[256, 512, 1024, 1536, 2048]
+    queue_result = [57.64, 58.62, 61.92, 60.46, 60.12]
+    err=[2.28, 1.45, 2.88, 2.18, 1.14]
+    x=np.arange(len(queue_size))
+
+    ax[0].grid(axis='y')
+    ax[0].bar(x, queue_result, align='center', color=color_blue, yerr=err, capsize=10, ecolor='black', error_kw=dict(elinewidth=2, capthick=2), edgecolor='black', zorder=100)
+    ax[0].set_xticks(x, labels=[r"w/o $Q$", "512", "1024", "1536", "2048"], fontsize=20)
+    ax[0].set_yticks(np.arange(53, 67, 2), fontsize=22)
+    ax[0].tick_params(axis='y', labelsize=22)
+    ax[0].set_xlabel("The domain queues size M", fontsize=22)
+    ax[0].set_ylabel("Average F1 Score (%)", fontsize=19)
+    ax[0].set_ylim(53, 67)
+    ax[0].set_title("(a)", fontsize=20, y=-0.4)
+
+    
+    rate=[0.8, 0.9, 0.99, 0.999, 1.0]
+    f1=[53.98, 60.96, 62.45, 62.85, 56.39]
+    err=[5.70, 4.11, 1.62, 2.88, 1.28]
+    x=np.arange(len(rate))
+
+
+    ax[2].grid(axis='y')
+    ax[2].bar(x, f1, align='center', color=color_blue, yerr=err, capsize=10, ecolor='black', error_kw=dict(elinewidth=2, capthick=2), edgecolor='black', zorder=100)
+    ax[2].set_xticks(x, labels=["0.8", '0.9', '0.99', '0.999', '1.0'], fontsize=20)
+    ax[2].set_yticks(np.arange(46, 68, 4), fontsize=22)
+    ax[2].set_xlabel("The Momentum update ratio", fontsize=22)
+    ax[2].set_ylabel("Average F1 Score (%)", fontsize=19)
+    ax[2].set_ylim(46, 68)
+    ax[2].set_title("(c)", fontsize=20, y=-0.4)
+
+    ax[2].tick_params(axis='y', labelsize=22)
+
+    plt.subplots_adjust(wspace=3)
+    slr=[0.1, 0.3, 0.5, 0.7, 0.9]
+    slr_result = [58.80, 59.04, 58.66, 61.92, 59.74]
+    err=[1.31, 2.55, 2.76, 2.88, 2.42]
+    x=np.arange(len(slr))
+
+    with_queue = [3014, 3016, 3018, 3146, 3146]
+    without_queue = [2312, 3012, 4222, 6144, 6996]
+    q = [256, 512, 1024, 1536, 2048]
+    x=np.arange(len(q))
+    # plt.subplot(132)
+    ax[1].grid(axis='y')
+    ax[1].plot(x, without_queue, '-o', color=color_blue, linewidth=2, markersize=10)
+    ax[1].plot(x, with_queue, '-^', color=color_red, linewidth=2, markersize=10)
+    ax[1].legend([r'w/o $Q$', r'w/ $Q$'], fontsize=16)
+    ax[1].set_xticks(x, labels=q, fontsize=20)
+    ax[1].set_yticks(np.arange(1000, 7000, 1000), fontsize=20)
+    ax[1].set_xlabel("The number of negatives", fontsize=20)
+    ax[1].set_ylabel("Memory (MB)", fontsize=20)
+    ax[1].tick_params(axis='y', labelsize=20)
+    ax[1].set_title("(b)", fontsize=20, y=-0.4)
+    
+    plt.tight_layout()
+
+    plt.savefig(f"./figure_plot/saved/dq.pdf", bbox_inches='tight')
+    plt.savefig(f"./figure_plot/saved/dq.png", bbox_inches='tight')
+
+
+def fig_memory_f1_tradeoff():
+    fig, ax = plt.subplots(1, 2, figsize=(12, 4))
+    x = np.arange(0.8, 1.6, 0.2)
+    memory_space = [0.83, 0.84, 0.93, 0.95, 0.83, 0.84, 0.90]
+    f1_score = [46.38, 44.87, 53.49, 46.29, 53.93, 50.76, 51.57]
+    
+    memory_CS = [0.82, 0.98, 1.48]
+    ContrastSense = [59.42, 60.86, 62.85]
+    ax[0].plot(memory_space, f1_score, 'o', color=color_blue, markersize=10)
+    ax[0].plot(memory_CS, ContrastSense, '--^', color=color_red, markersize=10)
+    ax[0].set_xticks(x, labels = np.arange(0.8, 1.6, 0.2), fontsize=22)
+    ax[0].set_yticks(np.arange(40, 67, 4), fontsize=22)
+    ax[0].tick_params(axis='y', labelsize=22)
+    ax[0].set_xlabel("(a) The memory usage (%)", fontsize=22)
+    ax[0].set_ylabel("F1 Score (%)", fontsize=22)
+    ax[0].set_ylim(40, 67)
+    # ax[0].set_title("", fontsize=20, y=-0.4)
+    plt.tight_layout()
+
+    plt.savefig(f"./figure_plot/saved/memory_f1.pdf", bbox_inches='tight')
+    plt.savefig(f"./figure_plot/saved/memory_f1.png", bbox_inches='tight')
+    return
+
 
 color_blue = '#3c75b0'
 color_red = '#e6843b'
@@ -860,12 +965,14 @@ if __name__ == '__main__':
     # cmp_segmentation_performance()
     # figure_supervised_learning()
     # figure_domain_shift()
-    figure_limited_labels()
+    # figure_limited_labels()
+    # Momemtum_update_rate_plot()
     # figure_cross_domain(cross='positions')
     # fig_label_domain_portion()
     # fig_batch_size_result()
     # fig_aug_effect()
     # fig_queue_results()
+    # fig_time_window_result()
     # fig_slr_results()
     # fig_ewc_results()
     # fig_sensativity_analysis()
@@ -880,3 +987,5 @@ if __name__ == '__main__':
     # sensitivity_in_one()
 
     # fig_cost_in_one_figure()
+    effectiveness_of_domain_queues_in_one()
+    # fig_memory_f1_tradeoff()

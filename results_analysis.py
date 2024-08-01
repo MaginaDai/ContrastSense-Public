@@ -11,15 +11,16 @@ from xml.sax import default_parser_list
 dataset_imu = ['HHAR', 'MotionSense', 'Shoaib', 'HASC']
 # dataset_imu=['MotionSense', 'HASC']
 # dataset_imu = ['HHAR', 'MotionSense', 'Shoaib', 'HASC']
-dataset_imu=['MotionSense', 'HASC']
+# dataset_imu=['MotionSense', 'HASC']
 dataset_emg = ['Myo', 'NinaPro']
 dataset_eeg = ['sleepEDF']
+dataset_merged = ['Merged_dataset']
 # dataset_eeg = ['SEED', 'SEED_IV']
 # dataset = ['HHAR']
 
 parser = argparse.ArgumentParser(description='PyTorch Contrastive Learning for Wearable Sensing')
 parser.add_argument('-name', default=["test", "test"], nargs='+', type=str, help='the interested models file')
-parser.add_argument('-ft', default=True, type=bool, help='fine-tune or linear evaluation')
+parser.add_argument('-ft', default=False, type=bool, help='fine-tune or linear evaluation')
 parser.add_argument('-nad', default='ft_shot_10', type=str, help='name after datasets')
 parser.add_argument('-shot', default=10, type=int, help='how many shots we use')
 parser.add_argument('-modal', default='imu', type=str, help='which modal we use')
@@ -32,10 +33,15 @@ def avg_result(name, ft, modal, shot=10, version="shot"):
         dataset = dataset_emg
     elif modal == 'eeg':
         dataset = dataset_eeg
+    elif modal == "datasets_imu":
+        dataset = dataset_merged
     else:
         NotImplementedError
     
-    weight = cal_weight_for_weighted_evalution(modal, version)
+    if modal != "datasets_imu" and modal != "datasets_emg":
+        weight = cal_weight_for_weighted_evalution(modal, version)
+    else:
+        weight = cal_weight_for_weighted_evalution_for_cross_dataset(modal, version)
 
     eval = np.zeros([len(name), len(dataset)])
     test = np.zeros([len(name), len(dataset)])
@@ -71,15 +77,25 @@ def avg_result(name, ft, modal, shot=10, version="shot"):
     acc_mean = np.expand_dims(np.mean(test_acc, axis=1), 1)
 
     print(eval_mean.shape)
+    if modal != "datasets_imu" and modal != "datasets_emg":
+        weighted_eval = np.expand_dims(np.average(eval, axis=1, weights=weight), 1)
+        weighted_f1 = np.expand_dims(np.average(test, axis=1, weights=weight), 1)
+        weighted_acc = np.expand_dims(np.average(test_acc, axis=1, weights=weight), 1)
+        eval_final = np.concatenate((eval, eval_mean, weighted_eval), axis=1)
+        test_final = np.concatenate((test, test_mean, weighted_f1), axis=1)
+        test_acc_final = np.concatenate((test_acc, acc_mean, weighted_acc), axis=1)
 
-    weighted_eval = np.expand_dims(np.average(eval, axis=1, weights=weight), 1)
-    weighted_f1 = np.expand_dims(np.average(test, axis=1, weights=weight), 1)
-    weighted_acc = np.expand_dims(np.average(test_acc, axis=1, weights=weight), 1)
+    else:
+        weighted_eval = np.expand_dims(np.average(eval, axis=0, weights=weight), 1)
+        weighted_f1 = np.expand_dims(np.average(test, axis=0, weights=weight), 1)
+        weighted_acc = np.expand_dims(np.average(test_acc, axis=0, weights=weight), 1)
+        print(f"weighted eval/acc/f1: {weighted_eval}/{weighted_acc}/{weighted_f1}")
 
-    eval_final = np.concatenate((eval, eval_mean, weighted_eval), axis=1)
-    test_final = np.concatenate((test, test_mean, weighted_f1), axis=1)
-    test_acc_final = np.concatenate((test_acc, acc_mean, weighted_acc), axis=1)
-    
+        eval_final = np.concatenate((eval, eval_mean,), axis=1)
+        test_final = np.concatenate((test, test_mean,), axis=1)
+        test_acc_final = np.concatenate((test_acc, acc_mean,), axis=1)
+
+
     print("Eval f1 is: \n {}".format(np.around(eval_final, 2)))
     print("Test f1 is: \n {}".format(np.around(test_final, 2)))
     print("Test acc is: \n {}".format(np.around(test_acc_final, 2)))
@@ -87,7 +103,8 @@ def avg_result(name, ft, modal, shot=10, version="shot"):
     print("Test mean is: {}".format(np.around(np.mean(test_final, axis=0), 2)))
     print("Test acc is: {}".format(np.around(np.mean(test_acc_final, axis=0), 2)))
     print("Test std is: {}".format(np.around(np.std(test_mean), 2)))
-    return np.mean(test_final, axis=0)
+    # pdb.set_trace()
+    return np.mean(test_final, axis=0), np.std(test_mean), test_final, test_acc_final, np.std(test, axis=0)
 
 def results_for_each_file(files):
     eval = np.zeros([len(files)])
@@ -202,6 +219,7 @@ def avg_result_for_limited_labels(name):
 def avg_result_for_cross_domains(name, ft, modal, shot, cross="preliminary"):
     eval = np.zeros([len(name)])
     test = np.zeros([len(name)])
+    test_acc = np.zeros([len(name)])
     if cross == 'positions' or cross == 'positions_100' or cross == 'users_positions':
         data="Shoaib"
     elif cross == 'devices' or cross == 'users_devices':
@@ -225,19 +243,28 @@ def avg_result_for_cross_domains(name, ft, modal, shot, cross="preliminary"):
             # pdb.set_trace()
             eval_extract = np.float64(re.findall(eval_pattern, content))
             test_extract = np.float64(re.findall(test_pattern, content))
+            acc_extract = np.float64(re.findall(test_acc_pattern, content))
             if len(eval_extract) > 1 or len(test_extract) > 1:
                 # pdb.set_trace()
                 raise ReadError
             eval[i] = eval_extract[0]
             test[i] = test_extract[0]
+            if len(acc_extract) == 0:
+                test_acc[i] = 0
+            else:
+                test_acc[i] = acc_extract[0]
+
     eval_mean = np.expand_dims(np.mean(eval), axis=0)
     test_mean = np.expand_dims(np.mean(test), axis=0)
+    test_acc_mean = np.expand_dims(np.mean(test_acc), axis=0)
     eval_final = np.concatenate((eval, eval_mean))
     test_final = np.concatenate((test, test_mean))
+    test_acc_final = np.concatenate((test_acc, test_acc_mean))
     print("Eval f1 is: {}".format(np.around(eval_final, 2)))
     print("Test f1 is: {}".format(np.around(test_final, 2)))
     print("Test std is: {}".format(np.around(np.std(test), 2)))
-    return test_mean, np.around(np.std(test), 2)
+    # pdb.set_trace()
+    return test_mean, np.around(np.std(test), 2), test_final, test_acc_final, np.std(test, axis=0)
 
 
 def analysis_semi_hard_sampling():
@@ -287,17 +314,41 @@ def cal_weight_for_weighted_evalution(modal='imu', version="shot"):
         datasets = dataset_imu
     elif modal == 'emg':
         datasets = dataset_emg
+    elif modal == "datasets":
+        datasets = dataset_merged
     num_test_sample = np.zeros(len(datasets))
 
     for i, dataset in enumerate(datasets):
+        if modal == "datasets":
+            dir = f"datasets/{dataset}_{version}"
         dir = f"datasets/{dataset}_{version}"
         for v in np.arange(5):
             test_dir = dir + f"{v}/test_set.npz"
             test_set = np.load(test_dir)['test_set']
             num_test_sample[i] += len(test_set)/5
-        
+    print(num_test_sample)
     weight = num_test_sample/np.sum(num_test_sample)
     # print(weight)
+    return weight
+
+def cal_weight_for_weighted_evalution_for_cross_dataset(modal='imu', version="shot"):
+    if modal == 'datasets_imu':
+        datasets = dataset_imu
+    elif modal == 'datasets_emg':
+        datasets = dataset_emg
+    num_test_sample = np.zeros(len(datasets))
+
+    for i, dataset in enumerate(datasets):
+        if modal == "datasets":
+            dir = f"datasets/{version}_{dataset}"
+        dir = f"datasets/{version}_{dataset}"
+
+        test_dir = dir + f"/test_set.npz"
+        test_set = np.load(test_dir)['test_set']
+        num_test_sample[i] += len(test_set)
+        
+    weight = num_test_sample/np.sum(num_test_sample)
+    print(weight)
     return weight
 
 

@@ -3,7 +3,9 @@
         "./baseline/ClusterHAR",
         "./baseline/GILE",
         "./baseline/Mixup",
-        "./baseline"
+        "./baseline",
+        "./baseline/Collossl",
+        "./baseline/Collossl"
     ],
     "python.analysis.typeCheckingMode": "off"
 }

@@ -113,6 +113,8 @@ class Transfer_Coder(nn.Module):
             self.Classifier = CL_Classifier(classes)
         elif method == 'Cluster':
             self.Classifier = Cluster_Classifier(classes)
+        elif method == "ColloSSL":
+            self.Classifier = ColloSSL_Classifier(classes)
         else:
             raise TypeError
     
@@ -120,3 +122,21 @@ class Transfer_Coder(nn.Module):
         h = self.TPN(x)
         z = self.Classifier(h)
         return z
+
+
+class ColloSSL_Classifier(nn.Module):
+    def __init__(self, classes):
+        super(ColloSSL_Classifier, self).__init__()
+        self.linear1 = nn.Linear(96, 1024)
+        self.linear2 = nn.Linear(1024, classes)
+        self.relu = nn.ReLU()
+        self.SoftMax = nn.Softmax(-1)
+        
+    
+    def forward(self, x):
+        x = x.reshape(x.shape[0], -1)
+        x = self.relu(self.linear1(x))
+        x = self.linear2(x)
+        x = self.SoftMax(x)
+        # pdb.set_trace()
+        return x

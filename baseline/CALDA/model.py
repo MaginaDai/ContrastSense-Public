@@ -76,6 +76,67 @@ class CALDA_encoder(nn.Module):
         contrast_logits = self.contrastive_head(h)
         return y_logits, domain_logits, contrast_logits
 
+
+
+class CALDA_encoder_for_mobile(nn.Module):
+    def __init__(self, num_classes, num_domains, num_units, modal):
+
+        super().__init__()
+        self.num_classes = num_classes
+        self.num_domains = num_domains
+
+        self.dropout = torch.nn.Dropout(p=0.3)
+        self.relu = torch.nn.ReLU()
+
+        self.feature_extractor = nn.Sequential(
+            torch.nn.Conv2d(1, 128, kernel_size=(8, 1)),
+            torch.nn.BatchNorm2d(128),
+            torch.nn.ReLU(),
+            torch.nn.Conv2d(128, 256, kernel_size=(5, 1)),
+            torch.nn.BatchNorm2d(256),
+            torch.nn.ReLU(),
+            torch.nn.Conv2d(256, 128, kernel_size=(3, 1)),
+            torch.nn.BatchNorm2d(128),
+            torch.nn.ReLU(),
+            )
+
+        if modal == 'imu':
+            self.feature_size = 1122
+        elif modal == 'emg':
+            self.feature_size = 312
+        else:
+            NotADirectoryError
+
+        self.task_classifier = torch.nn.Linear(self.feature_size, num_classes)
+
+        self.domain_classifier = nn.Sequential(
+            # GradientReversal(),
+            torch.nn.Linear(self.feature_size, 500),
+            torch.nn.BatchNorm1d(500),
+            torch.nn.ReLU(),
+            torch.nn.Dropout(p=0.3),
+            torch.nn.Linear(500, 500),
+            torch.nn.BatchNorm1d(500),
+            torch.nn.ReLU(),
+            torch.nn.Dropout(p=0.3),
+            torch.nn.Linear(500, num_domains),
+        )
+
+        self.contrastive_head = torch.nn.Linear(self.feature_size, num_units)
+
+    def forward(self, x):
+        if len(x.shape) == 3:
+            x = x.unsqueeze(1)
+        h = self.feature_extractor(x)
+        h = h.permute([0, 2, 1, 3])
+        h = F.max_pool2d(h, kernel_size=(h.size()[2], 1)) 
+        h = h.reshape(h.shape[0], -1)
+        y_logits = self.task_classifier(h)
+        domain_logits = self.domain_classifier(h)
+        contrast_logits = self.contrastive_head(h)
+        return y_logits
+
+
 class CALDA():
     def __init__(self, *args, **kwargs):
         self.args = kwargs['args']

@@ -12,9 +12,22 @@ from figure_plot.figure_plot import t_SNE_view
 import matplotlib.pyplot as plt
 from torchvision.transforms import transforms
 from data_aug import imu_transforms
+import seaborn as sns
+import pdb
+
+from sklearn.neural_network import MLPClassifier
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
 
 from matplotlib.collections import PathCollection
 from matplotlib.legend_handler import HandlerLine2D
+
+
+custom_palette = ['#cfb28c', '#529e52', '#c53a32', '#b4b4b4', '#3c75b0', '#e6843b']
+# color_box = ['#A1A9D0', '#F0988C', '#C4A5DE',  '#F6CAE5', '#96CCCB', '#CFEAF1', '#B883D4', '#9E9E9E', ]
+color_box = ['#529e52', '#e6843b', '#3c75b0', '#c53a32', '#529e52', '#e6843b', '#c53a32',  ]
+marker_box=['o', '^', '*', 's', 'P', 'p']
+
 
 def updateline(handle, orig):
     handle.update_from(orig)
@@ -144,6 +157,167 @@ def tSNE_visualization(dir, dataset_name, version, model_type='CPC', shot=10, gp
     return
 
 
+def tSNE_visualization_with_boundary(dir, dataset_name, version, model_type='CPC', shot=10, gpu_idx=2):
+    device = torch.device(f'cuda:{gpu_idx}')
+    model = load_model(dir, dataset_name, model_type=model_type)
+    model = model.to(device)
+    dataset = ContrastiveLearningDataset(transfer=True, version=version, datasets_name=dataset_name)
+    
+    train_dataset = Dataset4Training(dataset_name, version, transform=transforms.Compose([imu_transforms.ToTensor()]), split='train', transfer=True)
+    tune_dataset = Dataset4Training(dataset_name, version, transform=transforms.Compose([imu_transforms.ToTensor()]), split='tune', transfer=True, shot=shot)
+    test_dataset = dataset.get_dataset('test')
+
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=False, pin_memory=False, drop_last=False)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=128, shuffle=False, pin_memory=False, drop_last=False)
+    
+    feature_bank = torch.empty(0).to(device)
+    label_bank = torch.empty(0)
+    domain_bank = torch.empty(0)
+
+    tsne = TSNE(n_components=2, learning_rate='auto', init='random')
+    
+    train_user = []
+    tune_user = []
+    test_user = []
+    for sensor, target in train_dataset:
+        train_user.append(target[1].numpy())
+    for sensor, target in tune_dataset:
+        tune_user.append(target[1].numpy())
+    for sensor, target in test_dataset:
+        test_user.append(target[1].numpy())
+    
+    train_user = np.unique(train_user)
+    tune_user = np.unique(tune_user)
+    test_user = np.unique(test_user)
+    # select_user = [train_user[1], tune_user[0], test_user[0]]
+    print(train_user)
+    print(tune_user)
+    print(test_user)
+
+    select_user = [6, 5, 2]
+
+    with torch.no_grad():
+        for sensor, target in tqdm(train_loader):
+            sensor = sensor.to(device)
+            if model_type == 'CPC':
+                sensor = sensor.squeeze(1)
+                feature = model.ar(model.encoder(sensor))
+            else:
+                sensor = sensor.reshape(-1, sensor.shape[0], sensor.shape[1], sensor.shape[2])
+                feature = model.encoder(sensor)
+            feature = feature.reshape(sensor.shape[0], -1)
+            pos = [i for i, t in enumerate(target) if t[1] in select_user]
+            feature_bank, label_bank, domain_bank = torch.cat((feature_bank, feature[pos])), torch.cat((label_bank, target[pos, 0])), torch.cat((domain_bank, target[pos, 1]))
+
+        for sensor, target in tqdm(test_loader):
+            sensor = sensor.to(device)
+            if model_type == 'CPC':
+                sensor = sensor.squeeze(1)
+                feature = model.ar(model.encoder(sensor))
+            else:
+                sensor = sensor.reshape(-1, sensor.shape[0], sensor.shape[1], sensor.shape[2])
+                feature = model.encoder(sensor)
+            feature = feature.reshape(sensor.shape[0], -1)
+            pos = [i for i, t in enumerate(target) if t[1] in select_user]
+            
+            feature_bank, label_bank, domain_bank = torch.cat((feature_bank, feature[pos])), torch.cat((label_bank, target[pos, 0])), torch.cat((domain_bank, target[pos, 1]))
+        
+        feature_bank = feature_bank.reshape(feature_bank.shape[0], -1)
+        feature_bank, label_bank, domain_bank = feature_bank.cpu().numpy(), label_bank.numpy(), domain_bank.numpy()
+
+        h_trans = tsne.fit_transform(feature_bank)
+
+    h_trans[:, 0] = (h_trans[:, 0] - np.min(h_trans[:, 0]))/(np.max(h_trans[:, 0]) - np.min(h_trans[:, 0]))
+    h_trans[:, 1] = (h_trans[:, 1] - np.min(h_trans[:, 1]))/(np.max(h_trans[:, 1]) - np.min(h_trans[:, 1]))
+
+    plt.figure()
+
+    labeled_user = select_user[0]
+    pos = np.int32(np.argwhere(domain_bank == labeled_user)).reshape(-1)
+    x_min, x_max = 0, 1
+    y_min, y_max = 0, 1
+
+    h=0.001
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),np.arange(y_min, y_max, h))
+
+
+    mlp_tsne = MLPClassifier(hidden_layer_sizes=(50, ), max_iter=500, random_state=42)
+    mlp_tsne.fit(h_trans[pos, :].reshape(len(pos), -1), label_bank[pos])
+
+
+    Z = mlp_tsne.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+    marked = np.zeros(xx.shape)
+    
+    # pdb.set_trace()
+    marked_pos = []
+    for i in range(1, len(xx)-1):
+        for j in range(1, len(yy)-1):
+            if Z[i, j] !=Z[i, j+1] or Z[i, j] != Z[i, j-1] or Z[i, j] != Z[i+1, j] or Z[i, j] !=Z[i-1, j]:
+                # if [i-1, j] not in marked_pos and [i+1, j]
+                marked[i, j] = 1
+                marked_pos.append([j/1000, i/1000])
+
+    marked_pos = np.vstack(marked_pos)
+
+    plt.figure()
+    # plt.contourf(xx, yy, Z, alpha=0.3, cmap=plt.cm.coolwarm, linestyles='-')
+    plt.contour(xx, yy, marked, alpha=0.3, colors=color_box[0], linestyles='--', linewidths=0.5)
+    # plt.scatter(marked_pos[::2, 0], marked_pos[::2, 1], alpha=1.0, color=color_box[0], s=0.1, )
+    # pdb.set_trace()
+    cmap = plt.get_cmap('coolwarm')
+
+    # Sample colors for each class
+    colors = [cmap(i / len(HHAR_lable)) for i in range(len(HHAR_lable))]
+
+    
+    # sns.scatterplot(x=h_trans[pos, 0], y=h_trans[pos, 1], hue=label_bank[pos], palette=plt.cm.coolwarm, markers=marker_box[0], alpha=1.0, edgecolor="k",  legend=None)
+    
+    # user_2 = select_user[1]
+    # pos = np.int32(np.argwhere(domain_bank == user_2)).reshape(-1)
+
+    # sns.scatterplot(x=h_trans[pos, 0], y=h_trans[pos, 1], hue=label_bank[pos], palette=plt.cm.coolwarm, markers=marker_box[1], alpha=1.0, edgecolor="k",  legend=None)
+
+    # user_3 = select_user[2]
+    # pos = np.int32(np.argwhere(domain_bank == user_3)).reshape(-1)
+    # sns.scatterplot(x=h_trans[pos, 0], y=h_trans[pos, 1], hue=label_bank[pos], palette=sns.color_palette("coolwarm", len(np.unique(label_bank[pos]))), style=pos, markers={True: marker_box[2]}, alpha=1.0, edgecolor="k",  legend=None)
+
+
+    for i, u in enumerate(select_user):
+        pos = np.int32(np.argwhere(domain_bank == u)).reshape(-1)
+        select_pos_len = int(len(pos)*0.15)
+        select_pos = np.random.choice(pos, size=select_pos_len)
+        h = h_trans[select_pos, :]
+        label_for_u = label_bank[select_pos]
+        for j, label in enumerate(HHAR_lable):
+            p_for_label = np.int32(np.argwhere(label_for_u == j)).reshape(-1)
+            # plt.scatter(h[p_for_label, 0], h[p_for_label, 1], color=color_box[j], s=20, marker=marker_box[i], edgecolors='k', linewidth=0.5)
+            plt.scatter(h[p_for_label, 0], h[p_for_label, 1], color=color_box[i], s=30, marker=marker_box[j], facecolors='none',)
+            # pdb.set_trace()
+        
+    # for i, user in enumerate(np.unique(select_user)):
+    #     plt.scatter([], [], marker=marker_box[i], label=f'User {i}', facecolors='none', color='k')
+    
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.ylim([0, 1])
+    plt.xlim([0, 1])
+
+    plt.xlabel("Feature One", fontsize=16)
+    plt.ylabel("Feature Two", fontsize=16)
+    # # legd = plt.legend()
+    # legd.legendHandles[0].set_sizes([60])
+    # legd.legendHandles[1].set_sizes([60])
+    # legd.legendHandles[2].set_sizes([60])
+
+    save_str = f'./figure_plot/tSNE/{dataset_name}_{version}_{model_type}_2user2motion_t_rescale.pdf'
+    save_str_png = f'./figure_plot/tSNE/{dataset_name}_{version}_{model_type}_2user2motion_t_rescale.png'
+    
+    plt.subplots_adjust(wspace=0.3)
+    plt.savefig(save_str, bbox_inches='tight')
+    plt.savefig(save_str_png, bbox_inches='tight')
+    return
+
 def feature_extract(dataset, v):
     version=f"shot{v}"
     # dir = f"runs/ablation/CL_v{v}/{dataset}"
@@ -257,11 +431,9 @@ def compare_model_effect(dataset):
     plt.savefig(f"./figure_plot/tSNE/show_CDL_effect_in_{dataset}_t_with_axis.png", bbox_inches='tight')
     plt.savefig(f"./figure_plot/tSNE/show_CDL_effect_in_{dataset}_t_with_axis.pdf", bbox_inches='tight')
 
-# color_box = ['#A1A9D0', '#F0988C', '#C4A5DE',  '#F6CAE5', '#96CCCB', '#CFEAF1', '#B883D4', '#9E9E9E', ]
-color_box = ['#529e52', '#e6843b', '#3c75b0', '#c53a32', '#529e52', '#e6843b', '#c53a32',  ]
-marker_box=['o', '^', 'v']
 
-if __name__ == '__main__':
+
+def ablation_cdl_effect():
     v=0
     # dataset='HHAR'
     # dir = f"baseline/CPCHAR/runs/CPCHAR_cu{v}/{dataset}_ft_shot_50"
@@ -271,10 +443,13 @@ if __name__ == '__main__':
     # feature_extract(dataset, v=2)
     compare_model_effect(dataset)
 
-    # dir = f"baseline/CPCHAR/runs/25_label/HHAR_ft_shot_50"
-    # model_dir = dir + '/model_best.pth.tar'
-    # version=f"domain_shift"
-    # dataset='HHAR'
+if __name__ == '__main__':
+
+    dir = f"baseline/CPCHAR/runs/25_label/HHAR_ft_shot_50"
+    model_dir = dir + '/model_best.pth.tar'
+    version=f"domain_shift"
+    dataset='HHAR'
     # tSNE_visualization(model_dir, dataset, version, model_type='CPC', shot=0, gpu_idx=1)
+    tSNE_visualization_with_boundary(model_dir, dataset, version, model_type='CPC', shot=0, gpu_idx=1)
 
     

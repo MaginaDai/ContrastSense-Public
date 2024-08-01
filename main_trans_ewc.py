@@ -40,7 +40,7 @@ parser.add_argument('-shot', default=10, type=int, help='how many shots of label
 parser.add_argument('--pretrained', default='test/Merged_dataset', type=str,
                     help='path to ContrastSense pretrained checkpoint')
 parser.add_argument('-name', default='HHAR',
-                    help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF'])
+                    help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', 'sleepEDF', "Merged_dataset"])
 parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 
 parser.add_argument('-e', '--epochs', default=400, type=int, metavar='N',
@@ -75,9 +75,9 @@ parser.add_argument('--resume', default='', type=str, help='To restart the model
 
 parser.add_argument('--mol', default='MoCo', type=str, help='which model to use', choices=['SimCLR', 'LIMU', 'CPC', 'MoCo', 'DeepSense'])
 
-parser.add_argument('-d', default=32, type=int, help='how many dims for encoder')
+parser.add_argument('-d', default=16, type=int, help='how many dims for encoder')
 
-parser.add_argument('-cd', '--classifer_dims', default=1024, type=int, help='the feature dims of the classifier')
+parser.add_argument('-cd', '--classifer_dims', default=32, type=int, help='the feature dims of the classifier')
 parser.add_argument('-final_dim', default=8, type=int, help='the output dims of the GRU')
 parser.add_argument('-mo', default=0.9, type=float, help='the momentum for Batch Normalization')
 
@@ -101,7 +101,7 @@ parser.add_argument('-pretrain_lr', default=1e-4, type=float, help='learning rat
 parser.add_argument('-label_type', default=1, type=int, help='How many different kinds of labels for pretraining')
 parser.add_argument('-gama', default=1e3, type=float, help='the ratio of fisher_InfoNCE and fisher_CDL')
 
-parser.add_argument('-moco_m', default=0.999, type=int, help='keys size')
+parser.add_argument('-moco_m', default=0.999, type=float, help='keys size')
 parser.add_argument('-moco_K', default=1024, type=int, help='keys size')
 parser.add_argument('-tem_labels', default=[0.1], nargs='+', type=float, help='keys size')
 parser.add_argument('-CE', default=False, type=bool, help='keys size')
@@ -128,7 +128,6 @@ def main(args, fisher=None):
     args.transfer = True
     if args.store == None:
         args.store = deepcopy(args.pretrained)
-
     args.pretrained = './runs/' + args.pretrained + '/model_best.pth.tar'
     
     if args.ewc:

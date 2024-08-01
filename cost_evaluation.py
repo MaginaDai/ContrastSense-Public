@@ -5,8 +5,10 @@ from MoCo import MoCo_model
 from baseline.Mixup.ConvNet import ConvNet
 from data_aug.preprocessing import ClassesNum, UsersNum
 from torchsummary import summary
+from torchstat import stat
+from thop import profile
 
-modal='emg'
+modal='imu'
 
 def cost_evaluate():
     if modal == 'emg':
@@ -18,14 +20,16 @@ def cost_evaluate():
     else:
         NotADirectoryError
     
-    # model = MoCo_model(transfer=True, classes=ClassesNum[name], modal=modal).to('cuda')
+    model = MoCo_model(transfer=True, classes=ClassesNum[name], modal=modal).to('cuda')
+
+    flops, params = profile(model, inputs=(torch.randn((1, 1, 200, 6)).to('cuda'), ))
     # model = DeepSense_model(classes=ClassesNum[name]).to('cuda')
     # model = CALDA_encoder(num_classes=ClassesNum[name], 
     #                       num_domains=UsersNum[name],
     #                       num_units=128,
     #                       modal=modal).to('cuda')
-    model = ConvNet(number_of_class=ClassesNum[name]).to('cuda')
-
+    # model = ConvNet(number_of_class=ClassesNum[name]).to('cuda')
+    print({flops / 1e9})
     summary(model, input_size=input_size, batch_size=-1)
 
     get_model_parameter_amount(model)

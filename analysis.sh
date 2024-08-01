@@ -1,11 +1,12 @@
 #!/bin/bash
 key="v1"
-name="runs/negative sampling/hard_v10_cl_wo_time_best_"
+name="runs/ablation/hard_v10_cdl_hard_slr0.7_"
+# name="runs/om_update/moco_m0.8"
 # name="runs/hard_v1_cl_"
 # name="baseline/CDA/runs/CDA_lr5e-4_v"
 
 python results_analysis.py -shot 10 -name "${name}0" "${name}1" "${name}2" "${name}3" "${name}4" -modal "imu" -version "shot" -ft True
-# python results_analysis.py -shot 10 -name "${name}/HASC" "${name}/HHAR" "${name}/MotionSense" "${name}/Shoaib" -version "Merged_dataset"
+# python results_analysis.py -shot 50 -name "${name}/HHAR" "${name}/MotionSense" "${name}/Shoaib" "${name}/HASC" -ft True -modal "datasets_imu" -version "Merged_dataset"
 
 
 # python results_analysis.py -name "runs/CDL_ewc_mixup_v0" 

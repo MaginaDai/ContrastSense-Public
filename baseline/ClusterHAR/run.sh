@@ -229,10 +229,10 @@
 #     done
 # done
 
-version="users_devices_shot"
-store="ClusterCL_users_devices_"
-store_ft="ClusterCL_users_devices_"
-g=1
+# version="users_devices_shot"
+# store="ClusterCL_users_devices_"
+# store_ft="ClusterCL_users_devices_"
+# g=1
 # for dataset in "HASC"
 # do
 #     python main.py -g ${g} --store "${store}0" -version "${version}0" -name ${dataset} &
@@ -446,36 +446,36 @@ g=1
 # done
 
 
-# version="leave_shot"
-# store="ClusterCL_leave_shot"
-# store_ft="ClusterCL_leave_shot"
-# g=1
-# for dataset in "HASC" "MotionSense"
-# do
-#     python main.py -g ${g} --store "${store}0" -version "${version}0" -name ${dataset} &
-#     python main.py -g ${g} --store "${store}1" -version "${version}1" -name ${dataset} &
-#     python main.py -g ${g} --store "${store}2" -version "${version}2" -name ${dataset} &
-#     python main.py -g ${g} --store "${store}3" -version "${version}3" -name ${dataset} &
-#     python main.py -g ${g} --store "${store}4" -version "${version}4" -name ${dataset} 
+version="leave_shot"
+store="ClusterCL_alpha99_"
+store_ft="ClusterCL_alpha99_"
+g=3
+for dataset in "Shoaib"
+do
+    python main.py -g ${g} --store "${store}0" -version "${version}0" -name ${dataset} &
+    python main.py -g ${g} --store "${store}1" -version "${version}1" -name ${dataset} &
+    python main.py -g ${g} --store "${store}2" -version "${version}2" -name ${dataset} &
+    python main.py -g ${g} --store "${store}3" -version "${version}3" -name ${dataset} &
+    python main.py -g ${g} --store "${store}4" -version "${version}4" -name ${dataset} 
 
-#     wait
-# done
+    wait
+done
 
-# shot=10
+shot=10
 
-# for dataset in "HASC" "MotionSense"
-# do
-#     python transfer.py -g ${g} -ft True -version "${version}0" -shot ${shot} -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store_ft}0" &
-#     python transfer.py -g ${g} -ft True -version "${version}1" -shot ${shot} -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store_ft}1" &
-#     python transfer.py -g ${g} -ft True -version "${version}2" -shot ${shot} -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store_ft}2" &
-#     python transfer.py -g ${g} -ft True -version "${version}3" -shot ${shot} -name ${dataset} --pretrained "${store}3/${dataset}" --store "${store_ft}3" &
-#     python transfer.py -g ${g} -ft True -version "${version}4" -shot ${shot} -name ${dataset} --pretrained "${store}4/${dataset}" --store "${store_ft}4" 
+for dataset in "Shoaib"
+do
+    python transfer.py -g ${g} -ft True -version "${version}0" -shot ${shot} -name ${dataset} --pretrained "${store}0/${dataset}" --store "${store_ft}0" &
+    python transfer.py -g ${g} -ft True -version "${version}1" -shot ${shot} -name ${dataset} --pretrained "${store}1/${dataset}" --store "${store_ft}1" &
+    python transfer.py -g ${g} -ft True -version "${version}2" -shot ${shot} -name ${dataset} --pretrained "${store}2/${dataset}" --store "${store_ft}2" &
+    python transfer.py -g ${g} -ft True -version "${version}3" -shot ${shot} -name ${dataset} --pretrained "${store}3/${dataset}" --store "${store_ft}3" &
+    python transfer.py -g ${g} -ft True -version "${version}4" -shot ${shot} -name ${dataset} --pretrained "${store}4/${dataset}" --store "${store_ft}4" 
 
-#     wait
-# done
+    wait
+done
 
 
-name="ClusterCLHAR_cross_datasets"
+# name="ClusterCLHAR_cross_datasets"
 # g=2
 # for shot in 5 10 100
 # do
@@ -497,23 +497,23 @@ name="ClusterCLHAR_cross_datasets"
 #     done
 # done
 
-g=3
-for portion in 70 100
-do
-    for dataset in "Merged_dataset"
-    do
-        # python main.py -g ${g} -version "HASC" -name ${dataset} --store "${name}/HASC" &
-        # python main.py -g ${g} -version "HHAR" -name ${dataset} --store "${name}/HHAR" &
-        # python main.py -g ${g} -version "MotionSense" -name ${dataset} --store "${name}/MotionSense" &
-        # python main.py -g ${g} -version "Shoaib" -name ${dataset} --store "${name}/Shoaib" &
+# g=3
+# for portion in 70 100
+# do
+#     for dataset in "Merged_dataset"
+#     do
+#         # python main.py -g ${g} -version "HASC" -name ${dataset} --store "${name}/HASC" &
+#         # python main.py -g ${g} -version "HHAR" -name ${dataset} --store "${name}/HHAR" &
+#         # python main.py -g ${g} -version "MotionSense" -name ${dataset} --store "${name}/MotionSense" &
+#         # python main.py -g ${g} -version "Shoaib" -name ${dataset} --store "${name}/Shoaib" &
 
-        wait
+#         wait
 
-        python transfer.py -g ${g} -ft True -version "tune_portion_${portion}_HASC" -shot 50 -name ${dataset} --pretrained "${name}/HASC/${dataset}" --store "${name}_tune_portion_${portion}/HASC" &
-        python transfer.py -g ${g} -ft True -version "tune_portion_${portion}_HHAR" -shot 50 -name ${dataset} --pretrained "${name}/HHAR/${dataset}" --store "${name}_tune_portion_${portion}/HHAR" &
-        python transfer.py -g ${g} -ft True -version "tune_portion_${portion}_MotionSense" -shot 50 -name ${dataset} --pretrained "${name}/MotionSense/${dataset}" --store "${name}_tune_portion_${portion}/MotionSense" &
-        python transfer.py -g ${g} -ft True -version "tune_portion_${portion}_Shoaib" -shot 50 -name ${dataset} --pretrained "${name}/Shoaib/${dataset}" --store "${name}_tune_portion_${portion}/Shoaib" &
+#         python transfer.py -g ${g} -ft True -version "tune_portion_${portion}_HASC" -shot 50 -name ${dataset} --pretrained "${name}/HASC/${dataset}" --store "${name}_tune_portion_${portion}/HASC" &
+#         python transfer.py -g ${g} -ft True -version "tune_portion_${portion}_HHAR" -shot 50 -name ${dataset} --pretrained "${name}/HHAR/${dataset}" --store "${name}_tune_portion_${portion}/HHAR" &
+#         python transfer.py -g ${g} -ft True -version "tune_portion_${portion}_MotionSense" -shot 50 -name ${dataset} --pretrained "${name}/MotionSense/${dataset}" --store "${name}_tune_portion_${portion}/MotionSense" &
+#         python transfer.py -g ${g} -ft True -version "tune_portion_${portion}_Shoaib" -shot 50 -name ${dataset} --pretrained "${name}/Shoaib/${dataset}" --store "${name}_tune_portion_${portion}/Shoaib" &
         
-        wait
-    done
-done
+#         wait
+#     done
+# done

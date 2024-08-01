@@ -57,3 +57,8 @@
 /physionet.org
 
 /mobile_models
+
+/baseline/Collossl/dataset
+/baseline/Collossl/runs
+/baseline/Collossl/scripts/runs
+/baseline/Collossl/__pycache__

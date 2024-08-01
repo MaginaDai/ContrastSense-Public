@@ -3,16 +3,19 @@ import torch
 import torchvision
 from torch.utils.mobile_optimizer import optimize_for_mobile
 from baseline.CDA.model import STCN
-from baseline.CALDA.model import CALDA_encoder
+from baseline.CALDA.model import CALDA_encoder, CALDA_encoder_for_mobile
 from baseline.Mixup.ConvNet import ConvNet
 from baseline.LIMU_BERT.models import BERTClassifier, fetch_classifier
 from baseline.ClusterHAR.TPN_model import Encoder
 from baseline.MMD.FMUDA import FM_model
 from MoCo import MoCo_model, MoCo_model_for_mobile
+from cost_evaluation import get_model_parameter_amount
 from data_aug.preprocessing import ClassesNum, PositionNum, UsersNum
 from baseline.CPCHAR.CPC import Transfer_Coder
 from baseline.GILE.model_GILE import GILE_for_mobile
 from utils import handle_argv, load_bert_classifier_data_config
+from thop import profile
+from torchsummary import summary
 
 def generate_mobile_model(modal, method):
     if modal == 'emg':
@@ -24,6 +27,7 @@ def generate_mobile_model(modal, method):
     else:
         NotADirectoryError
 
+    
     if modal == 'emg':
         name='NinaPro'
         if method in ["FM", "CM"]:
@@ -40,7 +44,7 @@ def generate_mobile_model(modal, method):
             input_tensor = torch.randn(1, 1, 200, 6)
     else:
         NotADirectoryError
-
+    # print(input_tensor.shape)
     if method == "ContrastSense":
         model = MoCo_model_for_mobile(transfer=True, classes=ClassesNum[name], modal=modal)
     elif method == "FM" or method == "CM":
@@ -70,22 +74,30 @@ def generate_mobile_model(modal, method):
         if name == 'Myo' or name == 'NinaPro':
             model = ConvNet(number_of_class=ClassesNum[name])
         else:
-            # from baseline.ClusterHAR.TPN_model import Transfer_Coder
+            from baseline.ClusterHAR.TPN_model import Transfer_Coder
             model = Transfer_Coder(classes=ClassesNum[name], method='CL')
-
+    elif method == "ColloSSL":
+        from baseline.ClusterHAR.TPN_model import Transfer_Coder
+        model = Transfer_Coder(classes=ClassesNum[name], method='ColloSSL')
     elif method == "CALDA":
-        model = CALDA_encoder(num_classes=ClassesNum[name], 
+        model = CALDA_encoder_for_mobile(num_classes=ClassesNum[name], 
                           num_domains=UsersNum[name],
                           num_units=128,
                           modal=modal)
     elif method == "ConSSL":
         model = STCN(num_class=ClassesNum[name], transfer=True)
-        
+
+    # summary(model, input_size=(1, 52, 8), batch_size=-1)
+
+    get_model_parameter_amount(model)
+
+    flops, params = profile(model, inputs=(input_tensor,))
     # model = torch.quantization.convert(model)
+    print(f'GFLOPs: {flops / 1e9}')
     model.eval()
     traced_script_module = torch.jit.trace(model, input_tensor)
     optimized_traced_model = optimize_for_mobile(traced_script_module)
-    optimized_traced_model._save_for_lite_interpreter(f"mobile_models/{method}_{modal}.ptl")
+    optimized_traced_model._save_for_lite_interpreter(f"mobile_models/{method}_medium_{modal}.ptl")
 
 
 
@@ -160,4 +172,4 @@ def CPCHAR_args():
 
 
 if __name__ == "__main__":
-    generate_mobile_model(modal="imu", method="CM")
+    generate_mobile_model(modal="imu", method="ColloSSL")

@@ -558,11 +558,11 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
-    dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
-    # dataset_name = ["Shoaib"]
+    # dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
+    dataset_name = ["Shoaib"]
     for i in range(seg_types):
         for dataset in dataset_name:
-            preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot{i}_test521/", dataset=dataset, cross='users', test_portion=0.6)
+            preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_leave_shot${i}/", dataset=dataset, cross='users', test_portion=0.01)
 
     return
 
@@ -751,17 +751,84 @@ def preprocessing_dataset_cross_domain_based_on_existing_split(split, dir, targe
 
 
 
+def identify_included_domain(ori_dir, dir_name=None, cross='users'):
+    all_domain_type = []
+    final_dir = "datasets/" + dir_name + '/'
+    save_dir = f"baseline/Collossl/dataset/{dir_name}"
+    for name in ["train", "val", "test"]:
+        loc = final_dir + f'{name}_set' + '.npz'
+        data = np.load(loc)
+        data_set = data[f'{name}_set']
+
+        domain = []
+
+        for i in data_set:
+            sub_dir = ori_dir + i
+            data = np.load(sub_dir, allow_pickle=True)
+
+            if cross == 'users':
+                domain.append(data['add_infor'][1])
+            elif cross == 'devices':
+                domain.append(data['add_infor'][2])
+            elif cross == 'positions':
+                domain.append(data['add_infor'][2])
+            elif cross == 'multiple':
+                domain.append([np.float64(data['add_infor'][1]), np.float64(data['add_infor'][2])])
+            elif cross == "datasets":
+                domain.append(data['add_infor'][4])
+            else:
+                NotADirectoryError()
+
+
+        if cross == 'multiple':
+            domain_type = np.unique(domain, axis=0)
+        else:
+            domain_type = np.unique(domain)
+
+        all_domain_type.append(domain_type)
+    
+    np.savez(save_dir, train_domain=all_domain_type[0], val_domain=all_domain_type[1], test_domain=all_domain_type[2])
+    
+    print(all_domain_type)
+
+
+def obtain_all_domain_infor_for_collossl():
+    dataset="Shoaib"
+    dir=f'datasets/{dataset}/'
+    train_dir = [
+        # "Shoaib_alpha45_shot0",
+        # "Shoaib_alpha45_shot1",
+        # "Shoaib_alpha45_shot2",
+        # "Shoaib_alpha45_shot3",
+        # "Shoaib_alpha45_shot4",
+        "Shoaib_alpha65_shot0",
+        "Shoaib_alpha65_shot1",
+        "Shoaib_alpha65_shot2",
+        "Shoaib_alpha65_shot3",
+        "Shoaib_alpha65_shot4",
+        # "Shoaib_leave_shot0",
+        # "Shoaib_leave_shot1",
+        # "Shoaib_leave_shot2",
+        # "Shoaib_leave_shot3",
+        # "Shoaib_leave_shot4",
+    ]
+    for i in train_dir:
+        identify_included_domain(dir, dir_name=i)
+    return
+    
+
 if __name__ == '__main__':
     # datasets_shot_record(datasets='HASC', version='s1', shot=100)
     # new_segmentation_for_positions(seg_types=5)
     # new_segmentation_for_devices(seg_types=1)
-    new_segmentation_for_user(seg_types=1)
+    new_segmentation_for_user(seg_types=5)
     # generate_split_for_cda_based_on_previous_split()
     # cmp_split()
-    new_tune_segmentation_with_different_portion(seed=940, seg_type=5)
+    # new_tune_segmentation_with_different_portion(seed=940, seg_type=5)
     # dataset='Myo'
     # preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot0/", test_portion=0.6, val_portion=0.15, tune_domain_portion=0.4, dataset=dataset, cross='users')
     
     # write_balance_tune_set(ori_dir=f'datasets/{dataset}/', train_dir="", target_dir=f'datasets/{dataset}_shot0/', dataset=dataset, cross='users')
     # preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_domain_shift/", dataset=dataset, cross='users')
     # random_split(dir=f'datasets/{dataset}/', cross_domain_dir=f'datasets/HHAR_train25_supervised_cross/', target_dir=f'datasets/HHAR_train25_supervised_random/')
+    # obtain_all_domain_infor_for_collossl()

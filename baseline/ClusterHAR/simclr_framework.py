@@ -85,8 +85,8 @@ class  SimCLR_cluster(object):
         logits_aa = torch.matmul(p1, p1.T) / t
         logits_ab = torch.matmul(p1, p2.T) / t
 
-        p1_clu = kmeans(X=p1, num_clusters=6, device=self.args.device)
-        
+        p1_clu, _ = kmeans(X=p1, num_clusters=6, device=self.args.device, if_tqdm=False)
+        # print(p1_clu)
         masks_aa = (p1_clu.unsqueeze(0) == p1_clu.unsqueeze(1)).float()
         logits_aa = logits_aa - masks_aa * LARGE_NUM
 

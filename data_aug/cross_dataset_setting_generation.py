@@ -13,6 +13,7 @@ def merge_samples_from_different_dataset():
     sample_id = 0
     for i, dataset in enumerate(datasets):
         total_instance_number = fetch_instance_number_of_dataset(source_root_dir + dataset)
+
         for j in range(total_instance_number):
             loc = os.path.join(source_root_dir + dataset + '/' + str(j) +'.npz')
             sample = np.load(loc, allow_pickle=True)
@@ -39,8 +40,9 @@ def generate_cross_dataset_setting(seed=940):
 
     dir = "datasets/Merged_dataset/"
     for dataset_idx, dataset in enumerate(datasets):
-        target_dir = f"datasets/Merged_dataset_tune_portion_100_{dataset}/"
-        segment_merged_dataset(dataset, dataset_idx, dir, target_dir)
+        for i in range(5):
+            target_dir = f"datasets/Merged_dataset_{dataset}_shot{i}/"
+            segment_merged_dataset(dataset, dataset_idx, dir, target_dir)
     return
 
 
@@ -80,7 +82,7 @@ def segment_merged_dataset(dataset, dataset_idx, dir, target_dir, ):
     test_num = [j for j in range(num) if domain[j] in domains_test_name]
 
     write_dataset(target_dir, train_num, val_num, test_num)
-    write_balance_tune_set(dir, target_dir, dataset, dataset_size=num, tune_domain_portion=1.0, cross=cross)
+    write_balance_tune_set(dir, target_dir, dataset, dataset_size=num, tune_domain_portion=0.4, cross=cross)
 
 if __name__ == "__main__":
     # merge_samples_from_different_dataset()

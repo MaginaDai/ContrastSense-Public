@@ -9,6 +9,7 @@
 import os
 import sys
 import pdb
+import pickle
 import numpy as np
 import pandas as pd
 from torch.utils.data import random_split
@@ -100,6 +101,76 @@ def preprocess(path, path_save, target_window=20, seq_len=20, position_num=5):
     return
 
 
+def preprocess_collossl_format(path, path_save, target_window=20, seq_len=20, position_num=5):
+
+    num = 0
+    time_idx = 0
+    usr_list = []
+    for usr in np.arange(10):
+        usr_name = f"Participant_{usr}"
+        usr_list.append(usr_name)
+    pos_name = ["right_pocket", "left_pocket", "belt_position", "right_arm", "right_wrist"]
+    info = {
+        "device_list": pos_name,
+        "user_list": usr_list,
+        "session_list": np.arange(7),
+    }
+
+    
+    data={}
+    
+    for device in pos_name:
+        data[device] = {}
+        for user in usr_list:
+            data[device][user] = {}
+            for a in range(len(ACT_LABELS)):
+                data[device][user][a] = {}
+                for b in range(2):
+                    data[device][user][a][b] = []
+
+
+    for root, dirs, files in os.walk(path):
+        for f in range(len(files)):
+            if 'Participant' in files[f]:
+                exp = pd.read_csv(os.path.join(root, files[f]), skiprows=1)
+                labels_activity = exp.iloc[:, -1].to_numpy()
+                labels_activity = label_name_to_index(labels_activity)
+
+                for a in range(len(ACT_LABELS)):
+                    exp_act = exp.iloc[labels_activity == a, :]
+                    for i in range(position_num):
+                        index = np.array([1, 2, 3, 7, 8, 9, 10, 11, 12]) + i * 14
+                        exp_pos = exp_act.iloc[:, index].to_numpy(dtype=np.float32)
+                        print("User-%s, activity-%s, position-%d: num-%d" % (files[f][-5], ACT_LABELS[a], i, exp_pos.shape[0]))
+                        
+                        # data[pos_name[i]][files[f][:-4]][a]
+                        if exp_pos.shape[0] > 0:
+                            exp_pos_down = down_sample(exp_pos, target_window)
+                            if exp_pos_down.shape[0] < seq_len:
+                                continue
+                            else:
+                                sensor_down = exp_pos_down[:exp_pos_down.shape[0] // seq_len * seq_len, :]
+                                sensor_down = sensor_down.reshape(sensor_down.shape[0] // seq_len, seq_len, sensor_down.shape[1])
+                                # sensor_label = np.array([a, int(files[f][-5]), i]) # [motion, user, position]
+                                sensor_label = np.ones(sensor_down.shape[0]) * a
+
+                                data[pos_name[i]][f"Participant_{files[f][-5]}"][a][0] = sensor_down[:, :, 0:6]
+                                data[pos_name[i]][f"Participant_{files[f][-5]}"][a][1] = sensor_label
+                                
+                                # pdb.set_trace()
+
+    data_to_store = (info, data)
+
+    with open(path_save, 'wb') as file:
+        pickle.dump(data_to_store, file)
+    
+    # with open(path_save, 'rb') as file:
+    #     loaded_data = pickle.load(file)
+
+    # # Unpack the loaded data
+    # info, training_data, = loaded_data
+
+
 def split_dataset(num):
     train_set_len = int(num * 0.8)
     val_set_len = int(num * 0.1)
@@ -151,7 +222,11 @@ def split_dataset(num):
 
 
 if __name__ == '__main__':
-    path_save = r'./datasets/Shoaib_time/'
-    if not os.path.exists(path_save):
-        os.makedirs(path_save)
-    preprocess(DATASET_PATH, path_save, seq_len=200)
+    # path_save = r'./datasets/Shoaib_time/'
+    # if not os.path.exists(path_save):
+    #     os.makedirs(path_save)
+    # preprocess(DATASET_PATH, path_save, seq_len=200)
+    path_save = f"./baseline/Collossl/dataset/Shoaib_collossl.dat"
+    # if not os.path.exists(path_save):
+        # os.makedirs(path_save)
+    preprocess_collossl_format(DATASET_PATH, path_save, seq_len=200)
