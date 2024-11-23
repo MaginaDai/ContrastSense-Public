@@ -121,6 +121,7 @@ This project builds upon the following works:
 
 - **[MoCo](https://github.com/facebookresearch/moco)**: Momentum Contrast for Unsupervised Visual Representation Learning.
 - **[SimCLR](https://github.com/google-research/simclr)**: A Simple Framework for Contrastive Learning of Visual Representations.
+- **[SupContrast](https://github.com/HobbitLong/SupContrast)**: Supervised Contrastive Learning.
 - **[LIMU-BERT](https://github.com/dapowan/LIMU-BERT-Public)**: Unleashing the Potential of Unlabeled Data for IMU Sensing Applications.
 
 We thank the authors of these works for sharing their implementations, which formed the foundation for some aspects of ContrastSense.
