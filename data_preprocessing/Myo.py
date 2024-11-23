@@ -185,7 +185,7 @@ def translate_to_contrastSense_format():
     list_dataset, list_labels, list_domain_labels = read_data()
     idx = 0
     time_label = 0
-    dir_name = 'datasets/Myo_time'
+    dir_name = 'datasets/Myo'
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
     for i, subject in enumerate(list_dataset):
@@ -198,47 +198,9 @@ def translate_to_contrastSense_format():
                 np.savez(file_name, emg=sample, add_infor=np.array([label, domain_label, time_label]))
                 time_label += 1
                 idx = idx + 1
-                print(time_label)
 
         time_label += 1000
-
-def translate_to_CDA_format():
-    list_dataset, list_labels, list_domain_labels = read_data()
-    idx = 0
-    dir_name = 'datasets/Myo_cda'
-    if not os.path.isdir(dir_name):
-        os.makedirs(dir_name)
-    for i, subject in enumerate(list_dataset):
-        for j, motion in enumerate(subject):
-            for k in range(int(len(motion)/2)):
-                # each time we sample two data out
-                sample_1 = np.transpose(motion[k], [0, 2, 1])
-                sample_2 = np.transpose(motion[k+1], [0, 2, 1])
-
-                sample_1 = np.expand_dims(sample_1, axis=0)
-                sample_2 = np.expand_dims(sample_2, axis=0)
-
-                sample = np.concatenate([sample_1, sample_2], axis=0)
-
-                label_1 = list_labels[i][j][k]
-                label_2 = list_labels[i][j][k+1]
-                domain_label_1 = list_domain_labels[i][j][k]
-                domain_label_2 = list_domain_labels[i][j][k+1]
-
-                if label_1 == label_2 and domain_label_1 == domain_label_2:
-                    label = label_1
-                    domain_label = domain_label_1
-                else:
-                    continue
-
-                file_name = f"{dir_name}/{idx}.npz"
-                np.savez(file_name, emg=sample, add_infor=np.array([label, domain_label]))
-                idx = idx + 1
                 
 
 if __name__ == '__main__':
-    # list_dataset, list_labels, list_domain_labels = read_data('PreTrainingDataset')
-    # print(len(list_dataset[0]))
-    # print(len(list_labels))
     translate_to_contrastSense_format()
-    # translate_to_CDA_format()

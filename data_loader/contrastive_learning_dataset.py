@@ -91,7 +91,7 @@ class ContrastiveLearningDataset:
         emg_scale = emg_transforms.EMGScale(scale=[0.9, 1.1], p=0.8)
         emg_flip = emg_transforms.EMGHorizontalFlip(p=0.2)
         emg_negate = emg_transforms.EMGNegated(p=0.4)
-        emg_warp = emg_transforms.EMGTimeWarp(p=self.p4)
+        emg_warp = emg_transforms.EMGTimeWarp(p=0.4)
         emg_toTensor = emg_transforms.EMGToTensor()
 
         data_transforms = transforms.Compose([emg_scale,

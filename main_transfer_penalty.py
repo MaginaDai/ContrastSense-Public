@@ -7,7 +7,7 @@ from torchvision import models
 
 from ContrastSense import ContrastSense_model, ContrastSense
 from data_loader.contrastive_learning_dataset import ContrastiveLearningDataset, Dataset4Training
-from data_preprocessing.preprocessing import ClassesNum, UsersNum
+from data_preprocessing.data_split import ClassesNum, UsersNum
 from getPenalty import load_fisher_matrix
 from utils import ContrastSense_evaluate, seed_torch
 from torchvision.transforms import transforms
@@ -23,18 +23,19 @@ model_names = sorted(name for name in models.__dict__
 
 def get_args():
     parser = argparse.ArgumentParser(description='PyTorch ContrastSense for Wearable Sensing')
-
-    parser.add_argument('--pretrained', default='test/Shoaib', type=str, help='path to ContrastSense pretrained checkpoint')
+    
+    parser.add_argument('-name', default='Myo', help='datasets name', 
+                        choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', "Merged_dataset"])
+    
+    parser.add_argument('--pretrained', default='test/Myo', type=str, help='path to ContrastSense pretrained checkpoint')
     parser.add_argument('-version', default="shot0", type=str, help='control the version of the setting')
 
     parser.add_argument('-ft', '--if-fine-tune', default=True, type=bool, help='to decide whether tune all the layers')
     parser.add_argument('-shot', default=10, type=int, help='how many shots of labels to use')
 
-    parser.add_argument('-name', default='Shoaib',
-                        help='datasets name', choices=['HHAR', 'MotionSense', 'Shoaib', 'HASC', 'Myo', 'NinaPro', "Merged_dataset"])
     parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 
-    parser.add_argument('-e', '--epochs', default=400, type=int, metavar='N',
+    parser.add_argument('-e', '--epochs', default=4, type=int, metavar='N',
                         help='number of total epochs to run')
     parser.add_argument('-b', '--batch-size', default=32, type=int,
                         metavar='N',
@@ -185,7 +186,7 @@ def main(args, fisher=None):
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
-            # print("=> loading checkpoint '{}'".format(args.resume))
+            print("=> loading checkpoint '{}'".format(args.resume))
             checkpoint = torch.load(args.resume, map_location="cpu")
             args.start_epoch = checkpoint['epoch'] + 1
             try:
@@ -216,7 +217,6 @@ def main(args, fisher=None):
             print('test acc: {}'.format('%.3f' % test_acc))
             return
         
-        print(fisher)
         contrast.transfer_train_penalty(tune_loader, val_loader, fisher)
         best_model_dir = os.path.join(contrast.writer.log_dir, 'model_best.pth.tar')
         contrast.test_performance(best_model_dir=best_model_dir, test_loader=test_loader)

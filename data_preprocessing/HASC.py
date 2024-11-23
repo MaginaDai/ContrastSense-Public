@@ -1,8 +1,4 @@
-from asyncore import file_wrapper
 from decimal import InvalidContext
-from fileinput import filename
-from http.client import MOVED_PERMANENTLY
-from importlib.resources import path
 import os
 import numpy as np
 from scipy.interpolate import interp1d
@@ -217,7 +213,7 @@ def main(seq_len, target_freq, path_save):
     return
 
 if __name__ == '__main__':
-    path_save = f'./datasets/HASC_time/'
+    path_save = f'./datasets/HASC/'
     if not os.path.exists(path_save):
         os.makedirs(path_save)
     main(seq_len=200, target_freq=50, path_save=path_save)

@@ -174,33 +174,6 @@ def preprocessing_HHAR_cross_person(main_dir):
     return
 
 
-def preprocessing_dataset_cross_person(dir, dataset):
-    print(dataset)
-
-    num = MAX_INDEX[dataset]
-    u = []
-    for i in range(num):
-        sub_dir = dir + str(i) + '.npz'
-        data = np.load(sub_dir, allow_pickle=True)
-        u.append(data['add_infor'][0, UsersPosition[dataset]])
-    user_type = np.unique(u)
-    
-    print(user_type)
-    users_test_idx = np.random.randint(0, len(user_type), int(len(user_type) * 0.25))
-    users_test_name = [user_type[i] for i in users_test_idx]
-    print(users_test_name)
-    test_num = [j for j in range(num) if u[j] in users_test_name]
-    non_test_num = [j for j in range(num) if u[j] not in users_test_name]
-
-    train_set_len = int(len(non_test_num) * 0.9)
-    train_num, val_num = random_split(non_test_num, [train_set_len, len(non_test_num) - train_set_len])
-
-    write_dataset(dir, train_num, val_num, test_num)
-    write_tune_set(dir)
-    # write_balance_tune_set(dir, dataset)
-    return
-
-
 def fetch_instance_number_of_dataset(dir):
     file_name_list = [file for file in os.listdir(dir) if 'set' not in file]
     return len(file_name_list)
@@ -229,24 +202,23 @@ def preprocessing_dataset_cross_domain_val(dir, target_dir, dataset, test_portio
         label_distribution[motion] += 1
     
     print(label_distribution)
-    # print(f"maximum of domains id {max(domain)}")
     domain_type = np.unique(domain)
     test_num = max(int(len(domain_type) * test_portion), 1)
     val_num = max(int(len(domain_type) * val_portion), 1)
     
-    print(f"number of domains {domain_type}")
+    print(f"Number of domains {domain_type}")
     np.random.shuffle(domain_type)
     domains_test_name = np.sort(domain_type[:test_num])
     # users_test_name = np.array(['e', 'i'])
-    print(f"number of test domains {len(domains_test_name)}")
+    print(f"Number of test domains {len(domains_test_name)}")
 
     domains_train_name = np.sort(domain_type[test_num+val_num:])
     # users_train_name = np.array(['a', 'd', 'f', 'g', 'h'])
-    print(f"number of training domains {len(domains_train_name)}")
+    print(f"Number of training domains {len(domains_train_name)}")
     
     domains_val_name = np.sort(domain_type[test_num:test_num+val_num])
     # users_val_name = np.array(['b', 'c'])
-    print(f"number of validation domains {len(domains_val_name)}")
+    print(f"Number of validation domains {len(domains_val_name)}")
 
     train_num = [j for j in range(num) if domain[j] in domains_train_name]
     val_num =  [j for j in range(num) if domain[j] in domains_val_name]
@@ -362,7 +334,7 @@ def write_tune_set(dir):
         tune_set.sort()
         print(len(tune_set))
         loc = dir + 'tune_set_' + str(per).replace('.', '_') + '.npz'
-        # np.savez(loc, tune_set=tune_set)
+        np.savez(loc, tune_set=tune_set)
     return
     
 
@@ -551,7 +523,7 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     dataset_name = ["Shoaib"]
     for i in range(seg_types):
         for dataset in dataset_name:
-            preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_leave_shot${i}/", dataset=dataset, cross='users', test_portion=0.01)
+            preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot${i}/", dataset=dataset, cross='users', test_portion=0.6)
 
     return
 
@@ -810,12 +782,7 @@ if __name__ == '__main__':
     dataset='Myo'
     preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot0/", test_portion=0.6, val_portion=0.15, tune_domain_portion=0.4, dataset=dataset, cross='users')
     
-    # new_segmentation_for_positions(seg_types=5)
-    # new_segmentation_for_devices(seg_types=1)
     # new_segmentation_for_user(seg_types=5)
+    # new_segmentation_for_positions(seg_types=5)
+    # new_segmentation_for_devices(seg_types=5)
     
-    # new_tune_segmentation_with_different_portion(seed=940, seg_type=5)
-    
-    # write_balance_tune_set(ori_dir=f'datasets/{dataset}/', train_dir="", target_dir=f'datasets/{dataset}_shot0/', dataset=dataset, cross='users')
-    # preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_domain_shift/", dataset=dataset, cross='users')
-    # random_split(dir=f'datasets/{dataset}/', cross_domain_dir=f'datasets/HHAR_train25_supervised_cross/', target_dir=f'datasets/HHAR_train25_supervised_random/')
