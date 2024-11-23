@@ -18,15 +18,8 @@ def fetch_dataset_root(dataset_name):
             'Shoaib': './datasets/Shoaib',
             'HASC': './datasets/HASC',
             'Myo': './datasets/Myo',
-            'Myo_cda': './datasets/Myo_cda',
             'NinaPro': './datasets/NinaPro',
-            'NinaPro_cda': './datasets/NinaPro_cda',
-            'SEED': './datasets/SEED',
-            'SEED_IV': './datasets/SEED_IV',
-            'sleepEDF': './datasets/sleepEDF',
             'Merged_dataset': './datasets/Merged_dataset',
-            'sleepEDF': './datasets/sleepEDF',
-            'UCI': './datasets/UCI',
             }
     try:
         root_dir = root[dataset_name]
