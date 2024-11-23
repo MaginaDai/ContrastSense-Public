@@ -21,21 +21,61 @@ The framework has been evaluated on the following datasets:
 - **Human Activity Recognition (HAR)**: HHAR, MotionSense, Shoaib, HASC-PAC2016.
 - **Gesture Recognition (GR)**: MyoArmBand, NinaPro DB4, NinaPro DB5.
 
-
 ---
 
 ## Usage
 
+### Dataset Preprocessing
+To prepare the datasets for ContrastSense, follow these steps:
+
+1. **Download the Datasets**  
+   Place the raw datasets in the `./original_dataset` directory.
+
+2. **Preprocess the Datasets**  
+   Run the preprocessing scripts in `./data_preprocessing` for each dataset. Below are the commands to preprocess the supported datasets:
+
+   ```bash
+   # Preprocess HASC dataset
+   python HASC.py
+
+   # Preprocess HHAR dataset
+   python HHAR.py
+
+   # Preprocess MotionSense dataset
+   python MotionSense.py
+
+   # Preprocess Myo dataset
+   python Myo.py
+
+   # Preprocess NinaPro dataset
+   python NinaPro.py
+
+   # Preprocess Shoaib dataset
+   python Shoaib.py
+
+   # Preprocess UCI EMG dataset
+   python UCI_emg.py
+   ```
+
+3. **Generate Dataset Splits**  
+
+After preprocessing, generate dataset splits for different cross-domain scenarios using:
+```bash
+python data_split.py
+```
+
+To generate splits for different cross domain scenarios and datasets, you may setup the dataset, cross, split ratios in data_split.py.
+
 ### Pretraining
 To pretrain a model using ContrastSense:
 ```bash
-python main.py
+bash pretrain.sh
 ```
 
 ### Fine-tuning and Evaluation
 To fine-tune the pretrained model:
 ```bash
-python main_transfer_penalty.py
+bash finetune.sh
 ```
 
 ### Models for Mobile Phones

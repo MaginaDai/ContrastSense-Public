@@ -519,8 +519,8 @@ def new_segmentation_for_user(seg_types=5, seed=940):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
-    # dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
-    dataset_name = ["Shoaib"]
+    dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense", "Myo", "NinaPro"]
+    # dataset_name = ["Shoaib"]
     for i in range(seg_types):
         for dataset in dataset_name:
             preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot${i}/", dataset=dataset, cross='users', test_portion=0.6)
@@ -531,7 +531,7 @@ def new_segmentation_for_dataset(seg_types=5, seed=940):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
-    dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense"]
+    dataset_name = ["HASC", "HHAR", "Shoaib", "MotionSense", "Myo", "NinaPro"]
     # dataset_name = ["Shoaib"]
     for i in range(seg_types):
         for dataset in dataset_name:
@@ -779,10 +779,10 @@ def obtain_all_domain_infor_for_collossl():
     
 
 if __name__ == '__main__':
-    dataset='Myo'
+    dataset='Shoaib'
     preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot0/", test_portion=0.6, val_portion=0.15, tune_domain_portion=0.4, dataset=dataset, cross='users')
     
-    # new_segmentation_for_user(seg_types=5)
-    # new_segmentation_for_positions(seg_types=5)
-    # new_segmentation_for_devices(seg_types=5)
+    new_segmentation_for_user(seg_types=5)
+    new_segmentation_for_positions(seg_types=5)
+    new_segmentation_for_devices(seg_types=5)
     

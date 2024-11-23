@@ -35,7 +35,7 @@ def get_args():
 
     parser.add_argument('--store', default='test', type=str, help='define the name head for model storing')
 
-    parser.add_argument('-e', '--epochs', default=4, type=int, metavar='N',
+    parser.add_argument('-e', '--epochs', default=400, type=int, metavar='N',
                         help='number of total epochs to run')
     parser.add_argument('-b', '--batch-size', default=32, type=int,
                         metavar='N',
