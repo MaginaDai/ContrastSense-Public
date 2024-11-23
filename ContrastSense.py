@@ -701,109 +701,6 @@ class ContrastSense(object):
         logging.info("Training has finished.")
         logging.info(f"Model of Epoch {best_epoch} checkpoint and metadata has been saved at {self.writer.log_dir}.")
 
-    def transfer_train(self, tune_loader, val_loader):
-        scaler = GradScaler(enabled=self.args.fp16_precision)
-
-        # save config file
-        save_config_file(self.writer.log_dir, self.args)
-
-        n_iter_train = 0
-        logging.info(f"Start ContrastSense fine-tuning head for {self.args.epochs} epochs.")
-        logging.info(f"Training with gpu: {not self.args.disable_cuda}.")
-
-        acc = 0
-        f1 = 0
-        best_epoch = 0
-
-        if self.args.resume:
-            best_f1 = self.args.best_f1
-            best_acc = self.args.best_acc
-        else:
-            best_f1 = 0
-            best_acc = 0
-
-        for epoch_counter in tqdm(range(self.args.epochs)):
-            acc_batch = AverageMeter('acc_batch', ':6.2f')
-            time_fw = AverageMeter('time_fw', ':6.5f')
-
-            pred_batch = torch.empty(0).to(self.args.device)
-            label_batch = torch.empty(0).to(self.args.device)
-
-            if self.args.if_fine_tune:
-                self.model.train()
-            else:  
-                """
-                Switch to eval mode:
-                Under the protocol of linear classification on frozen features/models,
-                it is not legitimate to change any part of the pre-trained model.
-                BatchNorm in train mode may revise running mean/std (even if it receives
-                no gradient), which are part of the model parameters too.
-                """
-                self.model.eval()
-                self.model.classifier.train()
-            
-            start_time = time.time()
-            for sensor, target in tune_loader:
-
-                sensor = sensor.to(self.args.device)
-                target = target[:, 0].to(self.args.device)
-
-                with autocast(enabled=self.args.fp16_precision):
-                    logits, _ = self.model(sensor)
-                    loss = self.criterion(logits, target)
-
-                self.optimizer.zero_grad()
-                scaler.scale(loss).backward()
-                scaler.step(self.optimizer)
-                scaler.update()
-                end_time = time.time()
-
-                f1 = f1_cal(logits, target, topk=(1,))
-                acc = accuracy(logits, target, topk=(1,))
-                acc_batch.update(acc, sensor.size(0))
-                
-                label_batch = torch.cat((label_batch, target))
-                _, pred = logits.topk(1, 1, True, True)
-                pred_batch = torch.cat((pred_batch, pred.reshape(-1)))
-
-                if n_iter_train % self.args.log_every_n_steps == 0:
-                    self.writer.add_scalar('loss', loss, global_step=n_iter_train)
-                    self.writer.add_scalar('acc', acc, global_step=n_iter_train)
-                    self.writer.add_scalar('f1', f1, global_step=n_iter_train)
-                    self.writer.add_scalar('lr', self.scheduler.get_last_lr()[0], global_step=n_iter_train)
-
-                n_iter_train += 1
-
-
-            f1_batch = f1_score(label_batch.cpu().numpy(), pred_batch.cpu().numpy(), average='macro') * 100
-            val_acc, val_f1 = ContrastSense_evaluate(model=self.model, criterion=self.criterion, args=self.args, data_loader=val_loader)
-
-            is_best = val_f1 > best_f1
-
-            if epoch_counter >= 10:  # only after the first 10 epochs, the best_f1/acc is updated.
-                best_f1 = max(val_f1, best_f1)
-                best_acc = max(val_acc, best_acc)
-            if is_best:
-                best_epoch = epoch_counter
-                checkpoint_name = 'model_best.pth.tar'
-                save_checkpoint({
-                    'epoch': epoch_counter,
-                    'state_dict': self.model.state_dict(),
-                    'best_f1': best_f1, 
-                    'optimizer': self.optimizer.state_dict(),
-                }, is_best, filename=os.path.join(self.writer.log_dir, checkpoint_name), path_dir=self.writer.log_dir)
-
-            self.writer.add_scalar('eval acc', val_acc, global_step=epoch_counter)
-            self.writer.add_scalar('eval f1', val_f1, global_step=epoch_counter)
-            self.scheduler.step()
-            
-            logging.debug(f"Epoch: {epoch_counter} Loss: {loss} acc: {acc_batch.avg: .3f}/{val_acc: .3f} f1: {f1_batch: .3f}/{val_f1: .3f}")
-
-        logging.info("Fine-tuning has finished.")
-        logging.info(f"best eval f1 is {best_f1} at {best_epoch}.")
-
-        print('best eval f1 is {} for {}'.format(best_f1, self.args.name))
-
     def test_performance(self, best_model_dir, test_loader):
         checkpoint = torch.load(best_model_dir, map_location="cpu")
         state_dict = checkpoint['state_dict']
@@ -861,7 +758,6 @@ class ContrastSense(object):
 
         for epoch_counter in tqdm(range(self.args.epochs)):
             acc_batch = AverageMeter('acc_batch', ':6.2f')
-            time_fw = AverageMeter('time_fw', ':6.5f')
 
             pred_batch = torch.empty(0).to(self.args.device)
             label_batch = torch.empty(0).to(self.args.device)
@@ -870,24 +766,16 @@ class ContrastSense(object):
             if self.args.if_fine_tune:
                 self.model.train()
             else:  
-                """
-                Switch to eval mode:
-                Under the protocol of linear classification on frozen features/models,
-                it is not legitimate to change any part of the pre-trained model.
-                BatchNorm in train mode may revise running mean/std (even if it receives
-                no gradient), which are part of the model parameters too.
-                """
                 self.model.eval()
                 self.model.classifier.train()
                 
-            start_time = time.time()
             for sensor, target in tune_loader:
                 sensor = sensor.to(self.args.device)
                 target = target[:, 0].to(self.args.device)
                 label_batch = torch.cat((label_batch, target))
 
                 with autocast(enabled=self.args.fp16_precision):
-                    logits, _ = self.model(sensor)
+                    logits = self.model(sensor)
                     loss_clf = self.criterion(logits, target)
 
                     loss_penalty = self.compute_penalty()
@@ -898,7 +786,6 @@ class ContrastSense(object):
                 scaler.scale(loss).backward()
                 scaler.step(self.optimizer)
                 scaler.update()
-                end_time = time.time()
                     
                 acc = accuracy(logits, target, topk=(1,))
                 _, pred = logits.topk(1, 1, True, True)
@@ -906,7 +793,6 @@ class ContrastSense(object):
                 
                 f1 = f1_cal(logits, target, topk=(1,))
                 acc_batch.update(acc, sensor.size(0))
-                # f1_batch.update(f1, sensor.size(0))
                 if n_iter_train % self.args.log_every_n_steps == 0:
                     self.writer.add_scalar('loss', loss, global_step=n_iter_train)
                     self.writer.add_scalar('loss_clf', loss_clf, global_step=n_iter_train)
@@ -925,6 +811,7 @@ class ContrastSense(object):
             if epoch_counter >= 10:  # only after the first 10 epochs, the best_f1/acc is updated.
                 best_f1 = max(val_f1, best_f1)
                 best_acc = max(val_acc, best_acc)
+            
             if is_best:
                 best_epoch = epoch_counter
                 checkpoint_name = 'model_best.pth.tar'
@@ -960,17 +847,3 @@ class ContrastSense(object):
                     / 2
                 )
         return loss
-
-    
-def mixup_accuracy(predicted, y_a, y_b, lam):
-    with torch.no_grad():
-        predicted = predicted.reshape(-1)
-        correct = (lam * predicted.eq(y_a).cpu().sum().float()
-                        + (1 - lam) * predicted.eq(y_b).cpu().sum().float())
-    return 100 * correct / y_a.shape[0]
-
-def mixup_f1(pred, y_a, y_b, lam):
-    with torch.no_grad():
-        f1_a = f1_score(y_a.cpu().numpy(), pred.cpu().numpy(), average='macro') * 100
-        f1_b = f1_score(y_b.cpu().numpy(), pred.cpu().numpy(), average='macro') * 100
-    return lam * f1_a + (1 - lam) * f1_b

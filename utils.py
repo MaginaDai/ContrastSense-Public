@@ -133,7 +133,7 @@ def ContrastSense_evaluate(model, criterion, args, data_loader, test=False):
             target = target[:, 0].to(args.device)
 
             with autocast(enabled=args.fp16_precision):
-                logits, _ = model(sensor)
+                logits = model(sensor)
                 loss = criterion(logits, target)
 
             losses.update(loss.item(), sensor.size(0))
