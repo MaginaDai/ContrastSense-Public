@@ -11,18 +11,13 @@ import torch.nn as nn
 
 
 class SupConLoss(nn.Module):
-    def __init__(self, device, if_cross_entropy=False):
+    def __init__(self, device):
         super(SupConLoss, self).__init__()
-        self.if_cross_entropy = if_cross_entropy
         self.device = device
         self.criterion = torch.nn.CrossEntropyLoss().to(self.device)
 
     def forward(self, logits, labels=None, queue_labels=None):
         """Compute supervised loss for model."""
-        if self.if_cross_entropy:
-            target = torch.concat([labels, queue_labels.squeeze()])
-            loss = self.criterion(logits, target)  # use cross entropy for loss calculation.
-            return loss
         
         batch_size = logits.shape[0]
         labels = labels.contiguous().view(-1, 1)
@@ -37,16 +32,7 @@ class SupConLoss(nn.Module):
 
         # compute mean of log-likelihood over positive
         mean_log_prob_pos = (mask * log_prob).sum(1) / mask.sum(1)
-        # mask_sum = mask.sum(1)
-        # mask_zero = mask_sum != 0
-        # loss = -(mean_log_prob_pos * mask_zero).sum()/ mask_zero.sum()
-        # loss
         loss = - mean_log_prob_pos.mean()
-        # if torch.isnan(loss).any():
-        #     print(logits)
-        #     print(mask.sum(1))
-        #     print(mean_log_prob_pos)
-        #     pdb.set_trace()
         return loss
     
     def transfer_calculate(self, logits, labels):

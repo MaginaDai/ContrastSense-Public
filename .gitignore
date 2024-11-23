@@ -1,5 +1,4 @@
 /runs
-/__pycache__
 /datasets
 /datasets_backup
 
@@ -7,58 +6,19 @@
 
 /kmeans_pytorch
 
-/baseline/__pycache__
-
-/baseline/CLHAR/runs
-/baseline/CLHAR/__pycache__
-
-/baseline/ClusterHAR/runs
-/baseline/ClusterHAR/__pycache__
-
-/baseline/LIMU_BERT/saved
-/baseline/LIMU_BERT/__pycache__
-
-/baseline/CPCHAR/runs
-/baseline/CPCHAR/__pycache__
-
-/baseline/COCOA/runs
-/baseline/COCOA/__pycache__
-
-/baseline/MMD/runs
-/baseline/MMD/__pycache__
-
-
-/baseline/GILE/runs
-/baseline/GILE/__pycache__
-
-/baseline/Mixup/runs
-/baseline/Mixup/__pycache__
-
-/baseline/CALDA/runs
-/baseline/CALDA/__pycache__
-
-/baseline/CDA/runs
-/baseline/CDA/__pycache__
-
-/baseline/CLISA/runs
-/baseline/CLISA/__pycache__
-
-/baseline/SACL/runs
-/baseline/SACL/__pycache__
-
-
-/data_aug/__pycache__
+/baseline
 
 
 /figure_plot
 
-/datasets.zip
 
 /physionet.org
 
 /mobile_models
 
-/baseline/Collossl/dataset
-/baseline/Collossl/runs
-/baseline/Collossl/scripts/runs
-/baseline/Collossl/__pycache__
+
+/__pycache__
+/data_loader/__pycache__
+/attention/__pycache__
+/data_preprocessing/__pycache__
+/exceptions/__pycache__

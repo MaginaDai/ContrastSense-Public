@@ -1,5 +1,0 @@
-### to be determined
-
-parser.add_argument('-lr', '--learning-rate', default=5e-3, type=float, metavar='LR', help='initial learning rate', dest='lr')
-parser.add_argument('-b', '--batch-size', default=100, type=int, metavar='N')
-parser.add_argument('-e', '--epochs', default=200, type=int, metavar='N', help='number of total epochs to run')
