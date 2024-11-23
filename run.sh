@@ -859,16 +859,16 @@ version="shot"
 version="leave_shot"
 store="alpha99_"
 store_ft="alpha99_"
-for dataset in "Shoaib"
-do
-    python main.py -g 0 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
-    python main.py -g 0 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
-    python main.py -g 0 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
-    python main.py -g 1 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
-    python main.py -g 1 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
+# for dataset in "Shoaib"
+# do
+#     python main.py -g 0 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}0" -name ${dataset} --store "${store}0" -cross "users" &
+#     python main.py -g 0 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}1" -name ${dataset} --store "${store}1" -cross "users" &
+#     python main.py -g 0 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}2" -name ${dataset} --store "${store}2" -cross "users" &
+#     python main.py -g 1 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}3" -name ${dataset} --store "${store}3" -cross "users" &
+#     python main.py -g 1 -hard True -time_window 60 -last_ratio 0.5 -label_type 1 -tem_labels ${tem} -slr ${slr} -version "${version}4" -name ${dataset} --store "${store}4" -cross "users" 
 
-    wait
-done
+#     wait
+# done
 
 for shot in 10
 do

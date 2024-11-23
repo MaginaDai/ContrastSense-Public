@@ -75,9 +75,9 @@ parser.add_argument('--resume', default='', type=str, help='To restart the model
 
 parser.add_argument('--mol', default='MoCo', type=str, help='which model to use', choices=['SimCLR', 'LIMU', 'CPC', 'MoCo', 'DeepSense'])
 
-parser.add_argument('-d', default=16, type=int, help='how many dims for encoder')
+parser.add_argument('-d', default=32, type=int, help='how many dims for encoder')
 
-parser.add_argument('-cd', '--classifer_dims', default=32, type=int, help='the feature dims of the classifier')
+parser.add_argument('-cd', '--classifer_dims', default=1024, type=int, help='the feature dims of the classifier')
 parser.add_argument('-final_dim', default=8, type=int, help='the output dims of the GRU')
 parser.add_argument('-mo', default=0.9, type=float, help='the momentum for Batch Normalization')
 

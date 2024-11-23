@@ -268,7 +268,7 @@
 #     wait
 # done
 
-# name='preliminary'
+name='preliminary'
 
 # python pretrain.py v1 "train25_supervised_random" -g 0 -f "${name}" -s HHAR -name 'HHAR' &
 # python pretrain.py v1 "train45_supervised_random" -g 0 -f "${name}" -s HHAR -name 'HHAR' &
@@ -278,8 +278,8 @@
 # python pretrain.py v1 "train65_supervised_label" -g 1 -f "${name}" -s HHAR -name 'HHAR'
 
 # wait
-# shot=50
-# store="ft_shot_${shot}"
+shot=10
+store="ft_shot_${shot}"
 
 # python classifier_bert.py v1_v2 "train25_supervised_random" -g 0 -f "${name}" -pv "train25_supervised_random" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}" &
 # python classifier_bert.py v1_v2 "train45_supervised_random" -g 0 -f "${name}" -pv "train45_supervised_random" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}" &
@@ -287,6 +287,17 @@
 # python classifier_bert.py v1_v2 "train25_supervised_label" -g 1 -f "${name}" -pv "train25_supervised_label" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}" &
 # python classifier_bert.py v1_v2 "train45_supervised_label" -g 1 -f "${name}" -pv "train45_supervised_label" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}" &
 # python classifier_bert.py v1_v2 "train65_supervised_label" -g 1 -f "${name}" -pv "train65_supervised_label" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}"
+
+shot=100
+store="ft_shot_${shot}"
+
+python classifier_bert.py v1_v2 "train25_supervised_random" -g 0 -f "${name}" -pv "train25_supervised_random" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}" &
+# python classifier_bert.py v1_v2 "train45_supervised_random" -g 0 -f "${name}" -pv "train45_supervised_random" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}" &
+python classifier_bert.py v1_v2 "train65_supervised_random" -g 0 -f "${name}" -pv "train65_supervised_random" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}" &
+python classifier_bert.py v1_v2 "train25_supervised_label" -g 1 -f "${name}" -pv "train25_supervised_label" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}" &
+# python classifier_bert.py v1_v2 "train45_supervised_label" -g 1 -f "${name}" -pv "train45_supervised_label" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}" &
+python classifier_bert.py v1_v2 "train65_supervised_label" -g 1 -f "${name}" -pv "train65_supervised_label" -shot ${shot} -p HHAR -name 'HHAR' -s "HHAR_${store}"
+
 
 
 
@@ -514,23 +525,23 @@ shot=50
 # done
 # done
 
-for portion in 70 100
-do
-for dataset in "Merged_dataset"
-do
+# for portion in 70 100
+# do
+# for dataset in "Merged_dataset"
+# do
 
-    # python pretrain.py v1 "HASC" -g 0 -f "${name}" -s "${dataset}/HASC" -name "${dataset}" &
-    # python pretrain.py v1 "HHAR" -g 0 -f "${name}" -s "${dataset}/HHAR" -name "${dataset}" &
-    # python pretrain.py v1 "MotionSense" -g 1 -f "${name}" -s "${dataset}/MotionSense" -name "${dataset}" &
-    # python pretrain.py v1 "Shoaib" -g 1 -f "${name}" -s "${dataset}/Shoaib" -name "${dataset}"
+#     # python pretrain.py v1 "HASC" -g 0 -f "${name}" -s "${dataset}/HASC" -name "${dataset}" &
+#     # python pretrain.py v1 "HHAR" -g 0 -f "${name}" -s "${dataset}/HHAR" -name "${dataset}" &
+#     # python pretrain.py v1 "MotionSense" -g 1 -f "${name}" -s "${dataset}/MotionSense" -name "${dataset}" &
+#     # python pretrain.py v1 "Shoaib" -g 1 -f "${name}" -s "${dataset}/Shoaib" -name "${dataset}"
 
-    # wait
+#     # wait
 
-    python classifier_bert.py v1_v2 "tune_portion_${portion}_HASC" -g 0 -f "${name}" -shot ${shot} -pv "${dataset}/HASC" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
-    python classifier_bert.py v1_v2 "tune_portion_${portion}_HHAR" -g 0 -f "${name}" -shot ${shot} -pv "${dataset}/HHAR" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
-    python classifier_bert.py v1_v2 "tune_portion_${portion}_MotionSense" -g 1 -f "${name}" -shot ${shot} -pv "${dataset}/MotionSense" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
-    python classifier_bert.py v1_v2 "tune_portion_${portion}_Shoaib" -g 1 -f "${name}" -shot ${shot} -pv "${dataset}/Shoaib" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "tune_portion_${portion}_HASC" -g 0 -f "${name}" -shot ${shot} -pv "${dataset}/HASC" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "tune_portion_${portion}_HHAR" -g 0 -f "${name}" -shot ${shot} -pv "${dataset}/HHAR" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "tune_portion_${portion}_MotionSense" -g 1 -f "${name}" -shot ${shot} -pv "${dataset}/MotionSense" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
+#     python classifier_bert.py v1_v2 "tune_portion_${portion}_Shoaib" -g 1 -f "${name}" -shot ${shot} -pv "${dataset}/Shoaib" -p "${dataset}" -name "${dataset}" -s "${dataset}_ft_shot_${shot}" &
 
-    wait
-done
-done
+#     wait
+# done
+# done

@@ -169,10 +169,10 @@
 # python transfer.py -g ${g} -ft True -version "${version}" -shot 100 -name HHAR --pretrained "${name}/HHAR" --store "${store}" 
 
 
-# g=2
-# version="train25_supervised_label"
-# name="CPCHAR_preliminary"
-# store="CPCHAR_preliminary"
+g=2
+version="train25_supervised_label"
+name="CPCHAR_preliminary"
+store="CPCHAR_preliminary"
 
 # python main.py -g 2 -version "train25_supervised_random" -name HHAR --store "25_random" &
 # python main.py -g 2 -version "train45_supervised_random" -name HHAR --store "45_random" &
@@ -183,12 +183,19 @@
 
 # wait
 
-# python transfer.py -g 2 -ft True -version "train25_supervised_random" -shot 50 -name HHAR --pretrained "25_random/HHAR" --store "25_random" &
-# python transfer.py -g 2 -ft True -version "train45_supervised_random" -shot 50 -name HHAR --pretrained "45_random/HHAR" --store "45_random" &
-# python transfer.py -g 2 -ft True -version "train65_supervised_random" -shot 50 -name HHAR --pretrained "65_random/HHAR" --store "65_random" &
-# python transfer.py -g 3 -ft True -version "train25_supervised_label" -shot 50 -name HHAR --pretrained "25_label/HHAR" --store "25_label" &
-# python transfer.py -g 3 -ft True -version "train45_supervised_label" -shot 50 -name HHAR --pretrained "45_label/HHAR" --store "45_label" &
-# python transfer.py -g 3 -ft True -version "train65_supervised_label" -shot 50 -name HHAR --pretrained "65_label/HHAR" --store "65_label" 
+python transfer.py -g 2 -ft True -version "train25_supervised_random" -shot 10 -name HHAR --pretrained "25_random/HHAR" --store "25_random" &
+python transfer.py -g 2 -ft True -version "train45_supervised_random" -shot 10 -name HHAR --pretrained "45_random/HHAR" --store "45_random" &
+python transfer.py -g 2 -ft True -version "train65_supervised_random" -shot 10 -name HHAR --pretrained "65_random/HHAR" --store "65_random" &
+python transfer.py -g 3 -ft True -version "train25_supervised_label" -shot 10 -name HHAR --pretrained "25_label/HHAR" --store "25_label" &
+python transfer.py -g 3 -ft True -version "train45_supervised_label" -shot 10 -name HHAR --pretrained "45_label/HHAR" --store "45_label" &
+python transfer.py -g 3 -ft True -version "train65_supervised_label" -shot 10 -name HHAR --pretrained "65_label/HHAR" --store "65_label" 
+wait
+python transfer.py -g 2 -ft True -version "train25_supervised_random" -shot 100 -name HHAR --pretrained "25_random/HHAR" --store "25_random" &
+python transfer.py -g 2 -ft True -version "train45_supervised_random" -shot 100 -name HHAR --pretrained "45_random/HHAR" --store "45_random" &
+python transfer.py -g 2 -ft True -version "train65_supervised_random" -shot 100 -name HHAR --pretrained "65_random/HHAR" --store "65_random" &
+python transfer.py -g 3 -ft True -version "train25_supervised_label" -shot 100 -name HHAR --pretrained "25_label/HHAR" --store "25_label" &
+python transfer.py -g 3 -ft True -version "train45_supervised_label" -shot 100 -name HHAR --pretrained "45_label/HHAR" --store "45_label" &
+python transfer.py -g 3 -ft True -version "train65_supervised_label" -shot 100 -name HHAR --pretrained "65_label/HHAR" --store "65_label" 
 
 # python transfer.py -g 2 -ft True -version "train25_supervised_random" -shot 50 -name HHAR --pretrained "random/HHAR" --store "25_random_sup" &
 # python transfer.py -g 2 -ft True -version "train45_supervised_random" -shot 50 -name HHAR --pretrained "random/HHAR" --store "45_random_sup" &
@@ -225,31 +232,31 @@
 
 
 
-name="CPCHAR_users_positions_"
-version="users_positions_shot"
-g=0
-# for dataset in "Shoaib" 
+# name="CPCHAR_users_positions_"
+# version="users_positions_shot"
+# g=0
+# # for dataset in "Shoaib" 
+# # do
+# #     python main.py -g ${g} -version "${version}0" -name ${dataset} --store "${name}0" &
+# #     python main.py -g ${g} -version "${version}1" -name ${dataset} --store "${name}1" &
+# #     python main.py -g ${g} -version "${version}2" -name ${dataset} --store "${name}2" &
+# #     python main.py -g ${g} -version "${version}3" -name ${dataset} --store "${name}3" &
+# #     python main.py -g ${g} -version "${version}4" -name ${dataset} --store "${name}4" &
+
+# #     wait
+# # done
+
+# dataset="Shoaib"
+# for shot in 100
 # do
-#     python main.py -g ${g} -version "${version}0" -name ${dataset} --store "${name}0" &
-#     python main.py -g ${g} -version "${version}1" -name ${dataset} --store "${name}1" &
-#     python main.py -g ${g} -version "${version}2" -name ${dataset} --store "${name}2" &
-#     python main.py -g ${g} -version "${version}3" -name ${dataset} --store "${name}3" &
-#     python main.py -g ${g} -version "${version}4" -name ${dataset} --store "${name}4" &
+#     # python transfer.py -g ${g} -ft True -version "${version}0" -shot ${shot} -name ${dataset} --pretrained "${name}0/${dataset}" --store "${name}0" &
+#     # python transfer.py -g ${g} -ft True -version "${version}1" -shot ${shot} -name ${dataset} --pretrained "${name}1/${dataset}" --store "${name}1" &
+#     python transfer.py -g ${g} -ft True -version "${version}2" -shot ${shot} -name ${dataset} --pretrained "${name}2/${dataset}" --store "${name}2" &
+#     # python transfer.py -g ${g} -ft True -version "${version}3" -shot ${shot} -name ${dataset} --pretrained "${name}3/${dataset}" --store "${name}3" &
+#     # python transfer.py -g ${g} -ft True -version "${version}4" -shot ${shot} -name ${dataset} --pretrained "${name}4/${dataset}" --store "${name}4" 
 
 #     wait
 # done
-
-dataset="Shoaib"
-for shot in 100
-do
-    # python transfer.py -g ${g} -ft True -version "${version}0" -shot ${shot} -name ${dataset} --pretrained "${name}0/${dataset}" --store "${name}0" &
-    # python transfer.py -g ${g} -ft True -version "${version}1" -shot ${shot} -name ${dataset} --pretrained "${name}1/${dataset}" --store "${name}1" &
-    python transfer.py -g ${g} -ft True -version "${version}2" -shot ${shot} -name ${dataset} --pretrained "${name}2/${dataset}" --store "${name}2" &
-    # python transfer.py -g ${g} -ft True -version "${version}3" -shot ${shot} -name ${dataset} --pretrained "${name}3/${dataset}" --store "${name}3" &
-    # python transfer.py -g ${g} -ft True -version "${version}4" -shot ${shot} -name ${dataset} --pretrained "${name}4/${dataset}" --store "${name}4" 
-
-    wait
-done
 
 
 # name="CPCHAR_users_devices_"
@@ -266,26 +273,26 @@ done
 #     wait
 # done
 
-dataset="HASC"
-for shot in 100
-do
-    python transfer.py -g ${g} -ft True -version "${version}0" -shot ${shot} -name ${dataset} --pretrained "${name}0/${dataset}" --store "${name}0" &
-    # python transfer.py -g ${g} -ft True -version "${version}1" -shot ${shot} -name ${dataset} --pretrained "${name}1/${dataset}" --store "${name}1" &
-    # python transfer.py -g ${g} -ft True -version "${version}2" -shot ${shot} -name ${dataset} --pretrained "${name}2/${dataset}" --store "${name}2" &
-    # python transfer.py -g ${g} -ft True -version "${version}3" -shot ${shot} -name ${dataset} --pretrained "${name}3/${dataset}" --store "${name}3" &
-    # python transfer.py -g ${g} -ft True -version "${version}4" -shot ${shot} -name ${dataset} --pretrained "${name}4/${dataset}" --store "${name}4" 
+# dataset="HASC"
+# for shot in 100
+# do
+#     python transfer.py -g ${g} -ft True -version "${version}0" -shot ${shot} -name ${dataset} --pretrained "${name}0/${dataset}" --store "${name}0" &
+#     # python transfer.py -g ${g} -ft True -version "${version}1" -shot ${shot} -name ${dataset} --pretrained "${name}1/${dataset}" --store "${name}1" &
+#     # python transfer.py -g ${g} -ft True -version "${version}2" -shot ${shot} -name ${dataset} --pretrained "${name}2/${dataset}" --store "${name}2" &
+#     # python transfer.py -g ${g} -ft True -version "${version}3" -shot ${shot} -name ${dataset} --pretrained "${name}3/${dataset}" --store "${name}3" &
+#     # python transfer.py -g ${g} -ft True -version "${version}4" -shot ${shot} -name ${dataset} --pretrained "${name}4/${dataset}" --store "${name}4" 
 
-    wait
-done
+#     wait
+# done
 
-shot=10
-for dataset in "HASC" "MotionSense"
-do
-    python transfer.py -g ${g} -ft True -version "${version}0" -shot ${shot} -name ${dataset} --pretrained "${name}0/${dataset}" --store "${name}0" &
-    python transfer.py -g ${g} -ft True -version "${version}1" -shot ${shot} -name ${dataset} --pretrained "${name}1/${dataset}" --store "${name}1" &
-    python transfer.py -g ${g} -ft True -version "${version}2" -shot ${shot} -name ${dataset} --pretrained "${name}2/${dataset}" --store "${name}2" &
-    python transfer.py -g ${g} -ft True -version "${version}3" -shot ${shot} -name ${dataset} --pretrained "${name}3/${dataset}" --store "${name}3" &
-    python transfer.py -g ${g} -ft True -version "${version}4" -shot ${shot} -name ${dataset} --pretrained "${name}4/${dataset}" --store "${name}4" 
+# shot=10
+# for dataset in "HASC" "MotionSense"
+# do
+#     python transfer.py -g ${g} -ft True -version "${version}0" -shot ${shot} -name ${dataset} --pretrained "${name}0/${dataset}" --store "${name}0" &
+#     python transfer.py -g ${g} -ft True -version "${version}1" -shot ${shot} -name ${dataset} --pretrained "${name}1/${dataset}" --store "${name}1" &
+#     python transfer.py -g ${g} -ft True -version "${version}2" -shot ${shot} -name ${dataset} --pretrained "${name}2/${dataset}" --store "${name}2" &
+#     python transfer.py -g ${g} -ft True -version "${version}3" -shot ${shot} -name ${dataset} --pretrained "${name}3/${dataset}" --store "${name}3" &
+#     python transfer.py -g ${g} -ft True -version "${version}4" -shot ${shot} -name ${dataset} --pretrained "${name}4/${dataset}" --store "${name}4" 
 
-    wait
-done
+#     wait
+# done

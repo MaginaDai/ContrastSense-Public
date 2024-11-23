@@ -378,8 +378,8 @@ def load_pretrain_data_config(args):
 
 def handle_argv(target, config_train, prefix):
     parser = argparse.ArgumentParser(description='PyTorch LIMU-BERT Model')
-    parser.add_argument('-model_version', default="v1_v2", type=str, help='Model config')
-    parser.add_argument('-dataset_version',  default="HHAR", type=str, help='Dataset version')
+    parser.add_argument('model_version', default="v1_v2", type=str, help='Model config')
+    parser.add_argument('dataset_version',  default="HHAR", type=str, help='Dataset version')
     parser.add_argument('-g', '--gpu_index', default=0, type=int, help='Gpu index.')
     parser.add_argument('-f', '--model_file', type=str, default="user", help='Pretrain model name')
     parser.add_argument('-p', '--pretrain_dataset', type=str, default="HHAR", help='Pretrain dataset name')

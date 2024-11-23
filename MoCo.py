@@ -41,7 +41,7 @@ from sklearn.metrics import f1_score
 mol='MoCo'
 
 class MoCo_model(nn.Module):
-    def __init__(self, transfer=False, out_dim=256, classes=6, dims=16, classifier_dim=32, final_dim=8, momentum=0.9, drop=0.1, DAL=False, users_class=None, SCL=False, modal='imu'):
+    def __init__(self, transfer=False, out_dim=256, classes=6, dims=32, classifier_dim=1024, final_dim=8, momentum=0.9, drop=0.1, DAL=False, users_class=None, SCL=False, modal='imu'):
         super(MoCo_model, self).__init__()
         self.DAL = DAL
         self.modal = modal
@@ -224,7 +224,8 @@ class MoCo_projector(nn.Module):
     def __init__(self, out_dim=512, modal='imu'):
         super(MoCo_projector, self).__init__()
         if modal == 'imu':
-            feature_num = 3200
+            # feature_num = 3200
+            feature_num = 6400
         elif modal == 'emg':
             feature_num = 1024
             # feature_num = 2912

@@ -801,16 +801,16 @@ def obtain_all_domain_infor_for_collossl():
         # "Shoaib_alpha45_shot2",
         # "Shoaib_alpha45_shot3",
         # "Shoaib_alpha45_shot4",
-        "Shoaib_alpha65_shot0",
-        "Shoaib_alpha65_shot1",
-        "Shoaib_alpha65_shot2",
-        "Shoaib_alpha65_shot3",
-        "Shoaib_alpha65_shot4",
-        # "Shoaib_leave_shot0",
-        # "Shoaib_leave_shot1",
-        # "Shoaib_leave_shot2",
-        # "Shoaib_leave_shot3",
-        # "Shoaib_leave_shot4",
+        # "Shoaib_alpha65_shot0",
+        # "Shoaib_alpha65_shot1",
+        # "Shoaib_alpha65_shot2",
+        # "Shoaib_alpha65_shot3",
+        # "Shoaib_alpha65_shot4",
+        "Shoaib_leave_shot0",
+        "Shoaib_leave_shot1",
+        "Shoaib_leave_shot2",
+        "Shoaib_leave_shot3",
+        "Shoaib_leave_shot4",
     ]
     for i in train_dir:
         identify_included_domain(dir, dir_name=i)
@@ -821,7 +821,7 @@ if __name__ == '__main__':
     # datasets_shot_record(datasets='HASC', version='s1', shot=100)
     # new_segmentation_for_positions(seg_types=5)
     # new_segmentation_for_devices(seg_types=1)
-    new_segmentation_for_user(seg_types=5)
+    # new_segmentation_for_user(seg_types=5)
     # generate_split_for_cda_based_on_previous_split()
     # cmp_split()
     # new_tune_segmentation_with_different_portion(seed=940, seg_type=5)
@@ -831,4 +831,4 @@ if __name__ == '__main__':
     # write_balance_tune_set(ori_dir=f'datasets/{dataset}/', train_dir="", target_dir=f'datasets/{dataset}_shot0/', dataset=dataset, cross='users')
     # preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_domain_shift/", dataset=dataset, cross='users')
     # random_split(dir=f'datasets/{dataset}/', cross_domain_dir=f'datasets/HHAR_train25_supervised_cross/', target_dir=f'datasets/HHAR_train25_supervised_random/')
-    # obtain_all_domain_infor_for_collossl()
+    obtain_all_domain_infor_for_collossl()
