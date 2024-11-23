@@ -410,11 +410,8 @@ def label_translate(source_dir, target_dir):
 
 DATASET_PATH = r'./original_dataset/hhar/'
 if __name__ == '__main__':
-    # 50 refer to 20 Hz. 20 refer to 50 Hz
-    path_save = r'./datasets/HHAR_time/'
+    path_save = r'./datasets/HHAR/'
     if not os.path.exists(path_save):
         os.makedirs(path_save)
     num = preprocess_hhar(DATASET_PATH, path_save, version='test', window_time=20, seq_len=200)  # use jump to control overlap.
-
-    # label_translate(r'./datasets/HHAR/', r'./datasets/HHAR_50_200/')
 

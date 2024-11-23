@@ -213,10 +213,6 @@ def down_sample(data, window_target):
 
 
 if __name__ == '__main__':
-    # split_dataset(num=4531)
-    # Here we set parameter to build labeld time-series from dataset of "(A)DeviceMotion_data"
-    # attitude(roll, pitch, yaw); gravity(x, y, z); rotationRate(x, y, z); userAcceleration(x,y,z)
-
     if not os.path.exists(PATH_SAVE):
         os.makedirs(PATH_SAVE)
 

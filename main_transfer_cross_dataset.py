@@ -8,7 +8,7 @@ from torchvision import models
 
 from ContrastSense import ContrastSense_model,  ContrastSense
 from data_loader.contrastive_learning_dataset import ContrastiveLearningDataset
-from data_preprocessing.preprocessing import UsersNum
+from data_preprocessing.data_split import UsersNum
 from getPenalty import load_fisher_matrix
 from utils import fetch_test_loader_for_all_dataset, seed_torch
 import torch.multiprocessing

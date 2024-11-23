@@ -1,5 +1,5 @@
 import numpy as np
-from preprocessing import fetch_instance_number_of_dataset
+from data_preprocessing.data_split import fetch_instance_number_of_dataset
 
 
 def append_labels(dir, dataset):

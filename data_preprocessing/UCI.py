@@ -1,21 +1,11 @@
-# !/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Time    : 2020/12/29 15:01
-# @Author  : Huatao
-# @Email   : 735820057@qq.com
-# @File    : uci.py
-# @Description : http://archive.ics.uci.edu/ml/datasets/Smartphone-Based+Recognition+of+Human+Activities+and+Postural+Transitions
-
 import os
 import sys
 from os.path import dirname
-import pdb
 import numpy as np
-import pandas as pd
 from torch.utils.data import random_split
 
 sys.path.append(dirname(sys.path[0]))
-from data_loader.MotionSense_Prep import percent
+from data_preprocessing.MotionSense import percent
 
 DATASET_PATH = r'./original_dataset/uci/RawData'
 

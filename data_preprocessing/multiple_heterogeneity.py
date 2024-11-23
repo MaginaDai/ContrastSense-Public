@@ -1,6 +1,6 @@
 
 import numpy as np
-from preprocessing import fetch_instance_number_of_dataset, write_balance_tune_set, write_dataset
+from data_preprocessing.data_split import fetch_instance_number_of_dataset, write_balance_tune_set, write_dataset
 import random, os
 
 def preprocessing_dataset_cross_multiple_domains(dir, target_dir, dataset, test_portion=0.60, val_portion=0.15, tune_domain_portion=0.40, cross='users_devices'):
@@ -86,6 +86,4 @@ def new_tune_segmentation_cross_multiple_domains_with_different_portion(seed=940
 
 
 if __name__ == '__main__':
-
     new_segmentation_for_multiple_domain_shift(seg_types=5)
-    # new_tune_segmentation_cross_multiple_domains_with_different_portion(seg_type=5)

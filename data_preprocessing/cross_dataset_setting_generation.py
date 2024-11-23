@@ -1,7 +1,7 @@
 import numpy as np
 import os, pdb
 import random
-from preprocessing import fetch_instance_number_of_dataset, label_alignment, write_balance_tune_set, write_dataset
+from data_preprocessing.data_split import fetch_instance_number_of_dataset, label_alignment, write_balance_tune_set, write_dataset
 
 datasets = ["HASC", "HHAR", "MotionSense", "Shoaib"]
 

@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import yaml
 from data_loader.contrastive_learning_dataset import ContrastiveLearningDataset, fetch_dataset_root
-from data_preprocessing.preprocessing import UsersPosition
+from data_preprocessing.data_split import UsersPosition
 from torch.cuda.amp import autocast
 from sklearn.metrics import f1_score
 

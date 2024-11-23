@@ -12,7 +12,7 @@ from os.path import dirname
 import sys
 sys.path.append(dirname(sys.path[0]))
 sys.path.append(dirname(dirname(sys.path[0])))
-from data_preprocessing.preprocessing import UsersPosition
+from data_preprocessing.data_split import UsersPosition
 from exceptions.exceptions import InvalidDatasetSelection
 
 

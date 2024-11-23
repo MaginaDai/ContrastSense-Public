@@ -1,7 +1,7 @@
 import torch
 from torch.utils.mobile_optimizer import optimize_for_mobile
 from ContrastSense import ContrastSense_model_for_mobile
-from data_preprocessing.preprocessing import ClassesNum, PositionNum, UsersNum
+from data_preprocessing.data_split import ClassesNum, PositionNum, UsersNum
 from thop import profile
 
 def generate_mobile_model(modal, method):

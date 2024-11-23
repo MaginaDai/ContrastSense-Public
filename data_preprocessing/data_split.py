@@ -1,18 +1,8 @@
-from cProfile import label
-from gettext import find
-from itertools import count
+
 import os
 from os.path import dirname
-import pdb
 import sys
-from numpy.core.memmap import dtype
-import torch
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from torch.utils.data import Dataset, DataLoader, random_split
-from scipy.interpolate import interp1d
-from collections import Counter
 import random
 
 sys.path.append(dirname(dirname(sys.path[0])))
@@ -87,7 +77,7 @@ ClassesNum = {
 
 DevicesNum = {
     'HHAR': 6,
-    'HASC': 24, # actually we have 18 devices in total. But the largest user id is 23, set it to 24. +1 since it starts from 0. 
+    'HASC': 24,
 }
 
 PositionNum = {
@@ -817,17 +807,15 @@ def obtain_all_domain_infor_for_collossl():
     
 
 if __name__ == '__main__':
-    # datasets_shot_record(datasets='HASC', version='s1', shot=100)
+    dataset='Myo'
+    preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot0/", test_portion=0.6, val_portion=0.15, tune_domain_portion=0.4, dataset=dataset, cross='users')
+    
     # new_segmentation_for_positions(seg_types=5)
     # new_segmentation_for_devices(seg_types=1)
     # new_segmentation_for_user(seg_types=5)
-    # generate_split_for_cda_based_on_previous_split()
-    # cmp_split()
+    
     # new_tune_segmentation_with_different_portion(seed=940, seg_type=5)
-    # dataset='Myo'
-    # preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_shot0/", test_portion=0.6, val_portion=0.15, tune_domain_portion=0.4, dataset=dataset, cross='users')
     
     # write_balance_tune_set(ori_dir=f'datasets/{dataset}/', train_dir="", target_dir=f'datasets/{dataset}_shot0/', dataset=dataset, cross='users')
     # preprocessing_dataset_cross_domain_val(dir=f'datasets/{dataset}/', target_dir=f"datasets/{dataset}_domain_shift/", dataset=dataset, cross='users')
     # random_split(dir=f'datasets/{dataset}/', cross_domain_dir=f'datasets/HHAR_train25_supervised_cross/', target_dir=f'datasets/HHAR_train25_supervised_random/')
-    obtain_all_domain_infor_for_collossl()
