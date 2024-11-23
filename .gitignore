@@ -1,7 +1,7 @@
 /runs
 /datasets
 /datasets_backup
-
+/figure_plot
 /original_dataset
 
 /kmeans_pytorch
@@ -22,3 +22,4 @@
 /attention/__pycache__
 /data_preprocessing/__pycache__
 /exceptions/__pycache__
+

@@ -1,10 +1,10 @@
-class BaseSimCLRException(Exception):
+class BaseContrastSenseException(Exception):
     """Base exception"""
 
 
-class InvalidBackboneError(BaseSimCLRException):
+class InvalidBackboneError(BaseContrastSenseException):
     """Raised when the choice of backbone Convnet is invalid."""
 
 
-class InvalidDatasetSelection(BaseSimCLRException):
+class InvalidDatasetSelection(BaseContrastSenseException):
     """Raised when the choice of datasets is invalid."""
